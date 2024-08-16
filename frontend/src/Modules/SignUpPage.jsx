@@ -79,7 +79,7 @@ const SignUpPage = () => {
       setConfirmPassword("");
       setSelected("SignUp As");
 
-      toast.success("User registered successfully!");
+      toast.success("You registered successfully!");
       const queryCollection = async (collectionName) => {
         const q = query(
           collection(db, collectionName),

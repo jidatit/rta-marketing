@@ -37,7 +37,7 @@ const SignInPage = () => {
           return null;
         }
       };
-      toast.success("User signed in successfully");
+      toast.success("You signed in successfully");
       // Check in "admins" collection
       let userData = await queryCollection("admins");
       if (userData) {
