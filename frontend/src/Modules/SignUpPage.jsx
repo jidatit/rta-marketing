@@ -67,7 +67,11 @@ const SignUpPage = () => {
         userType: selected,
         dateCreated: new Date(),
       });
-      await sendEmailVerification(user);
+      console.log(collectionName);
+      if (collectionName !== "admins") {
+        await sendEmailVerification(user);
+      }
+
       // Clear the form fields after successful registration
       setName("");
       setEmail("");

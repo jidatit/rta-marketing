@@ -16,14 +16,18 @@ const SideBar = () => {
         <div className="flex flex-col w-full gap-y-4">
           <Link
             to=""
-            className={`w-full text-white transition-all duration-300 ease-in-out ${
+            className={`w-full transition-all duration-300 ease-in-out rounded-md ${
               activeItem === "Sales"
-                ? "bg-white rounded-md shadow-lg text-blue-900"
-                : ""
+                ? "bg-white rounded-md shadow-lg"
+                : "hover:bg-white rounded-md hover:text-blue-900"
             }`}
             onClick={() => handleItemClick("Sales")}
           >
-            <p className="w-full p-3 transition-all duration-300 ease-in-out rounded-md font-radios hover:bg-white hover:text-blue-900">
+            <p
+              className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
+                activeItem === "Sales" ? "text-blue-800" : "text-white"
+              }`}
+            >
               Sales
             </p>
           </Link>

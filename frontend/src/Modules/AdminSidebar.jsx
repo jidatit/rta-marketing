@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import "../index.css";
 
 const AdminSidebar = () => {
   const [activeItem, setActiveItem] = useState("Sales");
@@ -7,6 +8,7 @@ const AdminSidebar = () => {
   const handleItemClick = (item) => {
     setActiveItem(item);
   };
+
   return (
     <div className="bg-[#071b52] h-full w-full">
       <div className="flex flex-col items-center justify-start w-full h-full px-5 py-5 gap-y-10">
@@ -16,27 +18,35 @@ const AdminSidebar = () => {
         <div className="flex flex-col w-full gap-y-4">
           <Link
             to=""
-            className={`w-full text-white transition-all duration-300 ease-in-out ${
+            className={`w-full transition-all duration-300 ease-in-out rounded-md ${
               activeItem === "Sales"
-                ? "bg-white rounded-md shadow-lg text-blue-900"
-                : ""
+                ? "bg-white rounded-md shadow-lg"
+                : "hover:bg-white rounded-md hover:text-blue-900"
             }`}
             onClick={() => handleItemClick("Sales")}
           >
-            <p className="w-full p-3 transition-all duration-300 ease-in-out rounded-md font-radios hover:bg-white hover:text-blue-900">
+            <p
+              className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
+                activeItem === "Sales" ? "text-blue-800" : "text-white"
+              }`}
+            >
               Sales
             </p>
           </Link>
           <Link
-            to=""
-            className={`w-full text-white transition-all duration-300 ease-in-out ${
+            to="users"
+            className={`w-full transition-all duration-300 ease-in-out rounded-md ${
               activeItem === "Users"
-                ? "bg-white rounded-md shadow-lg text-blue-900"
-                : ""
+                ? "bg-white rounded-md shadow-lg"
+                : "hover:bg-white rounded-md hover:text-blue-900"
             }`}
             onClick={() => handleItemClick("Users")}
           >
-            <p className="w-full p-3 transition-all duration-300 ease-in-out rounded-md font-radios hover:bg-white hover:text-blue-900">
+            <p
+              className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
+                activeItem === "Users" ? "text-blue-800" : "text-white"
+              }`}
+            >
               Users
             </p>
           </Link>

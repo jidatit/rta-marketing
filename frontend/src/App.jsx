@@ -19,6 +19,7 @@ import VirtualAssistantLayout from "./Modules/VirtualAssistantLayout";
 import VirtualAssistantDashboard from "./Modules/VirtualAssistantDashboard";
 import AdminDashboard from "./Modules/AdminDashboard";
 import AdminLayout from "./Modules/AdminLayout";
+import AllUsers from "./Modules/AllUsers";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -81,6 +82,10 @@ function App() {
                   element={
                     currentUser ? <AdminDashboard /> : <Navigate to="/" />
                   }
+                />
+                <Route
+                  path="users"
+                  element={currentUser ? <AllUsers /> : <Navigate to="/" />}
                 />
               </Route>
             </Routes>
