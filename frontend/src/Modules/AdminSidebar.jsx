@@ -33,7 +33,7 @@ const AdminSidebar = () => {
               Sales
             </p>
           </Link>
-          <Link
+          {/* <Link
             to="users"
             className={`w-full transition-all duration-300 ease-in-out rounded-md ${
               activeItem === "Users"
@@ -49,7 +49,7 @@ const AdminSidebar = () => {
             >
               Users
             </p>
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>

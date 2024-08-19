@@ -21,7 +21,7 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   console.log(currentUser);
   const options = [
-    { value: "admin", label: "Admin" },
+    // { value: "admin", label: "Admin" },
     { value: "employee", label: "Employee" },
     { value: "virtual-assistant", label: "Virtual Assistant" },
   ];
@@ -80,45 +80,48 @@ const SignUpPage = () => {
       setSelected("SignUp As");
 
       toast.success("You registered successfully!");
-      const queryCollection = async (collectionName) => {
-        const q = query(
-          collection(db, collectionName),
-          where("uid", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          return querySnapshot.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }))[0];
-        } else {
-          return null;
-        }
-      };
+      setTimeout(() => {
+        navigate("/verificationPage");
+      }, 3000);
+      // const queryCollection = async (collectionName) => {
+      //   const q = query(
+      //     collection(db, collectionName),
+      //     where("uid", "==", user.uid)
+      //   );
+      //   const querySnapshot = await getDocs(q);
+      //   if (!querySnapshot.empty) {
+      //     return querySnapshot.docs.map((doc) => ({
+      //       ...doc.data(),
+      //       id: doc.id,
+      //     }))[0];
+      //   } else {
+      //     return null;
+      //   }
+      // };
 
       // Check in "admins" collection
-      let userData = await queryCollection("admins");
-      if (userData) {
-        setTimeout(() => {
-          navigate("/AdminLayout");
-        }, 3000);
-      }
+      // let userData = await queryCollection("admins");
+      // if (userData) {
+      //   setTimeout(() => {
+      //     navigate("/AdminLayout");
+      //   }, 3000);
+      // }
 
-      // Check in "employees" collection
-      userData = await queryCollection("employees");
-      if (userData) {
-        setTimeout(() => {
-          navigate("/EmployeeLayout");
-        }, 3000);
-      }
+      // // Check in "employees" collection
+      // userData = await queryCollection("employees");
+      // if (userData) {
+      //   setTimeout(() => {
+      //     navigate("/EmployeeLayout");
+      //   }, 3000);
+      // }
 
-      // Check in "users" collection
-      userData = await queryCollection("virtual-assistants");
-      if (userData) {
-        setTimeout(() => {
-          navigate("/VirtualAssistantLayout");
-        }, 3000);
-      }
+      // // Check in "users" collection
+      // userData = await queryCollection("virtual-assistants");
+      // if (userData) {
+      //   setTimeout(() => {
+      //     navigate("/VirtualAssistantLayout");
+      //   }, 3000);
+      // }
     } catch (err) {
       console.error(err);
       toast.error(`Registration failed: ${err.message}`);
