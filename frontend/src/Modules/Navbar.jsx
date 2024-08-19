@@ -1,9 +1,8 @@
 import { FaChevronDown } from "react-icons/fa";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { FaBell } from "react-icons/fa";
-import image from "../images/dad-hotel-WUoztQ3hp9Q-unsplash.jpg";
+import image from "../images/pngwing.com.png";
 import { useAuth } from "../AuthContext";
-import { Spinner } from "@material-tailwind/react";
 const Navbar = () => {
   const { currentUser, handleLogout } = useAuth();
 
@@ -63,7 +62,7 @@ const Navbar = () => {
             </MenuItems>
           </Menu>
 
-          <FaBell size={20} className="text-gray-500 cursor-pointer" />
+          {/* <FaBell size={20} className="text-gray-500 cursor-pointer" /> */}
         </div>
       </div>
     </div>
