@@ -32,9 +32,7 @@ const EmployeeDashboard = () => {
 
       uploadTask.on(
         "state_changed",
-        (snapshot) => {
-         
-        },
+        (snapshot) => {},
         (error) => {
           console.error("Upload failed", error);
         },
