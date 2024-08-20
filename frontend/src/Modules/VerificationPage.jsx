@@ -5,8 +5,7 @@ import { useEffect } from "react";
 
 const VerificationPage = () => {
   const navigate = useNavigate();
-  const { verifyEmail, startingUser, isEmailVerified, currentUser } = useAuth();
-  console.log(startingUser);
+  const { verifyEmail, isEmailVerified, currentUser } = useAuth();
 
   const handleRefresh = async () => {
     window.location.reload();
