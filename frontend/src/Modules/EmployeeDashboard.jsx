@@ -8,7 +8,7 @@ import { IoMdImage } from "react-icons/io";
 import { toast } from "react-toastify";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../config/firebaseConfig";
-import { arrayUnion, doc, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
@@ -85,7 +85,7 @@ const EmployeeDashboard = () => {
   const handleUpload = async () => {
     if (file) {
       console.log(file);
-      const storageRef = ref(storage, `insuranceFiles`);
+      const storageRef = ref(storage, "insuranceFiles");
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
@@ -99,31 +99,33 @@ const EmployeeDashboard = () => {
         async () => {
           console.log("Upload successful");
 
-          console.log(formData);
-          setThirdForm(false);
-          toast.success("New Sale Added Successfully");
-          const saleRef = doc(db, "sales", currentUser.uid);
-
           try {
-            // Add the saleData to the 'sales' array in the document
-            console.log(formData);
-            await updateDoc(saleRef, {
-              sales: arrayUnion(formData),
-            });
-          } catch (error) {
-            // If the document does not exist, create it
-            if (error.code === "not-found") {
+            const saleRef = doc(db, "sales", currentUser.uid);
+            const docSnap = await getDoc(saleRef);
+
+            if (!docSnap.exists()) {
+              // Create a new document if it does not exist
               await setDoc(saleRef, {
-                sales: [],
+                sales: [formData],
               });
             } else {
-              console.error("Error adding sale: ", error);
+              // Update the existing document
+              await updateDoc(saleRef, {
+                sales: arrayUnion(formData),
+              });
             }
-          }
 
-          setFileName("");
-          setFileType("");
-          setFile(null);
+            // Wait for the update to complete before updating the formData state
+            await setFormData({ ...formData, grossProfit: "" }); // Reset grossProfit
+            setThirdForm(false);
+            toast.success("New Sale Added Successfully");
+          } catch (error) {
+            console.error("Error adding sale: ", error);
+          } finally {
+            setFileName("");
+            setFileType("");
+            setFile(null);
+          }
         }
       );
     }
