@@ -7,7 +7,8 @@ import { IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
 import { toast } from "react-toastify";
 import { ref, uploadBytesResumable } from "firebase/storage";
-import { storage } from "../config/firebaseConfig";
+import { db, storage } from "../config/firebaseConfig";
+import { arrayUnion, doc, setDoc, updateDoc } from "firebase/firestore";
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
@@ -23,8 +24,6 @@ const EmployeeDashboard = () => {
     stockNumber: "",
     VIN: "",
     leadSource: "",
-  });
-  const [SecondFormData, setSecondFormData] = useState({
     salePrice: "",
     unitCost: "",
     warCost: "",
@@ -36,14 +35,6 @@ const EmployeeDashboard = () => {
     grossProfit: "",
   });
 
-  const handleSecondFormChange = (e) => {
-    const { id, value } = e.target;
-    setSecondFormData((prevData) => ({
-      ...prevData,
-      [id]: value,
-    }));
-  };
-
   const calculateGrossProfit = () => {
     const {
       salePrice,
@@ -54,7 +45,7 @@ const EmployeeDashboard = () => {
       pac,
       safety,
       reserve,
-    } = SecondFormData;
+    } = formData;
 
     const totalCost =
       parseFloat(unitCost) +
@@ -67,11 +58,11 @@ const EmployeeDashboard = () => {
 
     const grossProfit = parseFloat(salePrice) - totalCost;
 
-    setSecondFormData((prevData) => ({
+    setFormData((prevData) => ({
       ...prevData,
       grossProfit: grossProfit.toFixed(2),
     }));
-    console.log(SecondFormData);
+    console.log(formData);
   };
   // Step 2: Handle input changes
   const handleInputChange = (e) => {
@@ -91,7 +82,7 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (file) {
       console.log(file);
       const storageRef = ref(storage, `insuranceFiles`);
@@ -105,12 +96,31 @@ const EmployeeDashboard = () => {
         (error) => {
           console.error("Upload failed", error);
         },
-        () => {
+        async () => {
           console.log("Upload successful");
 
-          console.log(formData, SecondFormData);
+          console.log(formData);
           setThirdForm(false);
           toast.success("New Sale Added Successfully");
+          const saleRef = doc(db, "sales", currentUser.uid);
+
+          try {
+            // Add the saleData to the 'sales' array in the document
+            console.log(formData);
+            await updateDoc(saleRef, {
+              sales: arrayUnion(formData),
+            });
+          } catch (error) {
+            // If the document does not exist, create it
+            if (error.code === "not-found") {
+              await setDoc(saleRef, {
+                sales: [],
+              });
+            } else {
+              console.error("Error adding sale: ", error);
+            }
+          }
+
           setFileName("");
           setFileType("");
           setFile(null);
@@ -130,31 +140,13 @@ const EmployeeDashboard = () => {
   const handleFirstNext = () => {
     setShowModal(false);
     setSecondForm(true);
-    setFormData({
-      customerName: "",
-      vehicleMake: "",
-      vehicleModel: "",
-      stockNumber: "",
-      VIN: "",
-      leadSource: "",
-    });
+
     console.log("form data", formData);
   };
   const handleSecondNext = () => {
     setShowModal(false);
     setSecondForm(false);
     setThirdForm(true);
-    setSecondFormData({
-      salePrice: "",
-      unitCost: "",
-      warCost: "",
-      gapCost: "",
-      admin: "",
-      pac: "",
-      safety: "",
-      reserve: "",
-      grossProfit: "",
-    });
   };
   if (!currentUser) {
     return (
@@ -365,8 +357,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="salePrice"
-                          value={SecondFormData.salePrice}
-                          onChange={handleSecondFormChange}
+                          value={formData.salePrice}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Sale Price"
                           required
@@ -382,8 +374,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="unitCost"
-                          value={SecondFormData.unitCost}
-                          onChange={handleSecondFormChange}
+                          value={formData.unitCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder=" Unit Cost"
                           required
@@ -399,8 +391,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="warCost"
-                          value={SecondFormData.warCost}
-                          onChange={handleSecondFormChange}
+                          value={formData.warCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="War Cost"
                           required
@@ -416,8 +408,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="gapCost"
-                          value={SecondFormData.gapCost}
-                          onChange={handleSecondFormChange}
+                          value={formData.gapCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Gap Cost"
                           required
@@ -433,8 +425,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="admin"
-                          value={SecondFormData.admin}
-                          onChange={handleSecondFormChange}
+                          value={formData.admin}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Admin"
                           required
@@ -450,8 +442,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="pac"
-                          value={SecondFormData.pac}
-                          onChange={handleSecondFormChange}
+                          value={formData.pac}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="PAC"
                           required
@@ -467,8 +459,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="safety"
-                          value={SecondFormData.safety}
-                          onChange={handleSecondFormChange}
+                          value={formData.safety}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Safety"
                           required
@@ -484,8 +476,8 @@ const EmployeeDashboard = () => {
                         <input
                           type="text"
                           id="reserve"
-                          value={SecondFormData.reserve}
-                          onChange={handleSecondFormChange}
+                          value={formData.reserve}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Reserve"
                           required
@@ -511,7 +503,7 @@ const EmployeeDashboard = () => {
                           <input
                             type="text"
                             id="grossProfit"
-                            value={SecondFormData.grossProfit}
+                            value={formData.grossProfit}
                             className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                             placeholder="Gross Profit"
                             required
