@@ -5,7 +5,10 @@ import { GrLinkNext } from "react-icons/gr";
 import { FaFilePdf } from "react-icons/fa6";
 import { IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
-import { getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import { toast } from "react-toastify";
+import { ref, uploadBytesResumable } from "firebase/storage";
+import { db, storage } from "../config/firebaseConfig";
+import { arrayUnion, doc, setDoc, updateDoc } from "firebase/firestore";
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
@@ -14,6 +17,61 @@ const EmployeeDashboard = () => {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [fileType, setFileType] = useState("");
+  const [formData, setFormData] = useState({
+    customerName: "",
+    vehicleMake: "",
+    vehicleModel: "",
+    stockNumber: "",
+    VIN: "",
+    leadSource: "",
+    salePrice: "",
+    unitCost: "",
+    warCost: "",
+    gapCost: "",
+    admin: "",
+    pac: "",
+    safety: "",
+    reserve: "",
+    grossProfit: "",
+  });
+
+  const calculateGrossProfit = () => {
+    const {
+      salePrice,
+      unitCost,
+      warCost,
+      gapCost,
+      admin,
+      pac,
+      safety,
+      reserve,
+    } = formData;
+
+    const totalCost =
+      parseFloat(unitCost) +
+      parseFloat(warCost) +
+      parseFloat(gapCost) +
+      parseFloat(admin) +
+      parseFloat(pac) +
+      parseFloat(safety) +
+      parseFloat(reserve);
+
+    const grossProfit = parseFloat(salePrice) - totalCost;
+
+    setFormData((prevData) => ({
+      ...prevData,
+      grossProfit: grossProfit.toFixed(2),
+    }));
+    console.log(formData);
+  };
+  // Step 2: Handle input changes
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData({
+      ...formData,
+      [id]: value,
+    });
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -24,20 +82,48 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (file) {
       console.log(file);
-      const storageRef = ref(storage, `insurance/${file.name}`);
+      const storageRef = ref(storage, `insuranceFiles`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
         "state_changed",
-        (snapshot) => {},
+        (snapshot) => {
+          console.log(snapshot);
+        },
         (error) => {
           console.error("Upload failed", error);
         },
-        () => {
+        async () => {
           console.log("Upload successful");
+
+          console.log(formData);
+          setThirdForm(false);
+          toast.success("New Sale Added Successfully");
+          const saleRef = doc(db, "sales", currentUser.uid);
+
+          try {
+            // Add the saleData to the 'sales' array in the document
+            console.log(formData);
+            await updateDoc(saleRef, {
+              sales: arrayUnion(formData),
+            });
+          } catch (error) {
+            // If the document does not exist, create it
+            if (error.code === "not-found") {
+              await setDoc(saleRef, {
+                sales: [],
+              });
+            } else {
+              console.error("Error adding sale: ", error);
+            }
+          }
+
+          setFileName("");
+          setFileType("");
+          setFile(null);
         }
       );
     }
@@ -54,6 +140,8 @@ const EmployeeDashboard = () => {
   const handleFirstNext = () => {
     setShowModal(false);
     setSecondForm(true);
+
+    console.log("form data", formData);
   };
   const handleSecondNext = () => {
     setShowModal(false);
@@ -112,23 +200,25 @@ const EmployeeDashboard = () => {
                     <div className="flex flex-row flex-wrap items-center justify-between w-full ">
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="name"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="customerName"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Customer Name
                         </label>
                         <input
                           type="text"
-                          id="name"
+                          id="customerName"
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Customer Name"
                           required
+                          value={formData.customerName}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
                           htmlFor="vehicleMake"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Vehicle Make
                         </label>
@@ -138,42 +228,48 @@ const EmployeeDashboard = () => {
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Vehicle Make"
                           required
+                          value={formData.vehicleMake}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="VehicleModel"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="vehicleModel"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Vehicle Model
                         </label>
                         <input
                           type="text"
-                          id="VehicleModel"
+                          id="vehicleModel"
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Vehicle Model"
                           required
+                          value={formData.vehicleModel}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="StockNumber"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="stockNumber"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Stock Number
                         </label>
                         <input
                           type="text"
-                          id="StockNumber"
+                          id="stockNumber"
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Stock Number"
                           required
+                          value={formData.stockNumber}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
                           htmlFor="VIN"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           VIN
                         </label>
@@ -183,36 +279,40 @@ const EmployeeDashboard = () => {
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="VIN"
                           required
+                          value={formData.VIN}
+                          onChange={handleInputChange}
                         />
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="LeadSource"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="leadSource"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Lead Source
                         </label>
                         <input
                           type="text"
-                          id="LeadSource"
+                          id="leadSource"
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Lead Source"
                           required
+                          value={formData.leadSource}
+                          onChange={handleInputChange}
                         />
                       </div>
+                    </div>
+                    <div className="flex items-end justify-end w-full p-6 ml-4 border-t border-solid rounded-b border-blueGray-200 ">
+                      <button
+                        className="flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
+                        type="button"
+                        onClick={handleFirstNext}
+                      >
+                        Next <GrLinkNext size={23} />
+                      </button>
                     </div>
                   </form>
                 </div>
                 {/*footer*/}
-                <div className="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
-                  <button
-                    className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
-                    type="button"
-                    onClick={handleFirstNext}
-                  >
-                    Next <GrLinkNext size={23} />
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -227,9 +327,9 @@ const EmployeeDashboard = () => {
               {/*content*/}
               <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
                 {/*header*/}
-                <div className="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                <div className="flex items-start justify-between p-5 mt-24 border-b border-solid rounded-t border-blueGray-200">
                   <button
-                    className="float-right mt-3 ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
+                    className="float-right ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
                     onClick={() => setSecondForm(false)}
                   >
                     <span className="block text-4xl text-black outline-none focus:outline-none">
@@ -249,14 +349,16 @@ const EmployeeDashboard = () => {
                     <div className="flex flex-row flex-wrap items-center justify-between w-full ">
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="SalePrice"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="salePrice"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Sale Price
                         </label>
                         <input
                           type="text"
-                          id="SalePrice"
+                          id="salePrice"
+                          value={formData.salePrice}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Sale Price"
                           required
@@ -264,14 +366,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="UnitCost"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="unitCost"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Unit Cost
                         </label>
                         <input
                           type="text"
-                          id="UnitCost"
+                          id="unitCost"
+                          value={formData.unitCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder=" Unit Cost"
                           required
@@ -279,14 +383,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="WarCost"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="warCost"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           War Cost
                         </label>
                         <input
                           type="text"
-                          id="WarCost"
+                          id="warCost"
+                          value={formData.warCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="War Cost"
                           required
@@ -294,14 +400,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="GapCost"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="aapCost"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Gap Cost
                         </label>
                         <input
                           type="text"
-                          id="GapCost"
+                          id="gapCost"
+                          value={formData.gapCost}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Gap Cost"
                           required
@@ -309,14 +417,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="Admin"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="admin"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Admin
                         </label>
                         <input
                           type="text"
-                          id="Admin"
+                          id="admin"
+                          value={formData.admin}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Admin"
                           required
@@ -324,14 +434,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="PAC"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="pac"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           PAC
                         </label>
                         <input
                           type="text"
-                          id="PAC"
+                          id="pac"
+                          value={formData.pac}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="PAC"
                           required
@@ -339,14 +451,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="Safety"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="safety"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Safety
                         </label>
                         <input
                           type="text"
-                          id="Safety"
+                          id="safety"
+                          value={formData.safety}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Safety"
                           required
@@ -354,14 +468,16 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="Reserve"
-                          className="block mb-2 text-sm font-medium text-gray-900"
+                          htmlFor="reserve"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Reserve
                         </label>
                         <input
                           type="text"
-                          id="Reserve"
+                          id="reserve"
+                          value={formData.reserve}
+                          onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Reserve"
                           required
@@ -371,38 +487,41 @@ const EmployeeDashboard = () => {
                     <button
                       className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
                       type="button"
+                      onClick={calculateGrossProfit}
                     >
                       Calculate Gross Profit
                     </button>
+                    <div className="flex flex-col items-end justify-end w-full p-6 border-t border-solid rounded-b border-blueGray-200">
+                      <div className="w-full ">
+                        <div className="w-full mx-auto mb-5">
+                          <label
+                            htmlFor="grossProfit"
+                            className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          >
+                            Gross Profit
+                          </label>
+                          <input
+                            type="text"
+                            id="grossProfit"
+                            value={formData.grossProfit}
+                            className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Gross Profit"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <button
+                        className="flex flex-row items-center justify-center px-6 py-3 mt-5 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none text-end gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
+                        type="button"
+                        onClick={handleSecondNext}
+                      >
+                        Next <GrLinkNext size={23} />
+                      </button>
+                    </div>
                   </form>
                 </div>
-                <div className="w-full ">
-                  <div className="w-[60%] mb-5 mx-auto">
-                    <label
-                      htmlFor="GrossProfit"
-                      className="block mb-2 text-sm font-medium text-gray-900"
-                    >
-                      Gross Profit
-                    </label>
-                    <input
-                      type="text"
-                      id="GrossProfit"
-                      className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                      placeholder="Gross Profit"
-                      required
-                    />
-                  </div>
-                </div>
+
                 {/*footer*/}
-                <div className="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
-                  <button
-                    className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
-                    type="button"
-                    onClick={handleSecondNext}
-                  >
-                    Next <GrLinkNext size={23} />
-                  </button>
-                </div>
               </div>
             </div>
           </div>

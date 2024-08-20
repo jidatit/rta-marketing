@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "./config/firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import PropTypes from "prop-types";
-import { signOut } from "firebase/auth";
+import { sendEmailVerification, signOut } from "firebase/auth";
+import { toast } from "react-toastify";
 
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -89,9 +90,23 @@ export const AuthProvider = ({ children }) => {
       console.error("Error signing out:", error);
     }
   };
+  const verifyEmail = async () => {
+    try {
+      await sendEmailVerification(auth.currentUser);
+      console.log("Email verification sent!");
+    } catch (error) {
+      toast.error("Error sending email verification:", error);
+    }
+  };
   return (
     <AuthContext.Provider
-      value={{ currentUser, isEmailVerified, handleLogout, loading }}
+      value={{
+        currentUser,
+        isEmailVerified,
+        handleLogout,
+        loading,
+        verifyEmail,
+      }}
     >
       {children}
     </AuthContext.Provider>

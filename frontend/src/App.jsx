@@ -20,6 +20,7 @@ import VirtualAssistantDashboard from "./Modules/VirtualAssistantDashboard";
 import AdminDashboard from "./Modules/AdminDashboard";
 import AdminLayout from "./Modules/AdminLayout";
 import AllUsers from "./Modules/AllUsers";
+import VerificationPage from "./Modules/VerificationPage";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -51,6 +52,7 @@ function App() {
                   }
                 />
                 <Route path="signUp" element={<SignUpPage />} />
+                <Route path="verificationPage" element={<VerificationPage />} />
                 <Route path="signIn" element={<SignInPage />} />
               </Route>
               <Route path="/EmployeeLayout" element={<EmployeeLayout />}>
