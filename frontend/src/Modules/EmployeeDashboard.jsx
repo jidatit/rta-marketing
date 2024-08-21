@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../AuthContext";
+import { format } from "date-fns"; // Import date-fns for formatting dates
 import { FaPlus } from "react-icons/fa6";
 import { GrLinkNext } from "react-icons/gr";
 import { FaFilePdf } from "react-icons/fa6";
@@ -9,6 +10,7 @@ import { toast } from "react-toastify";
 import { ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../config/firebaseConfig";
 import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import SalesRecordTable from "./SalesRecordTable";
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
@@ -33,6 +35,9 @@ const EmployeeDashboard = () => {
     safety: "",
     reserve: "",
     grossProfit: "",
+    saleDate: "",
+    InsuranceStatus: "",
+    FundStatus: "",
   });
 
   const calculateGrossProfit = () => {
@@ -79,6 +84,10 @@ const EmployeeDashboard = () => {
       setFile(file);
       setFileName(file.name);
       setFileType(file.type);
+    } else {
+      setFile(null);
+      setFileName("");
+      setFileType("");
     }
   };
 
@@ -116,7 +125,9 @@ const EmployeeDashboard = () => {
             }
 
             // Wait for the update to complete before updating the formData state
-            await setFormData({ ...formData, grossProfit: "" }); // Reset grossProfit
+            setFormData({ ...formData, grossProfit: "" });
+
+            // Reset grossProfit
             setThirdForm(false);
             toast.success("New Sale Added Successfully");
           } catch (error) {
@@ -130,6 +141,41 @@ const EmployeeDashboard = () => {
       );
     }
   };
+  const getCurrentDate = () => {
+    const now = new Date();
+    return format(now, "dd MMMM yyyy");
+  };
+  const handleLaterUpload = async () => {
+    try {
+      const saleRef = doc(db, "sales", currentUser.uid);
+      const docSnap = await getDoc(saleRef);
+
+      if (!docSnap.exists()) {
+        // Create a new document if it does not exist
+        await setDoc(saleRef, {
+          sales: [formData],
+        });
+      } else {
+        // Update the existing document
+        await updateDoc(saleRef, {
+          sales: arrayUnion(formData),
+        });
+      }
+
+      // Wait for the update to complete before updating the formData state
+      setFormData({ ...formData, grossProfit: "" });
+
+      // Reset grossProfit
+      setThirdForm(false);
+      toast.success("New Sale Added Successfully");
+    } catch (error) {
+      console.error("Error adding sale: ", error);
+    } finally {
+      setFileName("");
+      setFileType("");
+      setFile(null);
+    }
+  };
   const renderFileIcon = () => {
     if (fileType.includes("pdf")) {
       return <FaFilePdf size={20} className="text-red-700" />;
@@ -139,16 +185,47 @@ const EmployeeDashboard = () => {
       return <IoDocumentText size={20} className="text-blue-600 " />;
     }
   };
+  const isFormDataValid = () => {
+    const requiredFields = [
+      formData.customerName,
+      formData.vehicleMake,
+      formData.vehicleModel,
+      formData.stockNumber,
+      formData.VIN,
+      formData.leadSource,
+    ];
+    return requiredFields.every((value) => value.trim() !== "");
+  };
+  const isSecondFormDataValid = () => {
+    const requiredFields = [
+      formData.salePrice,
+      formData.unitCost,
+      formData.warCost,
+      formData.admin,
+      formData.gapCost,
+      formData.pac,
+      formData.safety,
+      formData.reserve,
+      formData.grossProfit,
+    ];
+    return requiredFields.every((value) => value.trim() !== "");
+  };
   const handleFirstNext = () => {
-    setShowModal(false);
-    setSecondForm(true);
-
-    console.log("form data", formData);
+    if (isFormDataValid()) {
+      setShowModal(false);
+      setSecondForm(true);
+    } else {
+      toast.error("Please fill in all required fields");
+    }
   };
   const handleSecondNext = () => {
-    setShowModal(false);
-    setSecondForm(false);
-    setThirdForm(true);
+    if (isSecondFormDataValid()) {
+      setShowModal(false);
+      setSecondForm(false);
+      setThirdForm(true);
+    } else {
+      toast.error("Please fill in all required fields");
+    }
   };
   if (!currentUser) {
     return (
@@ -158,18 +235,22 @@ const EmployeeDashboard = () => {
       </div>
     ); // or you can display a fallback UI or redirect
   }
+
   return (
     <>
-      <div className="flex items-start justify-start w-full h-full px-12 py-8">
-        <div className="flex flex-row items-center justify-between w-full">
-          <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
-          <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-blue-500 rounded-full cursor-pointer gap-x-3 hover:bg-blue-700">
-            {" "}
-            <button type="button" onClick={() => setShowModal(true)}>
-              Add New Sale
-            </button>
-            <FaPlus size={25} />
+      <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
+        <div className="flex flex-col w-full h-full gap-y-8">
+          <div className="flex flex-row items-center justify-between w-full">
+            <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
+            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-blue-500 rounded-full cursor-pointer gap-x-3 hover:bg-blue-700">
+              {" "}
+              <button type="button" onClick={() => setShowModal(true)}>
+                Add New Sale
+              </button>
+              <FaPlus size={25} />
+            </div>
           </div>
+          <SalesRecordTable />
         </div>
       </div>
 
@@ -305,9 +386,14 @@ const EmployeeDashboard = () => {
                     </div>
                     <div className="flex items-end justify-end w-full p-6 ml-4 border-t border-solid rounded-b border-blueGray-200 ">
                       <button
-                        className="flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
+                        className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
+                          isFormDataValid()
+                            ? "bg-emerald-500 hover:shadow-lg active:bg-emerald-600"
+                            : "bg-gray-500 cursor-not-allowed"
+                        }`}
                         type="button"
                         onClick={handleFirstNext}
+                        disabled={!isFormDataValid()}
                       >
                         Next <GrLinkNext size={23} />
                       </button>
@@ -513,9 +599,14 @@ const EmployeeDashboard = () => {
                         </div>
                       </div>
                       <button
-                        className="flex flex-row items-center justify-center px-6 py-3 mt-5 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none text-end gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
+                        className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
+                          isSecondFormDataValid()
+                            ? "bg-emerald-500 hover:shadow-lg active:bg-emerald-600"
+                            : "bg-gray-500 cursor-not-allowed"
+                        }`}
                         type="button"
                         onClick={handleSecondNext}
+                        disabled={!isSecondFormDataValid()}
                       >
                         Next <GrLinkNext size={23} />
                       </button>
@@ -589,12 +680,20 @@ const EmployeeDashboard = () => {
                   </label>
 
                   <div className="flex flex-row justify-end w-full gap-x-4">
-                    <button className="inline-block px-5 py-3 mt-3 font-medium text-white bg-indigo-600 rounded shadow-md shadow-indigo-500/20 hover:bg-indigo-700">
+                    <button
+                      className="inline-block px-5 py-3 mt-3 font-medium text-white bg-indigo-600 rounded shadow-md shadow-indigo-500/20 hover:bg-indigo-700"
+                      onClick={handleLaterUpload}
+                    >
                       Add Insurance Later
                     </button>
                     <button
-                      className="inline-block px-5 py-3 mt-3 font-medium text-white bg-green-600 rounded shadow-md shadow-indigo-500/20 hover:bg-green-700"
+                      className={`inline-block px-5 py-3 mt-3 font-medium text-white rounded shadow-md shadow-indigo-500/20 ${
+                        file
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-gray-600 cursor-not-allowed"
+                      }`}
                       onClick={handleUpload}
+                      disabled={!file}
                     >
                       Upload Insurance
                     </button>

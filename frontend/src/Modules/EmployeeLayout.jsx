@@ -11,8 +11,8 @@ const EmployeeLayout = () => {
   return (
     <>
       {isEmailVerified ? (
-        <div className="flex flex-row w-full h-screen">
-          <div className="w-[15%] h-full">
+        <div className="flex flex-row w-full h-full">
+          <div className="w-[15%] h-screen">
             <SideBar />
           </div>
           <div className="w-[85%] flex flex-col h-full">
