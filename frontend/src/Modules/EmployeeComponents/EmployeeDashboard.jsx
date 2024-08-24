@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../../AuthContext";
 import { format } from "date-fns"; // Import date-fns for formatting dates
 import { FaPlus } from "react-icons/fa6";
 import { GrLinkNext } from "react-icons/gr";
@@ -8,9 +8,9 @@ import { IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
 import { toast } from "react-toastify";
 import { ref, uploadBytesResumable } from "firebase/storage";
-import { db, storage } from "../config/firebaseConfig";
+import { db, storage } from "../../config/firebaseConfig";
 import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import SalesRecordTable from "./SalesRecordTable";
+import SalesRecordTable from "../EmployeeComponents/SalesRecordTable";
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);

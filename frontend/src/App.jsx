@@ -9,18 +9,18 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 
 import { ToastContainer } from "react-toastify";
-import SignUpPage from "./Modules/SignUpPage";
-import SignInPage from "./Modules/SigninPage";
+import SignUpPage from "./Modules/AuthComponents/SignUpPage";
+import SignInPage from "./Modules/AuthComponents/SigninPage";
 import { AuthProvider, useAuth } from "./AuthContext";
-import AuthLayout from "./Modules/AuthLayout";
-import EmployeeLayout from "./Modules/EmployeeLayout";
-import EmployeeDashboard from "./Modules/EmployeeDashboard";
-import VirtualAssistantLayout from "./Modules/VirtualAssistantLayout";
-import VirtualAssistantDashboard from "./Modules/VirtualAssistantDashboard";
-import AdminDashboard from "./Modules/AdminDashboard";
-import AdminLayout from "./Modules/AdminLayout";
-import AllUsers from "./Modules/AllUsers";
-import VerificationPage from "./Modules/VerificationPage";
+import AuthLayout from "./Modules/AuthComponents/AuthLayout";
+import EmployeeLayout from "./Modules/EmployeeComponents/EmployeeLayout";
+import EmployeeDashboard from "./Modules/EmployeeComponents/EmployeeDashboard";
+import VirtualAssistantLayout from "./Modules/VirtualAssistantComponents/VirtualAssistantLayout";
+import VirtualAssistantDashboard from "./Modules/VirtualAssistantComponents/VirtualAssistantDashboard";
+import AdminDashboard from "./Modules/AdminComponents/AdminDashboard";
+import AdminLayout from "./Modules/AdminComponents/AdminLayout";
+import AllUsers from "./Modules/AdminComponents/AllUsers";
+import VerificationPage from "./Modules/AuthComponents/VerificationPage";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">

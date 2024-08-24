@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import "../index.css";
+import "../../index.css";
 
 const AdminSidebar = () => {
   const [activeItem, setActiveItem] = useState("Sales");

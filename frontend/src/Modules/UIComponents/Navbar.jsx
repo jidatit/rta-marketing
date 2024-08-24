@@ -1,8 +1,8 @@
 import { FaChevronDown } from "react-icons/fa";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { FaBell } from "react-icons/fa";
-import image from "../images/pngwing.com.png";
-import { useAuth } from "../AuthContext";
+
+import image from "../..//images/pngwing.com.png";
+import { useAuth } from "../../AuthContext";
 const Navbar = () => {
   const { currentUser, handleLogout } = useAuth();
 
