@@ -24,6 +24,7 @@ import VerificationPage from "./Modules/AuthComponents/VerificationPage";
 
 import SignInPage from "./Modules/AuthComponents/SignInPage";
 import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
+import ChangePassword from "./Modules/AuthComponents/ChangePassword";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -58,6 +59,7 @@ function App() {
                 <Route path="verificationPage" element={<VerificationPage />} />
                 <Route path="signIn" element={<SignInPage />} />
                 <Route path="forgotPassword" element={<ForgotPassword />} />
+                <Route path="changePassword" element={<ChangePassword />} />
               </Route>
               <Route path="/EmployeeLayout" element={<EmployeeLayout />}>
                 <Route
@@ -92,6 +94,12 @@ function App() {
                 <Route
                   path="users"
                   element={currentUser ? <AllUsers /> : <Navigate to="/" />}
+                />
+                <Route
+                  path="changePassword"
+                  element={
+                    currentUser ? <ChangePassword /> : <Navigate to="/" />
+                  }
                 />
               </Route>
             </Routes>

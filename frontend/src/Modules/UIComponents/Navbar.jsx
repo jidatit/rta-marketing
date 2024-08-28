@@ -3,6 +3,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 
 import image from "../..//images/pngwing.com.png";
 import { useAuth } from "../../AuthContext";
+import { Link } from "react-router-dom";
 const Navbar = () => {
   const { currentUser, handleLogout } = useAuth();
 
@@ -50,13 +51,22 @@ const Navbar = () => {
             >
               <div className="py-1">
                 <MenuItem>
-                  <a
-                    href="#"
+                  <Link
                     className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-blue-800 font-radios "
                     onClick={handleLogout}
                   >
                     Logout
-                  </a>
+                  </Link>
+                </MenuItem>
+              </div>
+              <div className="py-1">
+                <MenuItem>
+                  <Link
+                    to={"/AdminLayout/changePassword"}
+                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-blue-800 font-radios "
+                  >
+                    Change Password
+                  </Link>
                 </MenuItem>
               </div>
             </MenuItems>
