@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { ToastContainer } from "react-toastify";
 import SignUpPage from "./Modules/AuthComponents/SignUpPage";
-import SignInPage from "./Modules/AuthComponents/SigninPage";
+
 import { AuthProvider, useAuth } from "./AuthContext";
 import AuthLayout from "./Modules/AuthComponents/AuthLayout";
 import EmployeeLayout from "./Modules/EmployeeComponents/EmployeeLayout";
@@ -21,6 +21,9 @@ import AdminDashboard from "./Modules/AdminComponents/AdminDashboard";
 import AdminLayout from "./Modules/AdminComponents/AdminLayout";
 import AllUsers from "./Modules/AdminComponents/AllUsers";
 import VerificationPage from "./Modules/AuthComponents/VerificationPage";
+
+import SignInPage from "./Modules/AuthComponents/SignInPage";
+import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -54,6 +57,7 @@ function App() {
                 <Route path="signUp" element={<SignUpPage />} />
                 <Route path="verificationPage" element={<VerificationPage />} />
                 <Route path="signIn" element={<SignInPage />} />
+                <Route path="forgotPassword" element={<ForgotPassword />} />
               </Route>
               <Route path="/EmployeeLayout" element={<EmployeeLayout />}>
                 <Route

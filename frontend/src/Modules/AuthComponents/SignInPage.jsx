@@ -4,14 +4,16 @@ import { auth, db } from "../../config/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { useAuth } from "../../AuthContext";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // State to manage loading
-
   const navigate = useNavigate();
-
+  const handleForgotPassword = () => {
+    navigate("/forgotPassword");
+  };
   const LoginUser = async (e) => {
     e.preventDefault();
     setLoading(true); // Set loading to true when starting the login process
@@ -96,7 +98,12 @@ const SignInPage = () => {
               />
               <div className="flex flex-col items-center justify-center w-full gap-y-5">
                 <div className="flex flex-col items-end justify-end w-full">
-                  <p className="text-black cursor-pointer">Forgot Password?</p>
+                  <button
+                    className="text-black cursor-pointer"
+                    onClick={handleForgotPassword} // Handle forgot password navigation
+                  >
+                    Forgot Password?
+                  </button>
                   <button
                     type="submit"
                     className="flex items-center justify-center w-full p-4 text-white bg-blue-600 rounded-md shadow-lg cursor-pointer"

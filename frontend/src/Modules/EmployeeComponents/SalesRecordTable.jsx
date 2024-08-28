@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { useAuth } from "../../AuthContext";
 import { toast } from "react-toastify";
@@ -14,7 +21,7 @@ const SaleRecordTable = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(true);
-
+  const { currentUser } = useAuth();
   // Calculate total pages based on filtered clients
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
@@ -47,7 +54,43 @@ const SaleRecordTable = () => {
 
     fetchSalesData();
   }, []);
+  const handleFundStatus = async (clientId, index) => {
+    try {
+      const docRef = doc(db, "sales", clientId); // Use clientId here
+      const docSnap = await getDoc(docRef);
 
+      if (docSnap.exists()) {
+        // Get the sales array
+        const salesArray = docSnap.data().sales;
+
+        // Update the FundStatus field within the specific array element
+        const updatedSales = salesArray.map((sale, idx) =>
+          idx === index ? { ...sale, FundStatus: true } : sale
+        );
+
+        // Update Firestore document
+        await updateDoc(docRef, { sales: updatedSales });
+
+        // Update local state
+        setClients((prevClients) =>
+          prevClients.map((client) =>
+            client.id === clientId ? { ...client, sales: updatedSales } : client
+          )
+        );
+        setFilteredClients((prevFilteredClients) =>
+          prevFilteredClients.map((client) =>
+            client.id === clientId ? { ...client, sales: updatedSales } : client
+          )
+        );
+
+        toast.success("Car Funded Successfully");
+      } else {
+        toast.error("Document does not exist");
+      }
+    } catch (error) {
+      toast.error("Error funding car: " + error.message);
+    }
+  };
   // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -189,11 +232,15 @@ const SaleRecordTable = () => {
                       </button>
                     )}
                     <button
-                      className={`px-6 ml-7 py-2.5 text-white ${
-                        sale.FundStatus ? "bg-green-600" : "bg-gray-400"
-                      } rounded-lg dark:bg-gray-400`}
+                      className={`ml-7 py-2.5 text-white ${
+                        sale.FundStatus
+                          ? "bg-green-500 px-4"
+                          : "bg-gray-400 px-6"
+                      } rounded-lg`}
+                      onClick={() => handleFundStatus(client.id, saleIndex)}
+                      disabled={sale.FundStatus} // Optionally disable if already funded
                     >
-                      Fund Car
+                      {sale.FundStatus ? " Car Funded" : "Fund Car"}
                     </button>
                   </td>
                 </tr>
