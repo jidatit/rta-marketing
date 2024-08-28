@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("isEmailVerified")) || false
   );
   const [loading, setLoading] = useState(true);
-
+  console.log(currentUser);
   const getUserInfo = async (uid) => {
     console.log(uid);
 

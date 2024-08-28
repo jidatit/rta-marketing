@@ -1,5 +1,6 @@
+import { ToastContainer } from "react-toastify";
 import { useAuth } from "../../AuthContext";
-
+import "react-toastify/dist/ReactToastify.css";
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
   if (!currentUser) {

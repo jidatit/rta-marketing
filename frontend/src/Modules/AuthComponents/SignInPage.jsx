@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { auth, db } from "../../config/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useAuth } from "../../AuthContext";
-
+import "react-toastify/dist/ReactToastify.css";
 const SignInPage = () => {
   const [email, setEmail] = useState("");
+  const { currentUser } = useAuth();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // State to manage loading
   const navigate = useNavigate();
@@ -43,7 +44,6 @@ const SignInPage = () => {
         }
       };
       toast.success("You signed in successfully");
-
       // Check in "admins" collection
       let userData = await queryCollection("admins");
       if (userData) {
@@ -61,6 +61,8 @@ const SignInPage = () => {
       if (userData) {
         navigate("/VirtualAssistantLayout");
       }
+
+      console.log(currentUser);
     } catch (error) {
       console.error("Error signing in:", error.message);
       toast.error("Sign-in failed: " + error.message);
