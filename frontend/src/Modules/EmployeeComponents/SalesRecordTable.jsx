@@ -1,94 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
+import { db } from "../../config/firebaseConfig";
+import { useAuth } from "../../AuthContext";
+import { toast } from "react-toastify";
 const SaleRecordTable = () => {
-  const [clients, setClients] = useState([
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "25 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "24 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Completed",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "24 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "23 july 2024",
-      insuranceStatus: "Pending",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "27 july 2024",
-      insuranceStatus: "Pending",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "26 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Completed",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "28 july 2024",
-      insuranceStatus: "Pending",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "27 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Pending",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "23 july 2024",
-      insuranceStatus: "Completed",
-      fundStatus: "Completed",
-    },
-    {
-      clientName: "Client Name abcxyz",
-      carName: "Car Name abcxyz",
-      saleDate: "28 july 2024",
-      insuranceStatus: "Pending",
-      fundStatus: "Pending",
-    },
-  ]);
-  // Pagination state
+  const [clients, setClients] = useState([]); // Initialize as an empty array
+  const [filteredClients, setFilteredClients] = useState([]); // Initialize as an empty array
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(true);
-  const [filteredClients, setFilteredClients] = useState(clients); // State to hold filtered data
 
+  // Calculate total pages based on filtered clients
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   // Calculate records to display
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const currentClients = filteredClients.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    const fetchSalesData = async () => {
+      try {
+        const salesCollection = collection(db, "sales");
+        const salesSnapshot = await getDocs(salesCollection);
+
+        if (!salesSnapshot.empty) {
+          const salesData = salesSnapshot.docs.map((doc) => ({
+            id: doc.id, // This is the document ID, which corresponds to the user ID
+            ...doc.data(),
+          }));
+          console.log(salesData);
+          setClients(salesData);
+          setFilteredClients(salesData); // Initially set filteredClients to all clients
+        } else {
+          toast.info("No sales data found.");
+        }
+      } catch (err) {
+        toast.error(`Error fetching sales data: ${err.message}`);
+      }
+    };
+
+    fetchSalesData();
+  }, []);
 
   // Handle page change
   const handlePageChange = (pageNumber) => {
@@ -122,12 +80,7 @@ const SaleRecordTable = () => {
     setFilteredClients(clients); // Reset to original data
     setCurrentPage(1);
   };
-
   // Format date to "dd MMMM, yyyy" (matches your example data)
-  const formatDate = (date) => {
-    const options = { day: "2-digit", month: "long", year: "numeric" };
-    return date.toLocaleDateString("en-GB", options);
-  };
 
   return (
     <div>
@@ -197,49 +150,55 @@ const SaleRecordTable = () => {
             </tr>
           </thead>
           <tbody className="border-t-0 border-gray-300 border-1">
-            {currentClients.map((client, index) => (
-              <tr
-                key={index}
-                className="bg-white border-b dark:bg-white dark:border-gray-300"
-              >
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                  {client.clientName}
-                </td>
-                <td className="px-4 py-4">{client.carName}</td>
-                <td className="px-4 py-4">{client.saleDate}</td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                      client.insuranceStatus === "Completed"
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                  ></span>
-                  {client.insuranceStatus}
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                      client.fundStatus === "Completed"
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                  ></span>
-                  {client.fundStatus}
-                </td>
-                <td className="flex px-4 py-4">
-                  <button className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500">
-                    View Details
-                  </button>
-                  <button className="px-6 ml-7 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600">
-                    Upload Insurance
-                  </button>
-                  <button className="px-6 ml-7 py-2.5 text-white bg-gray-400 rounded-lg dark:bg-gray-400">
-                    Fund Car
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {currentClients.map((client, index) =>
+              client.sales.map((sale, saleIndex) => (
+                <tr
+                  key={`${index}-${saleIndex}`}
+                  className="bg-white border-b dark:bg-white dark:border-gray-300"
+                >
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
+                    {sale.customerName}
+                  </td>
+                  <td className="px-4 py-4 text-gray-900">
+                    {sale.vehicleMake}
+                  </td>
+                  <td className="px-4 py-4 text-gray-900">{sale.saleDate}</td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        sale.InsuranceStatus ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    {sale.InsuranceStatus ? "Completed" : "Pending"}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        sale.FundStatus ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    {sale.FundStatus ? "Completed" : "Pending"}
+                  </td>
+                  <td className="flex px-4 py-4">
+                    <button className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500">
+                      View Details
+                    </button>
+                    {!sale.InsuranceStatus && (
+                      <button className="px-6 ml-7 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600">
+                        Upload Insurance
+                      </button>
+                    )}
+                    <button
+                      className={`px-6 ml-7 py-2.5 text-white ${
+                        sale.FundStatus ? "bg-green-600" : "bg-gray-400"
+                      } rounded-lg dark:bg-gray-400`}
+                    >
+                      Fund Car
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

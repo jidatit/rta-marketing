@@ -11,6 +11,10 @@ import { ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../config/firebaseConfig";
 import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import SalesRecordTable from "../EmployeeComponents/SalesRecordTable";
+const getCurrentDate = () => {
+  const now = new Date();
+  return format(now, "dd MMMM yyyy");
+};
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
@@ -35,9 +39,9 @@ const EmployeeDashboard = () => {
     safety: "",
     reserve: "",
     grossProfit: "",
-    saleDate: "",
-    InsuranceStatus: "",
-    FundStatus: "",
+    saleDate: getCurrentDate(), // Use getCurrentDate function to set the current date
+    InsuranceStatus: false, // Set a default value
+    FundStatus: false, // Set a default value
   });
 
   const calculateGrossProfit = () => {
@@ -71,11 +75,11 @@ const EmployeeDashboard = () => {
   };
   // Step 2: Handle input changes
   const handleInputChange = (e) => {
-    const { id, value } = e.target;
-    setFormData({
-      ...formData,
-      [id]: value,
-    });
+    const { id, value, type, checked } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [id]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleFileChange = (event) => {
@@ -91,6 +95,13 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const handleDateChange = (date) => {
+    const formattedDate = format(date, "dd MMMM yyyy");
+    setFormData((prevData) => ({
+      ...prevData,
+      saleDate: formattedDate,
+    }));
+  };
   const handleUpload = async () => {
     if (file) {
       console.log(file);
@@ -141,10 +152,7 @@ const EmployeeDashboard = () => {
       );
     }
   };
-  const getCurrentDate = () => {
-    const now = new Date();
-    return format(now, "dd MMMM yyyy");
-  };
+
   const handleLaterUpload = async () => {
     try {
       const saleRef = doc(db, "sales", currentUser.uid);
@@ -207,8 +215,16 @@ const EmployeeDashboard = () => {
       formData.safety,
       formData.reserve,
       formData.grossProfit,
+      formData.saleDate, // Check if date is set
     ];
-    return requiredFields.every((value) => value.trim() !== "");
+
+    // Checking that string fields are not empty and numeric fields are not NaN or null
+    return requiredFields.every((value) => {
+      if (typeof value === "string") {
+        return value.trim() !== ""; // Check if the string is not empty
+      }
+      return value !== null && value !== undefined && !isNaN(value); // For numbers, ensure they are not null, undefined, or NaN
+    });
   };
   const handleFirstNext = () => {
     if (isFormDataValid()) {
