@@ -21,6 +21,7 @@ import SignInPage from "./Modules/AuthComponents/SignInPage";
 import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
 import ChangePassword from "./Modules/AuthComponents/ChangePassword";
 import { ToastContainer } from "react-toastify";
+import InsuranceUploadForm from "./Modules/EmployeeComponents/InsuranceUploadForm";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -47,7 +48,6 @@ function App() {
   return (
     <div className="w-full h-auto overflow-hidden bg-white">
       <Router>
-        <ToastContainer />
         <AuthProvider>
           {loading ? (
             <LoadingSpinner />
@@ -81,6 +81,12 @@ function App() {
                   path="changePassword"
                   element={
                     currentUser ? <ChangePassword /> : <Navigate to="/" />
+                  }
+                />
+                <Route
+                  path="insuranceUpload"
+                  element={
+                    currentUser ? <InsuranceUploadForm /> : <Navigate to="/" />
                   }
                 />
               </Route>

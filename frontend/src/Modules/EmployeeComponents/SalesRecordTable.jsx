@@ -7,11 +7,12 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { useAuth } from "../../AuthContext";
+import InsuranceUpload from "./UploadInsurance";
+import ViewDetails from "./ViewDetails";
 import { toast } from "react-toastify";
 const SaleRecordTable = () => {
   const [clients, setClients] = useState([]); // Initialize as an empty array
@@ -22,6 +23,7 @@ const SaleRecordTable = () => {
   const [endDate, setEndDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(true);
   const { currentUser } = useAuth();
+  const [sale, setSale] = useState(null);
   // Calculate total pages based on filtered clients
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
@@ -29,7 +31,23 @@ const SaleRecordTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const currentClients = filteredClients.slice(startIndex, endIndex);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const handleOpenModal = () => {
+    setSale(sale);
+    setIsModalOpen(true);
+  };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+  const handleOpenViewModal = (sale) => {
+    setSale(sale);
+    setIsViewModalOpen(true);
+  };
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+  };
   useEffect(() => {
     const fetchSalesData = async () => {
       try {
@@ -126,7 +144,7 @@ const SaleRecordTable = () => {
   // Format date to "dd MMMM, yyyy" (matches your example data)
 
   return (
-    <div>
+    <>
       <div className="relative h-full p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
         {showDatePicker && (
           <div className="flex justify-end mb-4">
@@ -222,25 +240,33 @@ const SaleRecordTable = () => {
                     ></span>
                     {sale.FundStatus ? "Completed" : "Pending"}
                   </td>
-                  <td className="flex px-4 py-4">
-                    <button className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500">
+                  <td className="flex px-4 py-4 space-x-7">
+                    <button
+                      className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500"
+                      onClick={() => handleOpenViewModal(sale)}
+                    >
                       View Details
                     </button>
-                    {!sale.InsuranceStatus && (
-                      <button className="px-6 ml-7 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600">
-                        Upload Insurance
-                      </button>
-                    )}
+
                     <button
-                      className={`ml-7 py-2.5 text-white ${
+                      className={`px-6 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600 ${
+                        sale.InsuranceStatus ? "invisible" : "visible"
+                      }`}
+                      onClick={handleOpenModal}
+                    >
+                      Upload Insurance
+                    </button>
+
+                    <button
+                      className={`py-2.5 text-white rounded-lg ${
                         sale.FundStatus
                           ? "bg-green-500 px-4"
                           : "bg-gray-400 px-6"
-                      } rounded-lg`}
+                      }`}
                       onClick={() => handleFundStatus(client.id, saleIndex)}
-                      disabled={sale.FundStatus} // Optionally disable if already funded
+                      disabled={sale.FundStatus}
                     >
-                      {sale.FundStatus ? " Car Funded" : "Fund Car"}
+                      {sale.FundStatus ? "Car Funded" : "Fund Car"}
                     </button>
                   </td>
                 </tr>
@@ -300,7 +326,17 @@ const SaleRecordTable = () => {
           </button>
         </div>
       </div>
-    </div>
+      {isModalOpen ? (
+        <InsuranceUpload
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          sale={sale}
+        />
+      ) : null}
+      {isViewModalOpen ? (
+        <ViewDetails onClose={handleCloseViewModal} sale={sale} />
+      ) : null}
+    </>
   );
 };
 

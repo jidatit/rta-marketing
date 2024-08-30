@@ -10,7 +10,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <div className="bg-[#071b52] h-full w-full">
+    <div className="bg-[#234dc0] h-full w-full">
       <div className="flex flex-col items-center justify-start w-full h-full px-5 py-5 gap-y-10">
         <div className="flex w-full">
           <h1 className="text-2xl font-bold text-white">Logo</h1>

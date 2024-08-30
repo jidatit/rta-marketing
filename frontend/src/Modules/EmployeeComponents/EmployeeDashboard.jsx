@@ -3,27 +3,26 @@ import { useAuth } from "../../AuthContext";
 import { format } from "date-fns"; // Import date-fns for formatting dates
 import { FaPlus } from "react-icons/fa6";
 import { GrLinkNext } from "react-icons/gr";
-import { FaFilePdf } from "react-icons/fa6";
-import { IoDocumentText } from "react-icons/io5";
-import { IoMdImage } from "react-icons/io";
-import { toast } from "react-toastify";
-import { ref, uploadBytesResumable } from "firebase/storage";
-import { db, storage } from "../../config/firebaseConfig";
-import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+
 import SalesRecordTable from "../EmployeeComponents/SalesRecordTable";
+import InsuranceUploadForm from "./InsuranceUploadForm";
+import { toast } from "react-toastify";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db, storage } from "../../config/firebaseConfig";
 const getCurrentDate = () => {
   const now = new Date();
   return format(now, "dd MMMM yyyy");
 };
 const EmployeeDashboard = () => {
   const [showModal, setShowModal] = useState(false);
+  const [Url, setUrl] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
   const [thirdForm, setThirdForm] = useState(false);
   const { currentUser } = useAuth();
-  const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState("");
-  const [fileType, setFileType] = useState("");
+
   const [formData, setFormData] = useState({
+    saleId: "",
     customerName: "",
     vehicleMake: "",
     vehicleModel: "",
@@ -33,6 +32,8 @@ const EmployeeDashboard = () => {
     salePrice: "",
     unitCost: "",
     warCost: "",
+    warr: "",
+    gap: "",
     gapCost: "",
     admin: "",
     pac: "",
@@ -43,12 +44,16 @@ const EmployeeDashboard = () => {
     InsuranceStatus: false, // Set a default value
     FundStatus: false, // Set a default value
   });
-
+  const [fileName, setFileName] = useState("");
+  const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState("");
   const calculateGrossProfit = () => {
     const {
       salePrice,
       unitCost,
       warCost,
+      warr,
+      gap,
       gapCost,
       admin,
       pac,
@@ -56,16 +61,17 @@ const EmployeeDashboard = () => {
       reserve,
     } = formData;
 
-    const totalCost =
+    const grossProfit =
+      parseFloat(salePrice) -
       parseFloat(unitCost) +
-      parseFloat(warCost) +
-      parseFloat(gapCost) +
+      parseFloat(warr) +
       parseFloat(admin) +
-      parseFloat(pac) +
+      parseFloat(gap) -
+      parseFloat(warCost) -
+      parseFloat(gapCost) -
+      parseFloat(pac) -
       parseFloat(safety) +
       parseFloat(reserve);
-
-    const grossProfit = parseFloat(salePrice) - totalCost;
 
     setFormData((prevData) => ({
       ...prevData,
@@ -81,73 +87,67 @@ const EmployeeDashboard = () => {
       [id]: type === "checkbox" ? checked : value,
     }));
   };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFile(file);
-      setFileName(file.name);
-      setFileType(file.type);
-    } else {
-      setFile(null);
-      setFileName("");
-      setFileType("");
-    }
-  };
-
-  const handleDateChange = (date) => {
-    const formattedDate = format(date, "dd MMMM yyyy");
-    setFormData((prevData) => ({
-      ...prevData,
-      saleDate: formattedDate,
-    }));
+  const generateSaleId = () => {
+    const timestamp = Date.now(); // Get current timestamp
+    const randomNum = Math.floor(Math.random() * 10000); // Generate a random number from 0 to 9999
+    return timestamp + randomNum; // Combine timestamp and random number
   };
   const handleUpload = async () => {
     if (file) {
-      console.log(file);
-      const storageRef = ref(storage, "insuranceFiles");
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const saleId = generateSaleId();
+      // Ensure a unique file name
+      const storageRef = ref(storage, `files/${fileName}`);
+
+      const metadata = {
+        contentType: file.type, // Use the MIME type of the file
+      };
+
+      // Upload file with metadata
+      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
       uploadTask.on(
         "state_changed",
         (snapshot) => {
-          console.log(snapshot);
+          console.log(
+            "Upload progress:",
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
+          );
         },
         (error) => {
-          console.error("Upload failed", error);
+          console.log(error); // Handle any errors
         },
         async () => {
-          console.log("Upload successful");
+          // Retrieve the download URL after the upload is complete
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setUrl(downloadURL);
 
-          try {
-            const saleRef = doc(db, "sales", currentUser.uid);
-            const docSnap = await getDoc(saleRef);
+          // Update the formData with the file URL and InsuranceStatus: true
+          const updatedFormData = {
+            ...formData,
+            InsuranceStatus: true,
+            documentUrl: downloadURL, // Use the correct download URL
+            saleId,
+          };
 
-            if (!docSnap.exists()) {
-              // Create a new document if it does not exist
-              await setDoc(saleRef, {
-                sales: [formData],
-              });
-            } else {
-              // Update the existing document
-              await updateDoc(saleRef, {
-                sales: arrayUnion(formData),
-              });
-            }
+          const saleRef = doc(db, "sales", currentUser.uid);
+          const docSnap = await getDoc(saleRef);
 
-            // Wait for the update to complete before updating the formData state
-            setFormData({ ...formData, grossProfit: "" });
-
-            // Reset grossProfit
-            setThirdForm(false);
-            toast.success("New Sale Added Successfully");
-          } catch (error) {
-            console.error("Error adding sale: ", error);
-          } finally {
-            setFileName("");
-            setFileType("");
-            setFile(null);
+          if (!docSnap.exists()) {
+            // Create a new document if it does not exist
+            await setDoc(saleRef, {
+              sales: [updatedFormData],
+            });
+          } else {
+            // Update the existing document
+            await updateDoc(saleRef, {
+              sales: arrayUnion(updatedFormData),
+            });
           }
+
+          // Reset formData and form state after upload
+          setFormData({ ...formData, grossProfit: "" });
+          setThirdForm(false);
+          toast.success("New Sale Added Successfully");
         }
       );
     }
@@ -155,18 +155,23 @@ const EmployeeDashboard = () => {
 
   const handleLaterUpload = async () => {
     try {
+      const saleId = generateSaleId(); // Generate a unique sale ID
+      const updatedFormData = {
+        ...formData,
+        saleId, // Add the sale ID here
+      };
       const saleRef = doc(db, "sales", currentUser.uid);
       const docSnap = await getDoc(saleRef);
 
       if (!docSnap.exists()) {
         // Create a new document if it does not exist
         await setDoc(saleRef, {
-          sales: [formData],
+          sales: [updatedFormData],
         });
       } else {
         // Update the existing document
         await updateDoc(saleRef, {
-          sales: arrayUnion(formData),
+          sales: arrayUnion(updatedFormData),
         });
       }
 
@@ -184,15 +189,7 @@ const EmployeeDashboard = () => {
       setFile(null);
     }
   };
-  const renderFileIcon = () => {
-    if (fileType.includes("pdf")) {
-      return <FaFilePdf size={20} className="text-red-700" />;
-    } else if (fileType.includes("image")) {
-      return <IoMdImage size={20} className="text-blue-600" />;
-    } else {
-      return <IoDocumentText size={20} className="text-blue-600 " />;
-    }
-  };
+
   const isFormDataValid = () => {
     const requiredFields = [
       formData.customerName,
@@ -459,7 +456,7 @@ const EmployeeDashboard = () => {
                           Sale Price
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="salePrice"
                           value={formData.salePrice}
                           onChange={handleInputChange}
@@ -476,12 +473,29 @@ const EmployeeDashboard = () => {
                           Unit Cost
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="unitCost"
                           value={formData.unitCost}
                           onChange={handleInputChange}
                           className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder=" Unit Cost"
+                          required
+                        />
+                      </div>
+                      <div className="w-[48%] mb-5">
+                        <label
+                          htmlFor="warr"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                        >
+                          Warr
+                        </label>
+                        <input
+                          type="number"
+                          id="warr"
+                          value={formData.warr}
+                          onChange={handleInputChange}
+                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          placeholder="Warr"
                           required
                         />
                       </div>
@@ -493,7 +507,7 @@ const EmployeeDashboard = () => {
                           War Cost
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="warCost"
                           value={formData.warCost}
                           onChange={handleInputChange}
@@ -504,13 +518,30 @@ const EmployeeDashboard = () => {
                       </div>
                       <div className="w-[48%] mb-5">
                         <label
-                          htmlFor="aapCost"
+                          htmlFor="gap"
+                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                        >
+                          Gap
+                        </label>
+                        <input
+                          type="number"
+                          id="gap"
+                          value={formData.gap}
+                          onChange={handleInputChange}
+                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          placeholder="Gap"
+                          required
+                        />
+                      </div>
+                      <div className="w-[48%] mb-5">
+                        <label
+                          htmlFor="gapCost"
                           className="block mb-2 text-lg font-medium text-gray-900 font-radios "
                         >
                           Gap Cost
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="gapCost"
                           value={formData.gapCost}
                           onChange={handleInputChange}
@@ -527,7 +558,7 @@ const EmployeeDashboard = () => {
                           Admin
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="admin"
                           value={formData.admin}
                           onChange={handleInputChange}
@@ -544,7 +575,7 @@ const EmployeeDashboard = () => {
                           PAC
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="pac"
                           value={formData.pac}
                           onChange={handleInputChange}
@@ -561,7 +592,7 @@ const EmployeeDashboard = () => {
                           Safety
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="safety"
                           value={formData.safety}
                           onChange={handleInputChange}
@@ -578,7 +609,7 @@ const EmployeeDashboard = () => {
                           Reserve
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           id="reserve"
                           value={formData.reserve}
                           onChange={handleInputChange}
@@ -638,87 +669,19 @@ const EmployeeDashboard = () => {
         </>
       ) : null}
       {thirdForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-          <div className="relative w-[55%] mx-auto my-6">
-            <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
-              <div className="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
-                <button
-                  className="float-right mt-3 ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
-                  onClick={() => setThirdForm(false)}
-                >
-                  <span className="block text-4xl text-black outline-none focus:outline-none">
-                    ×
-                  </span>
-                </button>
-              </div>
-              <div className="relative flex flex-col items-center justify-center w-full h-full p-6 gap-y-5">
-                <h1 className="w-full text-xl text-center font-radios ">
-                  Insurance Policy
-                </h1>
-                <div className="w-[65%] flex flex-col gap-y-4">
-                  <h1 className="w-full text-xl text-start font-radios ">
-                    Upload Documents
-                  </h1>
-                  <label
-                    htmlFor="uploadFile1"
-                    className="bg-white text-gray-500 py-6 font-semibold text-base rounded w-full h-full flex flex-col items-center justify-center cursor-pointer border-2 border-gray-300 border-dashed mx-auto font-[sans-serif]"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="mb-2 w-11 fill-gray-500"
-                      viewBox="0 0 32 32"
-                    >
-                      <path
-                        d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z"
-                        data-original="#000000"
-                      />
-                      <path
-                        d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z"
-                        data-original="#000000"
-                      />
-                    </svg>
-                    Upload file
-                    <input
-                      type="file"
-                      id="uploadFile1"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <p className="mt-2 text-xs font-medium text-gray-400">
-                      PNG, JPG SVG, WEBP, and GIF are Allowed.
-                    </p>
-                    {fileName && (
-                      <p className="flex items-center mt-2 text-sm font-medium text-gray-700">
-                        {renderFileIcon()}
-                        Selected file: {fileName}
-                      </p>
-                    )}
-                  </label>
-
-                  <div className="flex flex-row justify-end w-full gap-x-4">
-                    <button
-                      className="inline-block px-5 py-3 mt-3 font-medium text-white bg-indigo-600 rounded shadow-md shadow-indigo-500/20 hover:bg-indigo-700"
-                      onClick={handleLaterUpload}
-                    >
-                      Add Insurance Later
-                    </button>
-                    <button
-                      className={`inline-block px-5 py-3 mt-3 font-medium text-white rounded shadow-md shadow-indigo-500/20 ${
-                        file
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-gray-600 cursor-not-allowed"
-                      }`}
-                      onClick={handleUpload}
-                      disabled={!file}
-                    >
-                      Upload Insurance
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <InsuranceUploadForm
+          formData={formData}
+          setFormData={setFormData}
+          handleUpload={handleUpload}
+          handleLaterUpload={handleLaterUpload}
+          setThirdForm={setThirdForm}
+          file={file}
+          setFile={setFile}
+          fileName={fileName}
+          setFileName={setFileName}
+          fileType={fileType}
+          setFileType={setFileType}
+        />
       ) : null}
     </>
   );
