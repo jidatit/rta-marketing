@@ -1,19 +1,25 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
-import { auth, db } from "../config/firebaseConfig";
+import { toast, ToastContainer } from "react-toastify";
+import { auth, db } from "../../config/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
-
+import { useAuth } from "../../AuthContext";
+import "react-toastify/dist/ReactToastify.css";
 const SignInPage = () => {
   const [email, setEmail] = useState("");
+  const { currentUser } = useAuth();
   const [password, setPassword] = useState("");
-
+  const [loading, setLoading] = useState(false); // State to manage loading
   const navigate = useNavigate();
+  const handleForgotPassword = () => {
+    navigate("/forgotPassword");
+  };
   const LoginUser = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when starting the login process
+
     try {
-      // Attempt to sign in the user with email and password
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -41,38 +47,32 @@ const SignInPage = () => {
       // Check in "admins" collection
       let userData = await queryCollection("admins");
       if (userData) {
-        setTimeout(() => {
-          navigate("/AdminLayout");
-        }, 3000);
+        navigate("/AdminLayout");
       }
 
       // Check in "employees" collection
       userData = await queryCollection("employees");
       if (userData) {
-        setTimeout(() => {
-          navigate("/EmployeeLayout");
-        }, 3000);
+        navigate("/EmployeeLayout");
       }
 
-      // Check in "users" collection
+      // Check in "virtual-assistants" collection
       userData = await queryCollection("virtual-assistants");
       if (userData) {
-        setTimeout(() => {
-          navigate("/VirtualAssistantLayout");
-        }, 3000);
+        navigate("/VirtualAssistantLayout");
       }
 
-      // Navigate based on userType
+      console.log(currentUser);
     } catch (error) {
-      // Handle errors here, such as invalid credentials
       console.error("Error signing in:", error.message);
-
-      // Show an error toast message
       toast.error("Sign-in failed: " + error.message);
+    } finally {
+      setLoading(false); // Reset loading to false when the process is done
     }
   };
+
   return (
-    <div className="flex flex-col justify-center items-center w-screen bg-[#1332b9] h-screen ">
+    <div className="flex flex-col justify-center items-center w-screen bg-[#1332b9] h-screen">
       <div className="flex flex-col items-center w-[50%] justify-center bg-white rounded-md shadow-lg gap-y-12 p-10">
         <h1 className="text-3xl font-bold text-black">Logo</h1>
         <div className="flex flex-col items-center justify-center w-full gap-y-8">
@@ -100,16 +100,46 @@ const SignInPage = () => {
               />
               <div className="flex flex-col items-center justify-center w-full gap-y-5">
                 <div className="flex flex-col items-end justify-end w-full">
-                  <p className="text-black cursor-pointer ">Forgot Password?</p>
-                  <input
-                    type="submit" // Use type="submit" for the button
-                    className="w-full p-4 text-white bg-blue-600 rounded-md shadow-lg cursor-pointer"
-                    value={"Login"}
-                  />
+                  <button
+                    className="text-black cursor-pointer"
+                    onClick={handleForgotPassword} // Handle forgot password navigation
+                  >
+                    Forgot Password?
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center w-full p-4 text-white bg-blue-600 rounded-md shadow-lg cursor-pointer"
+                    disabled={loading} // Disable the button when loading
+                  >
+                    {loading ? (
+                      <svg
+                        className="w-5 h-5 text-white animate-spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8V12H4z"
+                        ></path>
+                      </svg>
+                    ) : (
+                      "Login"
+                    )}
+                  </button>
                 </div>
 
                 <div className="flex flex-col items-end justify-end w-full">
-                  <p className="text-black cursor-pointer ">Not a member?</p>
+                  <p className="text-black cursor-pointer">Not a member?</p>
                   <Link to={"/signUp"} className="w-full">
                     <button className="bg-[#043758] rounded-md text-white shadow-lg p-4 w-full">
                       SignUp

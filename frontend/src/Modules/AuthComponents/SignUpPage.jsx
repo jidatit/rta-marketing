@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { db, auth } from "../config/firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { toast } from "react-toastify";
 import bcrypt from "bcryptjs";
@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
 } from "firebase/auth";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../../AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
 const SignUpPage = () => {

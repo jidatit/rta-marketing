@@ -1,11 +1,15 @@
 import { FaChevronDown } from "react-icons/fa";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { FaBell } from "react-icons/fa";
-import image from "../images/pngwing.com.png";
-import { useAuth } from "../AuthContext";
+
+import image from "../..//images/pngwing.com.png";
+import { useAuth } from "../../AuthContext";
+import { Link } from "react-router-dom";
 const Navbar = () => {
   const { currentUser, handleLogout } = useAuth();
-
+  const changePasswordPath =
+    currentUser?.userType === "Employee"
+      ? "/EmployeeLayout/changePassword"
+      : "/AdminLayout/changePassword";
   return (
     <div className="flex flex-row items-center justify-between px-12 py-4 bg-transparent border-b-1 border-b-gray-300">
       <div className="flex w-full">
@@ -50,13 +54,22 @@ const Navbar = () => {
             >
               <div className="py-1">
                 <MenuItem>
-                  <a
-                    href="#"
+                  <Link
                     className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-blue-800 font-radios "
                     onClick={handleLogout}
                   >
                     Logout
-                  </a>
+                  </Link>
+                </MenuItem>
+              </div>
+              <div className="py-1">
+                <MenuItem>
+                  <Link
+                    to={changePasswordPath}
+                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-blue-800 font-radios "
+                  >
+                    Change Password
+                  </Link>
                 </MenuItem>
               </div>
             </MenuItems>
