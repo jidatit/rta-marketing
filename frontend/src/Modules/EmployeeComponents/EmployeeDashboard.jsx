@@ -60,24 +60,28 @@ const EmployeeDashboard = () => {
       safety,
       reserve,
     } = formData;
+    if (isSecondFormDataValid()) {
+      const grossProfit =
+        parseFloat(salePrice) -
+        parseFloat(unitCost) +
+        parseFloat(warr) +
+        parseFloat(admin) +
+        parseFloat(gap) -
+        parseFloat(warCost) -
+        parseFloat(gapCost) -
+        parseFloat(pac) -
+        parseFloat(safety) +
+        parseFloat(reserve);
 
-    const grossProfit =
-      parseFloat(salePrice) -
-      parseFloat(unitCost) +
-      parseFloat(warr) +
-      parseFloat(admin) +
-      parseFloat(gap) -
-      parseFloat(warCost) -
-      parseFloat(gapCost) -
-      parseFloat(pac) -
-      parseFloat(safety) +
-      parseFloat(reserve);
+      setFormData((prevData) => ({
+        ...prevData,
+        grossProfit: grossProfit.toFixed(2),
+      }));
 
-    setFormData((prevData) => ({
-      ...prevData,
-      grossProfit: grossProfit.toFixed(2),
-    }));
-    console.log(formData);
+      console.log(formData);
+    } else {
+      toast.error("Please fill in all required fields.");
+    }
   };
   // Step 2: Handle input changes
   const handleInputChange = (e) => {
@@ -212,7 +216,7 @@ const EmployeeDashboard = () => {
       formData.pac,
       formData.safety,
       formData.reserve,
-      formData.grossProfit,
+
       formData.saleDate, // Check if date is set
     ];
 
