@@ -33,7 +33,7 @@ const SaleRecordTable = () => {
   const currentClients = filteredClients.slice(startIndex, endIndex);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const handleOpenModal = () => {
+  const handleOpenModal = (sale) => {
     setSale(sale);
     setIsModalOpen(true);
   };
@@ -211,66 +211,84 @@ const SaleRecordTable = () => {
             </tr>
           </thead>
           <tbody className="border-t-0 border-gray-300 border-1">
-            {currentClients.map((client, index) =>
-              client.sales.map((sale, saleIndex) => (
-                <tr
-                  key={`${index}-${saleIndex}`}
-                  className="bg-white border-b dark:bg-white dark:border-gray-300"
-                >
-                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                    {sale.customerName}
-                  </td>
-                  <td className="px-4 py-4 text-gray-900">
-                    {sale.vehicleMake}
-                  </td>
-                  <td className="px-4 py-4 text-gray-900">{sale.saleDate}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                        sale.InsuranceStatus ? "bg-green-500" : "bg-red-500"
-                      }`}
-                    ></span>
-                    {sale.InsuranceStatus ? "Completed" : "Pending"}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                        sale.FundStatus ? "bg-green-500" : "bg-red-500"
-                      }`}
-                    ></span>
-                    {sale.FundStatus ? "Completed" : "Pending"}
-                  </td>
-                  <td className="flex px-4 py-4 space-x-7">
-                    <button
-                      className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500"
-                      onClick={() => handleOpenViewModal(sale)}
+            {currentClients && Array.isArray(currentClients) ? (
+              currentClients.map((client, index) =>
+                client.sales && Array.isArray(client.sales) ? (
+                  client.sales.map((sale, saleIndex) => (
+                    <tr
+                      key={`${index}-${saleIndex}`}
+                      className="bg-white border-b dark:bg-white dark:border-gray-300"
                     >
-                      View Details
-                    </button>
+                      <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
+                        {sale.customerName}
+                      </td>
+                      <td className="px-4 py-4 text-gray-900">
+                        {sale.vehicleMake}
+                      </td>
+                      <td className="px-4 py-4 text-gray-900">
+                        {sale.saleDate}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                            sale.InsuranceStatus ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        ></span>
+                        {sale.InsuranceStatus ? "Completed" : "Pending"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                            sale.FundStatus ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        ></span>
+                        {sale.FundStatus ? "Completed" : "Pending"}
+                      </td>
+                      <td className="flex px-4 py-4 space-x-7">
+                        <button
+                          className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500"
+                          onClick={() => handleOpenViewModal(sale)}
+                        >
+                          View Details
+                        </button>
 
-                    <button
-                      className={`px-6 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600 ${
-                        sale.InsuranceStatus ? "invisible" : "visible"
-                      }`}
-                      onClick={handleOpenModal}
-                    >
-                      Upload Insurance
-                    </button>
+                        <button
+                          className={`px-6 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600 ${
+                            sale.InsuranceStatus ? "invisible" : "visible"
+                          }`}
+                          onClick={() => handleOpenModal(sale)}
+                        >
+                          Upload Insurance
+                        </button>
 
-                    <button
-                      className={`py-2.5 text-white rounded-lg ${
-                        sale.FundStatus
-                          ? "bg-green-500 px-4"
-                          : "bg-gray-400 px-6"
-                      }`}
-                      onClick={() => handleFundStatus(client.id, saleIndex)}
-                      disabled={sale.FundStatus}
-                    >
-                      {sale.FundStatus ? "Car Funded" : "Fund Car"}
-                    </button>
-                  </td>
-                </tr>
-              ))
+                        <button
+                          className={`py-2.5 text-white rounded-lg ${
+                            sale.FundStatus
+                              ? "bg-green-500 px-4"
+                              : "bg-gray-400 px-6"
+                          }`}
+                          onClick={() => handleFundStatus(client.id, saleIndex)}
+                          disabled={sale.FundStatus}
+                        >
+                          {sale.FundStatus ? "Car Funded" : "Fund Car"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr key={index}>
+                    <td colSpan="100%" className="w-full p-2 text-center">
+                      No sales data available
+                    </td>
+                  </tr>
+                )
+              )
+            ) : (
+              <tr>
+                <td colSpan="100%" className="w-full p-2 text-center">
+                  No clients data available
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

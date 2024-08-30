@@ -94,6 +94,7 @@ const EmployeeDashboard = () => {
   };
   const handleUpload = async () => {
     if (file) {
+      console.log(file);
       const saleId = generateSaleId();
       // Ensure a unique file name
       const storageRef = ref(storage, `files/${fileName}`);

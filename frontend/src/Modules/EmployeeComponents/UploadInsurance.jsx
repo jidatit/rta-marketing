@@ -13,8 +13,11 @@ const InsuranceUpload = ({ onClose, sale }) => {
   const [url, setUrl] = useState(null);
   const [fileType, setFileType] = useState("");
   const { currentUser } = useAuth();
+  console.log(sale);
+  console.log(file);
   const handleUpload = async () => {
     if (file) {
+      console.log(file);
       // Ensure a unique file name
       const storageRef = ref(storage, `files/${fileName}`);
 
@@ -41,31 +44,45 @@ const InsuranceUpload = ({ onClose, sale }) => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           setUrl(downloadURL);
 
-          // Update the formData with the file URL and InsuranceStatus: true
-          const updatedFormData = {
-            InsuranceStatus: true,
-            documentUrl: downloadURL, // Use the correct download URL
-          };
-
+          // Reference to the user's sales document
           const saleRef = doc(db, "sales", currentUser.uid);
           const docSnap = await getDoc(saleRef);
 
-          if (!docSnap.exists()) {
-            // Create a new document if it does not exist
+          if (docSnap.exists()) {
+            // Get the sales array from the document
+            const sales = docSnap.data().sales;
 
-            // Update the existing document
-            await updateDoc(saleRef, {
-              sales: arrayUnion(updatedFormData),
-            });
+            // Find the index of the sale with the matching saleId
+            const saleIndex = sales.findIndex((s) => s.saleId === sale.saleId);
+
+            if (saleIndex !== -1) {
+              // Update the InsuranceStatus and documentUrl for the specific sale
+              const updatedSale = {
+                ...sales[saleIndex],
+                InsuranceStatus: true,
+                documentUrl: downloadURL,
+              };
+
+              // Replace the old sale with the updated one
+              const updatedSales = [...sales];
+              updatedSales[saleIndex] = updatedSale;
+
+              // Update the sales array in the Firestore document
+              await updateDoc(saleRef, { sales: updatedSales });
+
+              toast.success("Insurance document uploaded successfully");
+            } else {
+              console.log("Sale not found");
+            }
+          } else {
+            console.log("No document found for the current user");
           }
-
-          // Reset formData and form state after upload
-
-          toast.success("New Sale Added Successfully");
         }
       );
     }
   };
+
+  // Your JSX for the component
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
