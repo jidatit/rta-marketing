@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { FaRegCalendarAlt } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -10,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
-import { useAuth } from "../../AuthContext";
+
 import InsuranceUpload from "./UploadInsurance";
 import ViewDetails from "./ViewDetails";
 import { toast } from "react-toastify";
@@ -22,7 +21,6 @@ const SaleRecordTable = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(true);
-  const { currentUser } = useAuth();
   const [sale, setSale] = useState(null);
   // Calculate total pages based on filtered clients
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
