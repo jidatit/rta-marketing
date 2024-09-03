@@ -53,10 +53,8 @@ const InsuranceUploadForm = ({
             </button>
           </div>
           <div className="relative flex flex-col items-center justify-center w-full h-full p-6 gap-y-5">
-            <h1 className="w-full text-xl text-center font-radios">
-              Insurance Policy
-            </h1>
             <div className="w-[65%] flex flex-col gap-y-4">
+              <h1 className="w-full text-xl font-radios">Insurance Policy</h1>
               <h1 className="w-full text-xl text-start font-radios">
                 Upload Documents
               </h1>

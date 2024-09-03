@@ -260,7 +260,7 @@ const EmployeeDashboard = () => {
         <div className="flex flex-col w-full h-full gap-y-8">
           <div className="flex flex-row items-center justify-between w-full">
             <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
-            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-blue-500 rounded-full cursor-pointer gap-x-3 hover:bg-blue-700">
+            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-700">
               {" "}
               <button type="button" onClick={() => setShowModal(true)}>
                 Add New Sale
@@ -406,14 +406,14 @@ const EmployeeDashboard = () => {
                       <button
                         className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
                           isFormDataValid()
-                            ? "bg-emerald-500 hover:shadow-lg active:bg-emerald-600"
+                            ? "bg-[#003160] hover:shadow-lg active:bg-emerald-600"
                             : "bg-gray-500 cursor-not-allowed"
                         }`}
                         type="button"
                         onClick={handleFirstNext}
                         disabled={!isFormDataValid()}
                       >
-                        Next <GrLinkNext size={23} />
+                        Next <GrLinkNext size={23} className="mb-0.5" />
                       </button>
                     </div>
                   </form>
@@ -431,9 +431,9 @@ const EmployeeDashboard = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center w-full mt-4 overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
             <div className="relative w-[55%] mx-auto my-6">
               {/*content*/}
-              <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
+              <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg p-5 outline-none focus:outline-none">
                 {/*header*/}
-                <div className="flex items-start justify-between p-5 mt-24 border-b border-solid rounded-t border-blueGray-200">
+                <div className="flex items-start justify-between p-5 relative top-20 border-b mb-10 border-solid rounded-t border-blueGray-200">
                   <button
                     className="float-right ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
                     onClick={() => setSecondForm(false)}
@@ -444,11 +444,11 @@ const EmployeeDashboard = () => {
                   </button>
                 </div>
                 {/*body*/}
-                <div className="relative flex flex-col items-center justify-center flex-auto w-full p-6">
-                  <h1 className="w-full mb-5 text-3xl font-bold text-center text-black font-radios">
+                <div className="relative flex flex-col items-center justify-center flex-auto w-full">
+                  <h1 className="w-full text-3xl font-bold text-center text-black font-radios">
                     Add a New Sale
                   </h1>
-                  <form className="flex flex-col justify-center items-center w-[70%] mx-auto gap-y-4">
+                  <form className="flex flex-col justify-center items-center w-[70%] mx-auto gap-y-4 mt-8">
                     <h1 className="w-full mb-5 text-xl font-extrabold text-black text-start font-radios">
                       Gross Profit Calculator
                     </h1>
@@ -625,7 +625,7 @@ const EmployeeDashboard = () => {
                       </div>
                     </div>
                     <button
-                      className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-emerald-500 active:bg-emerald-600 hover:shadow-lg focus:outline-none"
+                      className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-[#6636C0] active:bg-[#6636C0] hover:shadow-lg focus:outline-none"
                       type="button"
                       onClick={calculateGrossProfit}
                     >
@@ -653,14 +653,14 @@ const EmployeeDashboard = () => {
                       <button
                         className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
                           isSecondFormDataValid()
-                            ? "bg-emerald-500 hover:shadow-lg active:bg-emerald-600"
+                            ? "bg-[#003160] hover:shadow-lg active:bg-[#003160]"
                             : "bg-gray-500 cursor-not-allowed"
                         }`}
                         type="button"
                         onClick={handleSecondNext}
                         disabled={!isSecondFormDataValid()}
                       >
-                        Next <GrLinkNext size={23} />
+                        Next <GrLinkNext size={23} className="mb-0.5" />
                       </button>
                     </div>
                   </form>

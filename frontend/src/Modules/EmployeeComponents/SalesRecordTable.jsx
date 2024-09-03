@@ -186,7 +186,7 @@ const SaleRecordTable = () => {
         )}
 
         <table className="w-full h-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
-          <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-blue-500 dark:text-white rounded-t-md">
+          <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#1FABFA] dark:text-white rounded-t-md">
             <tr>
               <th scope="col" className="px-4 py-4 rounded-tl-md">
                 Client Name
@@ -244,32 +244,36 @@ const SaleRecordTable = () => {
                       </td>
                       <td className="flex px-4 py-4 space-x-7">
                         <button
-                          className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-blue-500"
+                          className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-[#0E376C]"
                           onClick={() => handleOpenViewModal(sale)}
                         >
                           View Details
                         </button>
 
-                        <button
-                          className={`px-6 py-2.5 text-white bg-green-600 rounded-lg dark:bg-purple-600 ${
-                            sale.InsuranceStatus ? "invisible" : "visible"
-                          }`}
-                          onClick={() => handleOpenModal(sale)}
-                        >
-                          Upload Insurance
-                        </button>
-
-                        <button
-                          className={`py-2.5 text-white rounded-lg ${
-                            sale.FundStatus
-                              ? "bg-green-500 px-4"
-                              : "bg-gray-400 px-6"
-                          }`}
-                          onClick={() => handleFundStatus(client.id, saleIndex)}
-                          disabled={sale.FundStatus}
-                        >
-                          {sale.FundStatus ? "Car Funded" : "Fund Car"}
-                        </button>
+                        {sale.InsuranceStatus ? (
+                          // Display the "Fund Car" button if InsuranceStatus is true
+                          <button
+                            className={`py-2.5 w-[40%] text-white rounded-lg ${
+                              sale.FundStatus
+                                ? "bg-[#10C900] px-4"
+                                : "bg-gray-400 px-6"
+                            }`}
+                            onClick={() =>
+                              handleFundStatus(client.id, saleIndex)
+                            }
+                            disabled={sale.FundStatus}
+                          >
+                            {sale.FundStatus ? "Car Funded" : "Fund Car"}
+                          </button>
+                        ) : (
+                          // Display the "Upload Insurance" button if InsuranceStatus is false
+                          <button
+                            className="w-[40%] py-2.5 text-white bg-green-600 rounded-lg dark:bg-[#6636C0]"
+                            onClick={() => handleOpenModal(sale)}
+                          >
+                            Upload Insurance
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
