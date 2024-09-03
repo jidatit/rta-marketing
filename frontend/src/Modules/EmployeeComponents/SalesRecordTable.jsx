@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   updateDoc,
   where,
@@ -19,7 +20,7 @@ import { useAuth } from "../../AuthContext";
 import { FaArrowLeft, FaArrowRight, FaBan } from "react-icons/fa6";
 import { FaCalendarAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
-const SaleRecordTable = () => {
+const SaleRecordTable = ({ setShowModal }) => {
   const [clients, setClients] = useState([]); // Initialize as an empty array
   const [filteredClients, setFilteredClients] = useState([]); // Initialize as an empty array
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +45,7 @@ const SaleRecordTable = () => {
     setIsModalOpen(false);
   };
   const handleOpenViewModal = (sale) => {
+    console.log(sale);
     setSale(sale);
     setIsViewModalOpen(true);
   };
@@ -56,16 +58,16 @@ const SaleRecordTable = () => {
         const user = auth.currentUser; // Get the currently logged-in user
         if (user) {
           const docRef = doc(db, "sales", user.uid); // Use the user's uid as the document ID
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const salesData = docSnap.data().sales || [];
-            console.log(salesData);
-            setClients(salesData);
-            setFilteredClients(salesData); // Initially set filteredClients to all clients
-          } else {
-            toast.info("No sales data found for this user.");
-          }
+          onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+              const salesData = docSnap.data().sales || [];
+              console.log(salesData);
+              setClients(salesData);
+              setFilteredClients(salesData); // Initially set filteredClients to all clients
+            } else {
+              toast.info("No sales data found for this user.");
+            }
+          });
         } else {
           toast.error("User not authenticated");
         }
@@ -75,7 +77,7 @@ const SaleRecordTable = () => {
     };
 
     fetchSalesData();
-  }, []);
+  }, [currentUser]);
   const handleFundStatus = async (clientId, index) => {
     try {
       const docRef = doc(db, "sales", clientId); // Use clientId here
@@ -316,12 +318,12 @@ const SaleRecordTable = () => {
               <tr>
                 <td colSpan="100%" className="w-full p-2 text-center">
                   No sales data available{" "}
-                  <Link
+                  <button
                     className="text-blue-600 font-radios font-semibold"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => setShowModal(true)}
                   >
                     Add New Sale
-                  </Link>
+                  </button>
                 </td>
               </tr>
             )}

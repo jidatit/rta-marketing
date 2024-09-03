@@ -11,6 +11,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
   const [fileType, setFileType] = useState("");
   const [fileName, setFileName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     const getFileURL = async () => {
       try {
@@ -19,13 +20,15 @@ const InsuranceUpload = ({ onClose, sale }) => {
 
         if (docSnap.exists()) {
           const salesData = docSnap.data().sales || [];
-          const sale = salesData.find((sale) => sale.saleId === sale.saleId);
+          const foundSale = salesData.find(
+            (item) => item.saleId === sale.saleId
+          );
 
-          if (sale && sale.documentUrl) {
-            setFileURL(sale.documentUrl);
+          if (foundSale && foundSale.documentUrl) {
+            setFileURL(foundSale.documentUrl);
 
             // Extract file name from the URL
-            const urlParts = sale.documentUrl.split("/");
+            const urlParts = foundSale.documentUrl.split("/");
             const name = urlParts[urlParts.length - 1];
             setFileName(name);
             const fileExtension = name.split(".").pop().toLowerCase();
@@ -40,8 +43,9 @@ const InsuranceUpload = ({ onClose, sale }) => {
         console.error("Error retrieving file URL: ", error);
       }
     };
+
     getFileURL();
-  }, []);
+  }, [sale, currentUser.uid]);
 
   const openDocument = () => {
     setIsModalOpen(true);
@@ -212,7 +216,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
             </h1>
             <input
               type="text"
-              value={sale.documentUrl}
+              value={sale.documentUrl ? sale.documentUrl : "No file URL added"}
               readOnly
               className="w-full p-2 border rounded"
             />
