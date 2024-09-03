@@ -6,13 +6,19 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
-import { db } from "../../config/firebaseConfig";
+import { auth, db } from "../../config/firebaseConfig";
 
 import InsuranceUpload from "./UploadInsurance";
 import ViewDetails from "./ViewDetails";
 import { toast } from "react-toastify";
+import { useAuth } from "../../AuthContext";
+import { FaArrowLeft, FaArrowRight, FaBan } from "react-icons/fa6";
+import { FaCalendarAlt } from "react-icons/fa";
+import { Link } from "react-router-dom";
 const SaleRecordTable = () => {
   const [clients, setClients] = useState([]); // Initialize as an empty array
   const [filteredClients, setFilteredClients] = useState([]); // Initialize as an empty array
@@ -20,15 +26,13 @@ const SaleRecordTable = () => {
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [sale, setSale] = useState(null);
   // Calculate total pages based on filtered clients
-  const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
+  const { currentUser } = useAuth();
   // Calculate records to display
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentClients = filteredClients.slice(startIndex, endIndex);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const handleOpenModal = (sale) => {
@@ -49,19 +53,21 @@ const SaleRecordTable = () => {
   useEffect(() => {
     const fetchSalesData = async () => {
       try {
-        const salesCollection = collection(db, "sales");
-        const salesSnapshot = await getDocs(salesCollection);
+        const user = auth.currentUser; // Get the currently logged-in user
+        if (user) {
+          const docRef = doc(db, "sales", user.uid); // Use the user's uid as the document ID
+          const docSnap = await getDoc(docRef);
 
-        if (!salesSnapshot.empty) {
-          const salesData = salesSnapshot.docs.map((doc) => ({
-            id: doc.id, // This is the document ID, which corresponds to the user ID
-            ...doc.data(),
-          }));
-          console.log(salesData);
-          setClients(salesData);
-          setFilteredClients(salesData); // Initially set filteredClients to all clients
+          if (docSnap.exists()) {
+            const salesData = docSnap.data().sales || [];
+            console.log(salesData);
+            setClients(salesData);
+            setFilteredClients(salesData); // Initially set filteredClients to all clients
+          } else {
+            toast.info("No sales data found for this user.");
+          }
         } else {
-          toast.info("No sales data found.");
+          toast.error("User not authenticated");
         }
       } catch (err) {
         toast.error(`Error fetching sales data: ${err.message}`);
@@ -140,11 +146,46 @@ const SaleRecordTable = () => {
     setCurrentPage(1);
   };
   // Format date to "dd MMMM, yyyy" (matches your example data)
+  const handleFilterToggle = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const sortedFilteredClients = filteredClients.sort((a, b) => {
+    const dateA = new Date(a.saleDate);
+    const dateB = new Date(b.saleDate);
+    return dateB - dateA; // Sort in descending order (newest to oldest)
+  });
+
+  // Calculate the current clients for pagination
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+
+  const currentClients = sortedFilteredClients.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
+
+  // Calculate total pages based on filtered clients
+  const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   return (
     <>
       <div className="relative h-full p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
-        {showDatePicker && (
+        <div className="w-full text-end flex justify-end">
+          <button
+            onClick={handleFilterToggle}
+            className="flex items-center px-4 py-3 mb-4 text-white bg-[#003160] rounded-lg "
+          >
+            <FaCalendarAlt className="mr-2" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </button>
+        </div>
+
+        <div
+          className={`${
+            showFilters ? "max-h-screen" : "max-h-0"
+          } overflow-hidden transition-all duration-500 ease-in-out`}
+        >
           <div className="flex justify-end mb-4">
             <div className="flex items-center mr-4">
               <label htmlFor="start-date" className="mr-2 font-radios">
@@ -171,8 +212,8 @@ const SaleRecordTable = () => {
               />
             </div>
             <button
-              onClick={handleFilter}
-              className="px-4 py-2 ml-4 text-white bg-blue-500 rounded-lg"
+              onClick={() => handleFilter(startDate, endDate)}
+              className="px-4 py-2 ml-4 text-white bg-[#003160] rounded-lg"
             >
               Apply Filter
             </button>
@@ -183,10 +224,10 @@ const SaleRecordTable = () => {
               Clear Filter
             </button>
           </div>
-        )}
+        </div>
 
         <table className="w-full h-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
-          <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#1FABFA] dark:text-white rounded-t-md">
+          <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white rounded-t-md">
             <tr>
               <th scope="col" className="px-4 py-4 rounded-tl-md">
                 Client Name
@@ -209,143 +250,160 @@ const SaleRecordTable = () => {
             </tr>
           </thead>
           <tbody className="border-t-0 border-gray-300 border-1">
-            {currentClients && Array.isArray(currentClients) ? (
-              currentClients.map((client, index) =>
-                client.sales && Array.isArray(client.sales) ? (
-                  client.sales.map((sale, saleIndex) => (
-                    <tr
-                      key={`${index}-${saleIndex}`}
-                      className="bg-white border-b dark:bg-white dark:border-gray-300"
+            {currentClients && currentClients.length > 0 ? (
+              currentClients.map((sale, saleIndex) => (
+                <tr
+                  key={saleIndex}
+                  className="bg-white border-b dark:bg-white dark:border-gray-300"
+                >
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
+                    {sale.customerName}
+                  </td>
+                  <td className="px-4 py-4 text-gray-900">
+                    {sale.vehicleMake}
+                  </td>
+                  <td className="px-4 py-4 text-gray-900">{sale.saleDate}</td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        sale.InsuranceStatus ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    {sale.InsuranceStatus ? "Completed" : "Pending"}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        sale.FundStatus ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    {sale.FundStatus ? "Completed" : "Pending"}
+                  </td>
+                  <td className="flex px-4 py-4 space-x-7">
+                    <button
+                      className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-[#0E376C]"
+                      onClick={() => handleOpenViewModal(sale)}
                     >
-                      <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                        {sale.customerName}
-                      </td>
-                      <td className="px-4 py-4 text-gray-900">
-                        {sale.vehicleMake}
-                      </td>
-                      <td className="px-4 py-4 text-gray-900">
-                        {sale.saleDate}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                            sale.InsuranceStatus ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        ></span>
-                        {sale.InsuranceStatus ? "Completed" : "Pending"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                            sale.FundStatus ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        ></span>
-                        {sale.FundStatus ? "Completed" : "Pending"}
-                      </td>
-                      <td className="flex px-4 py-4 space-x-7">
-                        <button
-                          className="px-6 py-2.5 text-white bg-blue-600 rounded-lg dark:bg-[#0E376C]"
-                          onClick={() => handleOpenViewModal(sale)}
-                        >
-                          View Details
-                        </button>
+                      View Details
+                    </button>
 
-                        {sale.InsuranceStatus ? (
-                          // Display the "Fund Car" button if InsuranceStatus is true
-                          <button
-                            className={`py-2.5 w-[40%] text-white rounded-lg ${
-                              sale.FundStatus
-                                ? "bg-[#10C900] px-4"
-                                : "bg-gray-400 px-6"
-                            }`}
-                            onClick={() =>
-                              handleFundStatus(client.id, saleIndex)
-                            }
-                            disabled={sale.FundStatus}
-                          >
-                            {sale.FundStatus ? "Car Funded" : "Fund Car"}
-                          </button>
-                        ) : (
-                          // Display the "Upload Insurance" button if InsuranceStatus is false
-                          <button
-                            className="w-[40%] py-2.5 text-white bg-green-600 rounded-lg dark:bg-[#6636C0]"
-                            onClick={() => handleOpenModal(sale)}
-                          >
-                            Upload Insurance
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr key={index}>
-                    <td colSpan="100%" className="w-full p-2 text-center">
-                      No sales data available
-                    </td>
-                  </tr>
-                )
-              )
+                    {sale.InsuranceStatus ? (
+                      <button
+                        className={`py-2.5 w-[40%] text-white rounded-lg ${
+                          sale.FundStatus
+                            ? "bg-[#10C900] px-4"
+                            : "bg-[#2c81ff] px-6"
+                        }`}
+                        onClick={() =>
+                          handleFundStatus(currentUser.uid, saleIndex)
+                        }
+                        disabled={sale.FundStatus}
+                      >
+                        {sale.FundStatus ? "Car Funded" : "Fund Car"}
+                      </button>
+                    ) : (
+                      <button
+                        className="w-[40%] py-2.5 text-white bg-green-600 rounded-lg dark:bg-[#6636C0]"
+                        onClick={() => handleOpenModal(sale)}
+                      >
+                        Upload Insurance
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
             ) : (
               <tr>
                 <td colSpan="100%" className="w-full p-2 text-center">
-                  No clients data available
+                  No sales data available{" "}
+                  <Link
+                    className="text-blue-600 font-radios font-semibold"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    Add New Sale
+                  </Link>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <div className="flex items-center justify-between mt-4">
+          <div>
+            <label
+              htmlFor="rows-per-page"
+              className="p-3 mr-2 text-white bg-[#003160] rounded-lg font-radios"
+            >
+              Rows per page :
+            </label>
+            <select
+              id="rows-per-page"
+              value={rowsPerPage}
+              onChange={handleRowsPerPageChange}
+              className="px-6 py-3 border-gray-300 rounded-md border-1"
+            >
+              <option value={5} className="p-3">
+                5 per page
+              </option>
+              <option value={7} className="p-3">
+                7 per page
+              </option>
+              <option value={10} className="p-3">
+                10 per page
+              </option>
+              <option value={15} className="p-3">
+                15 per page
+              </option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 border rounded-l-lg flex items-center space-x-1 ${
+                  currentPage === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-800"
+                }`}
+              >
+                <FaArrowLeft />
+              </button>
+              {currentPage === 1 && (
+                <div className="absolute inset-0 flex items-center justify-center text-red-500 opacity-0 hover:opacity-100">
+                  <FaBan size={20} />
+                </div>
+              )}
+            </div>
+
+            <span className="px-4 py-2">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <div className="relative">
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 border rounded-r-lg flex items-center space-x-1 ${
+                  currentPage === totalPages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-800"
+                }`}
+              >
+                <FaArrowRight />
+              </button>
+              {currentPage === totalPages && (
+                <div className="absolute inset-0 flex items-center justify-center text-red-500 opacity-0 hover:opacity-100">
+                  <FaBan size={20} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between mt-4">
-        <div>
-          <label
-            htmlFor="rows-per-page"
-            className="p-3 mr-2 text-white bg-green-500 rounded-lg font-radios"
-          >
-            Rows per page :
-          </label>
-          <select
-            id="rows-per-page"
-            value={rowsPerPage}
-            onChange={handleRowsPerPageChange}
-            className="px-6 py-3 border-gray-300 rounded-md border-1"
-          >
-            <option value={5} className="p-3">
-              5 per page
-            </option>
-            <option value={7} className="p-3">
-              7 per page
-            </option>
-            <option value={10} className="p-3">
-              10 per page
-            </option>
-            <option value={15} className="p-3">
-              15 per page
-            </option>
-          </select>
-        </div>
 
-        <div className="flex items-center">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-200 border rounded-l-lg"
-          >
-            Previous
-          </button>
-          <span className="px-4 py-2">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-200 border rounded-r-lg"
-          >
-            Next
-          </button>
-        </div>
-      </div>
       {isModalOpen ? (
         <InsuranceUpload
           isOpen={isModalOpen}

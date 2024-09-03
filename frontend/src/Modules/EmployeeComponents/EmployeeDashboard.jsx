@@ -3,7 +3,7 @@ import { useAuth } from "../../AuthContext";
 import { format } from "date-fns"; // Import date-fns for formatting dates
 import { FaPlus } from "react-icons/fa6";
 import { GrLinkNext } from "react-icons/gr";
-
+import { IoMdClose } from "react-icons/io";
 import SalesRecordTable from "../EmployeeComponents/SalesRecordTable";
 import InsuranceUploadForm from "./InsuranceUploadForm";
 import { toast } from "react-toastify";
@@ -256,11 +256,11 @@ const EmployeeDashboard = () => {
 
   return (
     <>
-      <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
+      <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto ">
         <div className="flex flex-col w-full h-full gap-y-8">
           <div className="flex flex-row items-center justify-between w-full">
             <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
-            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-700">
+            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300">
               {" "}
               <button type="button" onClick={() => setShowModal(true)}>
                 Add New Sale
@@ -275,126 +275,126 @@ const EmployeeDashboard = () => {
       {showModal ? (
         <>
           <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-            <div className="relative w-[55%] mx-auto my-6">
+            <div className="relative w-[40%] mx-auto my-6">
               {/*content*/}
               <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
                 {/*header*/}
-                <div className="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                <div className="flex items-center justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                  <h1 className="w-full text-2xl font-bold text-center text-black font-radios">
+                    Add a New Sale
+                  </h1>
                   <button
                     className="float-right ml-auto -mt-1.5 font-semibold leading-none text-black border-0 outline-none focus:outline-none"
                     onClick={() => setShowModal(false)}
                   >
-                    <span className="block text-4xl text-black outline-none focus:outline-none">
-                      ×
+                    <span className="block text-3xl text-black outline-none focus:outline-none cursor-pointer">
+                      <IoMdClose />
                     </span>
                   </button>
                 </div>
                 {/*body*/}
                 <div className="relative flex flex-col items-center justify-center flex-auto w-full p-6">
-                  <h1 className="w-full mb-5 text-3xl font-bold text-center text-black font-radios">
-                    Add a New Sale
-                  </h1>
-                  <form className="flex flex-col justify-center items-center w-[70%] mx-auto gap-y-4">
-                    <h1 className="w-full mb-5 text-xl font-extrabold text-black text-start font-radios">
+                  <form className="flex flex-col justify-center items-center w-[80%] mx-auto gap-y-4">
+                    <h1 className="w-full mb-2 text-xl font-extrabold text-black text-start font-radios">
                       Car Details
                     </h1>
                     <div className="flex flex-row flex-wrap items-center justify-between w-full ">
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="customerName"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           Customer Name
                         </label>
                         <input
                           type="text"
                           id="customerName"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Customer Name"
                           required
                           value={formData.customerName}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="vehicleMake"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           Vehicle Make
                         </label>
                         <input
                           type="text"
                           id="vehicleMake"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Vehicle Make"
                           required
                           value={formData.vehicleMake}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="vehicleModel"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           Vehicle Model
                         </label>
                         <input
                           type="text"
                           id="vehicleModel"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Vehicle Model"
                           required
                           value={formData.vehicleModel}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="stockNumber"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           Stock Number
                         </label>
                         <input
                           type="text"
                           id="stockNumber"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Stock Number"
                           required
                           value={formData.stockNumber}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="VIN"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           VIN
                         </label>
                         <input
                           type="text"
                           id="VIN"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="VIN"
                           required
                           value={formData.VIN}
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="w-[48%] mb-5">
+                      <div className="w-[48%] mb-4">
                         <label
                           htmlFor="leadSource"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                          className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                         >
                           Lead Source
                         </label>
                         <input
                           type="text"
                           id="leadSource"
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Lead Source"
                           required
                           value={formData.leadSource}
@@ -402,9 +402,9 @@ const EmployeeDashboard = () => {
                         />
                       </div>
                     </div>
-                    <div className="flex items-end justify-end w-full p-6 ml-4 border-t border-solid rounded-b border-blueGray-200 ">
+                    <div className="flex items-center justify-end w-full ml-4 border-t border-solid rounded-b border-blueGray-200 ">
                       <button
-                        className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
+                        className={`flex flex-row items-center justify-center px-6 py-3 mb-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
                           isFormDataValid()
                             ? "bg-[#003160] hover:shadow-lg active:bg-emerald-600"
                             : "bg-gray-500 cursor-not-allowed"
@@ -413,7 +413,7 @@ const EmployeeDashboard = () => {
                         onClick={handleFirstNext}
                         disabled={!isFormDataValid()}
                       >
-                        Next <GrLinkNext size={23} className="mb-0.5" />
+                        Next <GrLinkNext size={18} className="" />
                       </button>
                     </div>
                   </form>
@@ -425,247 +425,250 @@ const EmployeeDashboard = () => {
           <div className="fixed inset-0 z-40 bg-black opacity-25"></div>
         </>
       ) : null}
-
       {secondForm ? (
         <>
-          <div className="fixed inset-0 z-50 flex items-center justify-center w-full mt-4 overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-            <div className="relative w-[55%] mx-auto my-6">
-              {/*content*/}
-              <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg p-5 outline-none focus:outline-none">
-                {/*header*/}
-                <div className="flex items-start justify-between p-5 relative top-20 border-b mb-10 border-solid rounded-t border-blueGray-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
+            <div className="relative w-[90%] sm:w-[80%] md:w-[70%] lg:w-[50%] xl:w-[45%] mx-auto my-6 h-[90vh]">
+              {/* Modal Content */}
+              <div className="relative flex flex-col w-full h-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                  <h1 className="w-full text-2xl font-bold text-center text-black font-radios">
+                    Add a New Sale
+                  </h1>
                   <button
-                    className="float-right ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
+                    className="float-right ml-auto -mt-1.5 font-semibold leading-none text-black border-0 outline-none focus:outline-none"
                     onClick={() => setSecondForm(false)}
                   >
-                    <span className="block text-4xl text-black outline-none focus:outline-none">
-                      ×
+                    <span className="block text-3xl text-black outline-none focus:outline-none cursor-pointer">
+                      <IoMdClose />
                     </span>
                   </button>
                 </div>
-                {/*body*/}
-                <div className="relative flex flex-col items-center justify-center flex-auto w-full">
-                  <h1 className="w-full text-3xl font-bold text-center text-black font-radios">
-                    Add a New Sale
-                  </h1>
-                  <form className="flex flex-col justify-center items-center w-[70%] mx-auto gap-y-4 mt-8">
-                    <h1 className="w-full mb-5 text-xl font-extrabold text-black text-start font-radios">
-                      Gross Profit Calculator
-                    </h1>
-                    <div className="flex flex-row flex-wrap items-center justify-between w-full ">
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="salePrice"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Sale Price
-                        </label>
-                        <input
-                          type="number"
-                          id="salePrice"
-                          value={formData.salePrice}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Sale Price"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="unitCost"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Unit Cost
-                        </label>
-                        <input
-                          type="number"
-                          id="unitCost"
-                          value={formData.unitCost}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder=" Unit Cost"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="warr"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Warr
-                        </label>
-                        <input
-                          type="number"
-                          id="warr"
-                          value={formData.warr}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Warr"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="warCost"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          War Cost
-                        </label>
-                        <input
-                          type="number"
-                          id="warCost"
-                          value={formData.warCost}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="War Cost"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="gap"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Gap
-                        </label>
-                        <input
-                          type="number"
-                          id="gap"
-                          value={formData.gap}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Gap"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="gapCost"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Gap Cost
-                        </label>
-                        <input
-                          type="number"
-                          id="gapCost"
-                          value={formData.gapCost}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Gap Cost"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="admin"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Admin
-                        </label>
-                        <input
-                          type="number"
-                          id="admin"
-                          value={formData.admin}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Admin"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="pac"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          PAC
-                        </label>
-                        <input
-                          type="number"
-                          id="pac"
-                          value={formData.pac}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="PAC"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="safety"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Safety
-                        </label>
-                        <input
-                          type="number"
-                          id="safety"
-                          value={formData.safety}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Safety"
-                          required
-                        />
-                      </div>
-                      <div className="w-[48%] mb-5">
-                        <label
-                          htmlFor="reserve"
-                          className="block mb-2 text-lg font-medium text-gray-900 font-radios "
-                        >
-                          Reserve
-                        </label>
-                        <input
-                          type="number"
-                          id="reserve"
-                          value={formData.reserve}
-                          onChange={handleInputChange}
-                          className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Reserve"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <button
-                      className="flex flex-row items-center justify-center px-6 py-3 mb-1 mr-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-[#6636C0] active:bg-[#6636C0] hover:shadow-lg focus:outline-none"
-                      type="button"
-                      onClick={calculateGrossProfit}
-                    >
-                      Calculate Gross Profit
-                    </button>
-                    <div className="flex flex-col items-end justify-end w-full p-6 border-t border-solid rounded-b border-blueGray-200">
-                      <div className="w-full ">
-                        <div className="w-full mx-auto mb-5">
+                {/* Body */}
+                <div className="relative flex flex-col items-center justify-center w-full p-6 overflow-y-auto">
+                  <div className="w-full h-full overflow-y-auto p-4 pt-0">
+                    {" "}
+                    {/* Ensure the body scrolls */}
+                    <form className="flex flex-col justify-center items-center w-[80%] mx-auto gap-y-4">
+                      <h1 className="w-full mb-1 text-xl font-extrabold text-black text-start font-radios">
+                        Gross Profit Calculator
+                      </h1>
+                      <div className="flex flex-row flex-wrap items-center justify-between w-full ">
+                        {/* Form fields */}
+                        <div className="w-[48%] mb-2">
                           <label
-                            htmlFor="grossProfit"
-                            className="block mb-2 text-lg font-medium text-gray-900 font-radios "
+                            htmlFor="salePrice"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                           >
-                            Gross Profit
+                            Sale Price
                           </label>
                           <input
-                            type="text"
-                            id="grossProfit"
-                            value={formData.grossProfit}
-                            className="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                            placeholder="Gross Profit"
+                            type="number"
+                            id="salePrice"
+                            value={formData.salePrice}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Sale Price"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="unitCost"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Unit Cost
+                          </label>
+                          <input
+                            type="number"
+                            id="unitCost"
+                            value={formData.unitCost}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder=" Unit Cost"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="warr"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Warr
+                          </label>
+                          <input
+                            type="number"
+                            id="warr"
+                            value={formData.warr}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Warr"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="warCost"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            War Cost
+                          </label>
+                          <input
+                            type="number"
+                            id="warCost"
+                            value={formData.warCost}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="War Cost"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="gap"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Gap
+                          </label>
+                          <input
+                            type="number"
+                            id="gap"
+                            value={formData.gap}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Gap"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="gapCost"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Gap Cost
+                          </label>
+                          <input
+                            type="number"
+                            id="gapCost"
+                            value={formData.gapCost}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Gap Cost"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="admin"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Admin
+                          </label>
+                          <input
+                            type="number"
+                            id="admin"
+                            value={formData.admin}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Admin"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="pac"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            PAC
+                          </label>
+                          <input
+                            type="number"
+                            id="pac"
+                            value={formData.pac}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="PAC"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="safety"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Safety
+                          </label>
+                          <input
+                            type="number"
+                            id="safety"
+                            value={formData.safety}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Safety"
+                            required
+                          />
+                        </div>
+                        <div className="w-[48%] mb-2">
+                          <label
+                            htmlFor="reserve"
+                            className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                          >
+                            Reserve
+                          </label>
+                          <input
+                            type="number"
+                            id="reserve"
+                            value={formData.reserve}
+                            onChange={handleInputChange}
+                            className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                            placeholder="Reserve"
                             required
                           />
                         </div>
                       </div>
                       <button
-                        className={`flex flex-row items-end justify-end px-6 py-3 mb-1 text-lg font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
-                          isSecondFormDataValid()
-                            ? "bg-[#003160] hover:shadow-lg active:bg-[#003160]"
-                            : "bg-gray-500 cursor-not-allowed"
-                        }`}
+                        className="flex flex-row items-center justify-center px-6 py-3 mr-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 bg-[#6636C0] active:bg-[#6636C0] hover:shadow-lg focus:outline-none"
                         type="button"
-                        onClick={handleSecondNext}
-                        disabled={!isSecondFormDataValid()}
+                        onClick={calculateGrossProfit}
                       >
-                        Next <GrLinkNext size={23} className="mb-0.5" />
+                        Calculate Gross Profit
                       </button>
-                    </div>
-                  </form>
+                      <div className="flex flex-col items-end justify-end w-full p-3 border-t border-solid rounded-b border-blueGray-200">
+                        <div className="w-full ">
+                          <div className="w-full mx-auto mb-4">
+                            <label
+                              htmlFor="grossProfit"
+                              className="block mb-2 text-sm font-medium text-gray-900 font-radios "
+                            >
+                              Gross Profit
+                            </label>
+                            <input
+                              type="text"
+                              id="grossProfit"
+                              value={formData.grossProfit}
+                              className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                              placeholder="Gross Profit"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <button
+                          className={`flex flex-row items-center justify-center px-6 py-3 mb-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
+                            isSecondFormDataValid()
+                              ? "bg-[#003160] hover:shadow-lg active:bg-[#003160]"
+                              : "bg-gray-500 cursor-not-allowed"
+                          }`}
+                          type="button"
+                          onClick={handleSecondNext}
+                          disabled={!isSecondFormDataValid()}
+                        >
+                          Next <GrLinkNext size={23} className="mb-0.5" />
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
-
                 {/*footer*/}
               </div>
             </div>

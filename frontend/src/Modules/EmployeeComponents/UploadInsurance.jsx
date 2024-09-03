@@ -2,6 +2,7 @@ import { FaFilePdf } from "react-icons/fa6";
 import { IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
 import { useState } from "react";
+import { IoMdClose } from "react-icons/io";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../config/firebaseConfig";
 import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -116,8 +117,8 @@ const InsuranceUpload = ({ onClose, sale }) => {
               className="float-right mt-3 ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
               onClick={onClose}
             >
-              <span className="block text-4xl text-black outline-none focus:outline-none">
-                ×
+              <span className="block cursor-pointer text-4xl text-black outline-none focus:outline-none">
+                <IoMdClose />
               </span>
             </button>
           </div>
