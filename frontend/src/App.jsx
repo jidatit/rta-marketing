@@ -22,6 +22,8 @@ import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
 import ChangePassword from "./Modules/AuthComponents/ChangePassword";
 import { ToastContainer } from "react-toastify";
 import InsuranceUploadForm from "./Modules/EmployeeComponents/InsuranceUploadForm";
+import LeadSource from "./Modules/AdminComponents/LeadSource";
+import SalesPage from "./Modules/AdminComponents/SalesPage";
 import SaleForm1 from "./Modules/EmployeeComponents/SaleForm1";
 
 const LoadingSpinner = () => (
