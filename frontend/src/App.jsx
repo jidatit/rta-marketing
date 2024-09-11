@@ -22,6 +22,8 @@ import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
 import ChangePassword from "./Modules/AuthComponents/ChangePassword";
 import { ToastContainer } from "react-toastify";
 import InsuranceUploadForm from "./Modules/EmployeeComponents/InsuranceUploadForm";
+import LeadSource from "./Modules/AdminComponents/LeadSource";
+import SalesPage from "./Modules/AdminComponents/SalesPage";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -121,6 +123,14 @@ function App() {
                   element={
                     currentUser ? <ChangePassword /> : <Navigate to="/" />
                   }
+                />
+                <Route
+                  path="leads-source"
+                  element={currentUser ? <LeadSource /> : <Navigate to="/" />}
+                />
+                <Route
+                  path="sales"
+                  element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                 />
               </Route>
             </Routes>
