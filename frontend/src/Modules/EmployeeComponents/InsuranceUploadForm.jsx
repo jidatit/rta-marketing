@@ -2,6 +2,7 @@ import { FaFilePdf } from "react-icons/fa6";
 import { IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
 import { useState } from "react";
+import { IoMdClose } from "react-icons/io";
 const InsuranceUploadForm = ({
   formData,
   setFormData,
@@ -40,22 +41,22 @@ const InsuranceUploadForm = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-      <div className="relative w-[55%] mx-auto my-6">
+      <div className="relative w-[45%] mx-auto my-6">
         <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
-          <div className="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+          <div className="flex items-center justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+            <h1 className="w-full font-bold text-2xl text-center font-radios">
+              Insurance Policy
+            </h1>
             <button
-              className="float-right mt-3 ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
+              className="float-right ml-auto font-semibold leading-none text-black border-0 outline-none focus:outline-none"
               onClick={() => setThirdForm(false)}
             >
-              <span className="block text-4xl text-black outline-none focus:outline-none">
-                ×
+              <span className="block cursor-pointer text-4xl text-black outline-none focus:outline-none">
+                <IoMdClose />
               </span>
             </button>
           </div>
           <div className="relative flex flex-col items-center justify-center w-full h-full p-6 gap-y-5">
-            <h1 className="w-full text-xl text-center font-radios">
-              Insurance Policy
-            </h1>
             <div className="w-[65%] flex flex-col gap-y-4">
               <h1 className="w-full text-xl text-start font-radios">
                 Upload Documents

@@ -72,7 +72,7 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-screen bg-[#1332b9] h-screen">
+    <div className="flex flex-col justify-center items-center w-screen bg-[#061861] h-screen">
       <div className="flex flex-col items-center w-[50%] justify-center bg-white rounded-md shadow-lg gap-y-12 p-10">
         <h1 className="text-3xl font-bold text-black">Logo</h1>
         <div className="flex flex-col items-center justify-center w-full gap-y-8">
@@ -108,7 +108,7 @@ const SignInPage = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex items-center justify-center w-full p-4 text-white bg-blue-600 rounded-md shadow-lg cursor-pointer"
+                    className="flex items-center justify-center w-full p-4 text-white bg-blue-400 rounded-md shadow-lg cursor-pointer"
                     disabled={loading} // Disable the button when loading
                   >
                     {loading ? (
@@ -141,7 +141,7 @@ const SignInPage = () => {
                 <div className="flex flex-col items-end justify-end w-full">
                   <p className="text-black cursor-pointer">Not a member?</p>
                   <Link to={"/signUp"} className="w-full">
-                    <button className="bg-[#043758] rounded-md text-white shadow-lg p-4 w-full">
+                    <button className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full">
                       SignUp
                     </button>
                   </Link>
