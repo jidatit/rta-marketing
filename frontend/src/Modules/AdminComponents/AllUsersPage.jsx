@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { db } from "../../config/firebaseConfig";
 import { FaSearch, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const AllUsersPage = () => {
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,6 @@ const AllUsersPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [currentPage, setCurrentPage] = useState(1);
   const apiUrl = import.meta.env.VITE_BLOCK_USER_API || "http://localhost:8000";
-  console.log(apiUrl);
 
   const fetchUsers = async () => {
     const employeesRef = collection(db, "employees");
@@ -67,8 +67,6 @@ const AllUsersPage = () => {
     fetchUsers();
   }, []);
 
-  console.log(allUsers);
-
   useEffect(() => {
     const filtered = allUsers.filter((user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -111,8 +109,6 @@ const AllUsersPage = () => {
 
       // If userType exists, proceed to update Firestore
 
-      console.log("Entered new block 2");
-
       const userTypeCollectionRef =
         userType === "Virtual Assistant" ? "virtual-assistants" : "employees";
 
@@ -132,9 +128,8 @@ const AllUsersPage = () => {
             userStatus: "blocked",
           });
         });
-        console.log("User status updated successfully");
       } else {
-        console.log("No matching document found for the given UID");
+        toast.error("No matching document found for the given UID");
       }
 
       // Update UI (you can refetch users or update state here)
@@ -144,7 +139,7 @@ const AllUsersPage = () => {
       setAllUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
 
-      console.log("User blocked successfully");
+      toast.success("User blocked successfully");
     } catch (error) {
       console.error("Error blocking user: ", error);
     }
@@ -166,8 +161,6 @@ const AllUsersPage = () => {
         throw new Error("Failed to unblock user 2");
       }
 
-      console.log("Entered user update for unblock");
-
       const userTypeCollectionRef =
         userType === "Virtual Assistant" ? "virtual-assistants" : "employees";
 
@@ -185,9 +178,8 @@ const AllUsersPage = () => {
             userStatus: deleteField(),
           });
         });
-        console.log("User status updated to active successfully");
       } else {
-        console.log("No matching document found for the given UID");
+        toast.error("No matching document found for the given UID");
       }
 
       // Update the UI
@@ -197,7 +189,7 @@ const AllUsersPage = () => {
       setAllUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
 
-      console.log("User unblocked and set to active successfully");
+      toast.success("User Unblocked");
     } catch (error) {
       console.error("Error unblocking user: ", error);
     }

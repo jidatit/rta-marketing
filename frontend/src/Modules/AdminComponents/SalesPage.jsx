@@ -62,7 +62,6 @@ const SalesPage = ({ setShowModal }) => {
           sales: dataWithId,
           id: id,
         };
-        console.log(uIds);
 
         salesData.push(dataObject);
         setUid(uIds);
@@ -81,7 +80,6 @@ const SalesPage = ({ setShowModal }) => {
   const fetchLeads = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "leads"));
-      console.log(querySnapshot);
       const fetchedLeads = querySnapshot.docs.map((doc) => doc.data().leadName);
       setLeadSources(fetchedLeads);
     } catch (error) {
@@ -107,7 +105,6 @@ const SalesPage = ({ setShowModal }) => {
           });
         });
 
-        console.log("Sales Person", results);
         setSalesPerson(results);
       }
     } catch (error) {
@@ -120,7 +117,6 @@ const SalesPage = ({ setShowModal }) => {
     setIsModalOpen(false);
   };
   const handleOpenViewModal = (sale) => {
-    console.log(sale);
     setSale(sale);
     setIsViewModalOpen(true);
   };
@@ -132,7 +128,6 @@ const SalesPage = ({ setShowModal }) => {
     fetchLeads();
     fetchSalesData();
   }, []);
-  console.log(selectedSalesPerson);
 
   useEffect(() => {
     fetchSalesPerson();
@@ -151,24 +146,18 @@ const SalesPage = ({ setShowModal }) => {
           (item) => item.saleId !== saleId
         );
 
-        console.log(arrayItem);
-        console.log(updatedArrayItems);
-
         if (updatedArrayItems.length === 0) {
           // Delete the document if the updated array is empty
           await deleteDoc(docRef);
-          console.log(`Document with id ${documentId} deleted successfully!`);
           toast.success("Document deleted successfully");
         } else {
           // Otherwise, update the document with the new array
           await updateDoc(docRef, { sales: updatedArrayItems });
-          console.log(`Object with saleId ${saleId} deleted successfully!`);
           toast.success("Sale deleted successfully");
         }
 
         fetchSalesData();
       } else {
-        console.log("Sale item not found");
         toast.error("Something happened: try again");
       }
     } catch (error) {
@@ -185,7 +174,6 @@ const SalesPage = ({ setShowModal }) => {
     setRowsPerPage(Number(event.target.value));
     setCurrentPage(1);
   };
-  console.log("ALL sales from sales page", allSales);
   const handleFilter = () => {
     if (startDate && endDate) {
       const filteredSales = allSales.filter((sale) => {
@@ -224,7 +212,6 @@ const SalesPage = ({ setShowModal }) => {
     setSelectedLeadSource("");
     setSelectedSalesPerson("");
     setShowDateFilter(false);
-    console.log(showDateFilter);
   };
   const handleFilterToggle = () => {
     setShowFilters(!showFilters);
@@ -247,12 +234,10 @@ const SalesPage = ({ setShowModal }) => {
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   const handleSelect = (event, setValue) => {
-    console.log(event.target.value);
     if (event.target.value === "") setFilteredClients(allSales);
 
     setValue(event.target.value);
   };
-  console.log(selectedLeadSource);
   return (
     <>
       <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
@@ -277,6 +262,7 @@ const SalesPage = ({ setShowModal }) => {
               <div className="flex justify-end items-center mb-4">
                 <div className="relative w-52 mx-4">
                   <select
+                    key={selectedSalesPerson}
                     name="Sales Person"
                     id="demo-simple-select-helper-label"
                     value={selectedSalesPerson}

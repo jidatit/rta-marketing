@@ -12,7 +12,6 @@ const LeadSource = () => {
     const fetchLeads = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "leads"));
-        console.log(querySnapshot);
         const fetchedLeads = querySnapshot.docs.map(
           (doc) => doc.data().leadName
         );
@@ -41,10 +40,8 @@ const LeadSource = () => {
     const lowerCaseLead = inputLead.toLowerCase();
     const CapitalizedLead =
       lowerCaseLead.charAt(0).toUpperCase() + lowerCaseLead.slice(1);
-    console.log(CapitalizedLead);
 
     const isDuplicate = leads.includes(CapitalizedLead);
-    console.log(isDuplicate);
     if (isDuplicate) {
       toast.error("Lead Source already Exist", "Lead Source already Exist");
       return;
@@ -65,7 +62,6 @@ const LeadSource = () => {
     }
     setShowForm(false);
     setInputLead("");
-    console.log("form Submitted");
   };
   const handleShowForm = () => {
     setShowForm(true);
