@@ -1,6 +1,5 @@
-import { compareSync } from "bcryptjs";
 import React, { useEffect, useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 
@@ -25,7 +24,7 @@ const LeadSource = () => {
     };
 
     fetchLeads();
-  }, [leads]);
+  }, [showForm]);
 
   const handleInput = (e) => {
     const leadInput = e.target.value;

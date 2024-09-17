@@ -1,44 +1,63 @@
 import { FaFilePdf } from "react-icons/fa6";
-import { IoDocumentText } from "react-icons/io5";
+import { IoArrowBack, IoDocumentText } from "react-icons/io5";
 import { IoMdImage } from "react-icons/io";
-import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
+
 const InsuranceUploadForm = ({
-  formData,
-  setFormData,
+  setThirdForm,
   handleUpload,
   handleLaterUpload,
-  setThirdForm,
-  file,
-  setFile,
-  fileName,
-  setFileName,
-  fileType,
-  setFileType,
+  files,
+  setFiles,
+  setSecondForm,
 }) => {
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFile(file);
-      setFileName(file.name);
-      setFileType(file.type);
-    } else {
-      setFile(null);
-      setFileName("");
-      setFileType("");
+    const Localfiles = Array.from(event.target.files);
+
+    if (Localfiles.length > 0) {
+      const updatedFiles = Localfiles.map((file) => ({
+        name: file.name,
+        fileType: file.type,
+        file: file,
+      }));
+
+      // setFiles(updatedFiles);
+      setFiles((prevFiles) => [...prevFiles, ...updatedFiles]);
     }
   };
 
-  const renderFileIcon = () => {
+  const renderFileIcon = (fileType) => {
     if (fileType.includes("pdf")) {
-      return <FaFilePdf size={20} className="text-red-700" />;
+      return <FaFilePdf size={20} className="text-red-700 mr-2" />;
     } else if (fileType.includes("image")) {
-      return <IoMdImage size={20} className="text-blue-600" />;
+      return <IoMdImage size={20} className="text-blue-600 mr-2" />;
     } else {
-      return <IoDocumentText size={20} className="text-blue-600 " />;
+      return <IoDocumentText size={20} className="text-blue-600 mr-2" />;
     }
   };
+  console.log(files);
 
+  const handleGoBack = () => {
+    //code here
+    setSecondForm(true);
+    setThirdForm(false);
+    setShowModal(true);
+  };
+
+  const handleMultipleFileChange = (event) => {
+    const newFiles = Array.from(event.target.files);
+
+    if (newFiles.length > 0) {
+      const updatedFiles = newFiles.map((file) => ({
+        name: file.name,
+        fileType: file.type,
+        file: file,
+      }));
+
+      // Append new files to existing files
+      setFiles((prevFiles) => [...prevFiles, ...updatedFiles]);
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
       <div className="relative w-[45%] mx-auto my-6">
@@ -58,9 +77,19 @@ const InsuranceUploadForm = ({
           </div>
           <div className="relative flex flex-col items-center justify-center w-full h-full p-6 gap-y-5">
             <div className="w-[65%] flex flex-col gap-y-4">
-              <h1 className="w-full text-xl text-start font-radios">
-                Upload Documents
-              </h1>
+              <div className="self-start  flex gap-4">
+                <button
+                  onClick={() => {
+                    handleGoBack();
+                    console.log("go to second");
+                  }}
+                >
+                  <IoArrowBack size={20} />
+                </button>
+                <h1 className="w-full mb-1 text-xl font-extrabold text-black text-start font-radios">
+                  Gross Profit Calculator
+                </h1>
+              </div>
               <label
                 htmlFor="uploadFile1"
                 className="bg-white text-gray-500 py-6 font-semibold text-base rounded w-full h-full flex flex-col items-center justify-center cursor-pointer border-2 border-gray-300 border-dashed mx-auto font-[sans-serif]"
@@ -84,18 +113,59 @@ const InsuranceUploadForm = ({
                   type="file"
                   id="uploadFile1"
                   onChange={handleFileChange}
+                  multiple
                   className="hidden"
                 />
                 <p className="mt-2 text-xs font-medium text-gray-400">
-                  PNG, JPG SVG, WEBP, and GIF are Allowed.
+                  PNG, JPG, SVG, WEBP, and GIF are allowed.
                 </p>
-                {fileName && (
-                  <p className="flex items-center mt-2 text-sm font-medium text-gray-700">
-                    {renderFileIcon()}
-                    Selected file: {fileName}
-                  </p>
-                )}
               </label>
+
+              {/* Display Selected Files */}
+              {files.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {files.map((file, index) => (
+                    <p
+                      key={index}
+                      className="flex items-center text-sm font-medium text-gray-700"
+                    >
+                      {renderFileIcon(file.fileType)}
+                      {file.name}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {files.length > 0 ? (
+                <div>
+                  <label
+                    htmlFor="selectMore"
+                    className="flex gap-1 text-gray-500 font-bold cursor-pointer"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="mb-2 w-5 fill-gray-500"
+                      viewBox="0 0 32 32"
+                    >
+                      <path
+                        d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z"
+                        data-original="#000000"
+                      />
+                      <path
+                        d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z"
+                        data-original="#000000"
+                      />
+                    </svg>
+                    Add More
+                  </label>
+                  <input
+                    type="file"
+                    id="selectMore"
+                    onChange={handleMultipleFileChange}
+                    multiple
+                    className="hidden"
+                  />
+                </div>
+              ) : null}
 
               <div className="flex flex-row justify-end w-full gap-x-4">
                 <button
@@ -106,12 +176,12 @@ const InsuranceUploadForm = ({
                 </button>
                 <button
                   className={`inline-block px-5 py-3 mt-3 font-medium text-white rounded shadow-md shadow-indigo-500/20 ${
-                    file
+                    files.length > 0
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-gray-600 cursor-not-allowed"
                   }`}
                   onClick={handleUpload}
-                  disabled={!file}
+                  disabled={files.length === 0}
                 >
                   Upload Insurance
                 </button>

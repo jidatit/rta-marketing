@@ -25,6 +25,10 @@ import InsuranceUploadForm from "./Modules/EmployeeComponents/InsuranceUploadFor
 import LeadSource from "./Modules/AdminComponents/LeadSource";
 import SalesPage from "./Modules/AdminComponents/SalesPage";
 import SaleForm1 from "./Modules/EmployeeComponents/SaleForm1";
+import SalesPersonPage from "./Modules/AdminComponents/SalesPersonPage";
+import EmployeeSales from "./Modules/AdminComponents/EmployeeSales";
+import AllUsersPage from "./Modules/AdminComponents/AllUsersPage";
+import TVScreen from "./Modules/TvScreenComponent/TVScreen";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -119,10 +123,10 @@ function App() {
                     currentUser ? <AdminDashboard /> : <Navigate to="/" />
                   }
                 />
-                <Route
+                {/* <Route
                   path="users"
                   element={currentUser ? <AllUsers /> : <Navigate to="/" />}
-                />
+                /> */}
                 <Route
                   path="changePassword"
                   element={
@@ -137,7 +141,24 @@ function App() {
                   path="sales"
                   element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                 />
+                <Route
+                  path="sales-person"
+                  element={
+                    currentUser ? <SalesPersonPage /> : <Navigate to="/" />
+                  }
+                />
+                <Route
+                  path="sale/:id"
+                  element={
+                    currentUser ? <EmployeeSales /> : <Navigate to="/" />
+                  }
+                />
+                <Route
+                  path="users"
+                  element={currentUser ? <AllUsersPage /> : <Navigate to="/" />}
+                />
               </Route>
+              <Route path="/tv" element={<TVScreen />} />
             </Routes>
           )}
         </AuthProvider>

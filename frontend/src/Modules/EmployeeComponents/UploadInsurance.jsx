@@ -5,106 +5,97 @@ import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../config/firebaseConfig";
-import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useAuth } from "../../AuthContext";
+
 const InsuranceUpload = ({ onClose, sale }) => {
-  const [fileName, setFileName] = useState("");
-  const [file, setFile] = useState(null);
-  const [url, setUrl] = useState(null);
-  const [fileType, setFileType] = useState("");
+  const [files, setFiles] = useState([]);
   const { currentUser } = useAuth();
   console.log(sale);
-  console.log(file);
+
   const handleUpload = async () => {
-    if (file) {
-      console.log(file);
-      // Ensure a unique file name
-      const storageRef = ref(storage, `files/${fileName}`);
+    if (files.length > 0) {
+      for (const fileObj of files) {
+        const { file, name } = fileObj;
+        console.log(file);
+        const storageRef = ref(storage, `files/${name}`);
+        const metadata = { contentType: file.type };
 
-      const metadata = {
-        contentType: file.type, // Use the MIME type of the file
-      };
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            console.log(
+              "Upload progress:",
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
+            );
+          },
+          (error) => {
+            console.log(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-      // Upload file with metadata
-      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+            const saleRef = doc(db, "sales", currentUser.uid);
+            const docSnap = await getDoc(saleRef);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          console.log(
-            "Upload progress:",
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
-          );
-        },
-        (error) => {
-          console.log(error); // Handle any errors
-        },
-        async () => {
-          // Retrieve the download URL after the upload is complete
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setUrl(downloadURL);
+            if (docSnap.exists()) {
+              const sales = docSnap.data().sales;
+              const saleIndex = sales.findIndex(
+                (s) => s.saleId === sale.saleId
+              );
 
-          // Reference to the user's sales document
-          const saleRef = doc(db, "sales", currentUser.uid);
-          const docSnap = await getDoc(saleRef);
+              if (saleIndex !== -1) {
+                const existingUrls = sales[saleIndex].documentUrl || [];
 
-          if (docSnap.exists()) {
-            // Get the sales array from the document
-            const sales = docSnap.data().sales;
+                const updatedDocumentUrls = [...existingUrls, downloadURL];
 
-            // Find the index of the sale with the matching saleId
-            const saleIndex = sales.findIndex((s) => s.saleId === sale.saleId);
+                const updatedSale = {
+                  ...sales[saleIndex],
+                  InsuranceStatus: true,
+                  documentUrl: updatedDocumentUrls,
+                };
 
-            if (saleIndex !== -1) {
-              // Update the InsuranceStatus and documentUrl for the specific sale
-              const updatedSale = {
-                ...sales[saleIndex],
-                InsuranceStatus: true,
-                documentUrl: downloadURL,
-              };
+                const updatedSales = [...sales];
+                updatedSales[saleIndex] = updatedSale;
 
-              // Replace the old sale with the updated one
-              const updatedSales = [...sales];
-              updatedSales[saleIndex] = updatedSale;
+                await updateDoc(saleRef, { sales: updatedSales });
 
-              // Update the sales array in the Firestore document
-              await updateDoc(saleRef, { sales: updatedSales });
-
-              toast.success("Insurance document uploaded successfully");
+                toast.success("Insurance document uploaded successfully");
+              } else {
+                console.log("Sale not found");
+              }
             } else {
-              console.log("Sale not found");
+              console.log("No document found for the current user");
             }
-          } else {
-            console.log("No document found for the current user");
           }
-        }
-      );
+        );
+      }
     }
   };
-
-  // Your JSX for the component
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFile(file);
-      setFileName(file.name);
-      setFileType(file.type);
-    } else {
-      setFile(null);
-      setFileName("");
-      setFileType("");
+    const newFiles = Array.from(event.target.files);
+
+    if (newFiles.length > 0) {
+      const updatedFiles = newFiles.map((file) => ({
+        name: file.name,
+        fileType: file.type,
+        file: file,
+      }));
+
+      setFiles((prevFiles) => [...prevFiles, ...updatedFiles]);
     }
   };
 
-  const renderFileIcon = () => {
+  const renderFileIcon = (fileType) => {
     if (fileType.includes("pdf")) {
       return <FaFilePdf size={20} className="text-red-700" />;
     } else if (fileType.includes("image")) {
       return <IoMdImage size={20} className="text-blue-600" />;
     } else {
-      return <IoDocumentText size={20} className="text-blue-600 " />;
+      return <IoDocumentText size={20} className="text-blue-600" />;
     }
   };
 
@@ -153,28 +144,38 @@ const InsuranceUpload = ({ onClose, sale }) => {
                   type="file"
                   id="uploadFile1"
                   onChange={handleFileChange}
+                  multiple
                   className="hidden"
                 />
                 <p className="mt-2 text-xs font-medium text-gray-400">
                   PNG, JPG SVG, WEBP, and GIF are Allowed.
                 </p>
-                {fileName && (
-                  <p className="flex items-center mt-2 text-sm font-medium text-gray-700">
-                    {renderFileIcon()}
-                    Selected file: {fileName}
-                  </p>
-                )}
               </label>
+
+              {/* Display Selected Files */}
+              {files.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {files.map((file, index) => (
+                    <p
+                      key={index}
+                      className="flex items-center text-sm font-medium text-gray-700"
+                    >
+                      {renderFileIcon(file.fileType)}
+                      {file.name}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               <div className="flex flex-row justify-end w-full gap-x-4">
                 <button
                   className={`inline-block px-5 py-3 mt-3 font-medium text-white rounded shadow-md shadow-indigo-500/20 ${
-                    file
+                    files.length > 0
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-gray-600 cursor-not-allowed"
                   }`}
                   onClick={handleUpload}
-                  disabled={!file}
+                  disabled={files.length === 0}
                 >
                   Upload Insurance
                 </button>

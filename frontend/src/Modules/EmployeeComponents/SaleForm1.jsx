@@ -1,6 +1,10 @@
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { FaChevronDown } from "react-icons/fa6";
 import { GrLinkNext } from "react-icons/gr";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
+import { db } from "../../config/firebaseConfig";
 
 const SaleForm1 = ({
   setShowModal,
@@ -8,6 +12,8 @@ const SaleForm1 = ({
   handleInputChange,
   formData,
 }) => {
+  const [leadSources, setLeadSources] = useState([]);
+  const [selectedLeadSource, setSelectedLeadSource] = useState("");
   const isFormDataValid = () => {
     const requiredFields = [
       formData.customerName,
@@ -28,6 +34,29 @@ const SaleForm1 = ({
       toast.error("Please fill in all required fields");
     }
   };
+
+  const fetchLeads = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "leads"));
+      console.log(querySnapshot);
+      const fetchedLeads = querySnapshot.docs.map((doc) => doc.data().leadName);
+      setLeadSources(fetchedLeads);
+    } catch (error) {
+      console.error("Error fetching leads: ", error);
+      toast.error("Failed to fetch leads: " + error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const handleSelect = (event, setValue) => {
+    console.log(event.target.value);
+
+    setValue(event.target.value);
+  };
+  console.log(selectedLeadSource);
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
@@ -147,15 +176,25 @@ const SaleForm1 = ({
                     >
                       Lead Source
                     </label>
-                    <input
-                      type="text"
-                      id="leadSource"
-                      className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                      placeholder="Lead Source"
-                      required
-                      value={formData.leadSource}
-                      onChange={handleInputChange}
-                    />
+
+                    <div className="relative">
+                      <select
+                        name="leads Sources"
+                        id="leadSource"
+                        value={formData.leadSource}
+                        onChange={handleInputChange}
+                        className="block w-full p-3  appearance-none text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                      >
+                        <option value="">Lead Source</option>
+                        {leadSources.map((lead) => (
+                          <option key={lead} value={lead}>
+                            {lead}
+                          </option>
+                        ))}
+                      </select>
+
+                      <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-end w-full ml-4 border-t border-solid rounded-b border-blueGray-200 ">

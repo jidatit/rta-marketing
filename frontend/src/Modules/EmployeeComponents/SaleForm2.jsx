@@ -2,6 +2,8 @@ import { GrLinkNext } from "react-icons/gr";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { useAuth } from "../../AuthContext";
+
+import { IoArrowBack } from "react-icons/io5";
 const SaleForm2 = ({
   formData,
   setShowModal,
@@ -9,6 +11,7 @@ const SaleForm2 = ({
   setThirdForm,
   setFormData,
   setSecondForm,
+  setFirstForm,
 }) => {
   const { currentUser } = useAuth();
   const calculateGrossProfit = () => {
@@ -78,6 +81,13 @@ const SaleForm2 = ({
       toast.error("Please fill in all required fields");
     }
   };
+
+  const handleGoBack = () => {
+    //code here
+    setSecondForm(false);
+    setFirstForm(true);
+    setShowModal(true);
+  };
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-screen loading-spinner">
@@ -112,9 +122,19 @@ const SaleForm2 = ({
                 {" "}
                 {/* Ensure the body scrolls */}
                 <form className="flex flex-col justify-center items-center w-[80%] mx-auto gap-y-4">
-                  <h1 className="w-full mb-1 text-xl font-extrabold text-black text-start font-radios">
-                    Gross Profit Calculator
-                  </h1>
+                  <div className="self-start  flex gap-4">
+                    <button
+                      onClick={() => {
+                        handleGoBack();
+                      }}
+                    >
+                      <IoArrowBack size={20} />
+                    </button>
+                    <h1 className="w-full mb-1 text-xl font-extrabold text-black text-start font-radios">
+                      Gross Profit Calculator
+                    </h1>
+                  </div>
+
                   <div className="flex flex-row flex-wrap items-center justify-between w-full ">
                     {/* Form fields */}
                     <div className="w-[48%] mb-2">
@@ -311,6 +331,7 @@ const SaleForm2 = ({
                           className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
                           placeholder="Gross Profit"
                           required
+                          disabled
                         />
                       </div>
                     </div>

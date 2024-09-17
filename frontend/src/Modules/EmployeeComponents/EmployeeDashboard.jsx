@@ -21,6 +21,7 @@ const EmployeeDashboard = () => {
   const [Url, setUrl] = useState(false);
   const [secondForm, setSecondForm] = useState(false);
   const [thirdForm, setThirdForm] = useState(false);
+  const [firstForm, setFirstForm] = useState(false);
   const { currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -42,15 +43,12 @@ const EmployeeDashboard = () => {
     safety: "",
     reserve: "",
     grossProfit: "",
-    saleDate: getCurrentDate(), // Use getCurrentDate function to set the current date
-    InsuranceStatus: false, // Set a default value
-    FundStatus: false, // Set a default value
+    saleDate: getCurrentDate(),
+    InsuranceStatus: false,
+    FundStatus: false,
   });
-  const [fileName, setFileName] = useState("");
-  const [file, setFile] = useState(null);
-  const [fileType, setFileType] = useState("");
+  const [files, setFiles] = useState([]);
 
-  // Step 2: Handle input changes
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
     setFormData((prevData) => ({
@@ -63,65 +61,76 @@ const EmployeeDashboard = () => {
     const randomNum = Math.floor(Math.random() * 10000); // Generate a random number from 0 to 9999
     return timestamp + randomNum; // Combine timestamp and random number
   };
-  const handleUpload = async () => {
-    if (file) {
-      console.log(file);
-      const saleId = generateSaleId();
-      // Ensure a unique file name
-      const storageRef = ref(storage, `files/${fileName}`);
 
-      const metadata = {
-        contentType: file.type, // Use the MIME type of the file
+  const handleUpload = async () => {
+    if (files.length > 0) {
+      console.log(files);
+      const saleId = generateSaleId();
+      const documentURLsArray = []; // To store download URLs of all files
+
+      // Loop through each file and upload to Firebase
+      for (const fileObj of files) {
+        const file = fileObj.file; // Extract the actual file object from the file structure
+        const uniqueFileName = `${saleId}_${file.name}`; // Create a unique filename using saleId and file name
+
+        const storageRef = ref(storage, `files/${uniqueFileName}`);
+
+        const metadata = {
+          contentType: file.type, // Set the file's MIME type
+        };
+
+        // Upload file and wait for it to complete
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              console.log(
+                "Upload progress:",
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
+              );
+            },
+            (error) => {
+              console.error("Error uploading file:", error);
+              reject(error); // Handle errors
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              documentURLsArray.push(downloadURL); // Add the download URL to the array
+              resolve();
+            }
+          );
+        });
+      }
+
+      // Once all files are uploaded and URLs are collected
+      const updatedFormData = {
+        ...formData,
+        InsuranceStatus: true,
+        documentUrl: documentURLsArray, // Save array of URLs
+        saleId,
       };
 
-      // Upload file with metadata
-      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+      const saleRef = doc(db, "sales", currentUser.uid);
+      const docSnap = await getDoc(saleRef);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          console.log(
-            "Upload progress:",
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
-          );
-        },
-        (error) => {
-          console.log(error); // Handle any errors
-        },
-        async () => {
-          // Retrieve the download URL after the upload is complete
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setUrl(downloadURL);
+      if (!docSnap.exists()) {
+        // Create a new document if it does not exist
+        await setDoc(saleRef, {
+          sales: [updatedFormData],
+        });
+      } else {
+        // Update the existing document
+        await updateDoc(saleRef, {
+          sales: arrayUnion(updatedFormData),
+        });
+      }
 
-          // Update the formData with the file URL and InsuranceStatus: true
-          const updatedFormData = {
-            ...formData,
-            InsuranceStatus: true,
-            documentUrl: downloadURL, // Use the correct download URL
-            saleId,
-          };
-
-          const saleRef = doc(db, "sales", currentUser.uid);
-          const docSnap = await getDoc(saleRef);
-
-          if (!docSnap.exists()) {
-            // Create a new document if it does not exist
-            await setDoc(saleRef, {
-              sales: [updatedFormData],
-            });
-          } else {
-            // Update the existing document
-            await updateDoc(saleRef, {
-              sales: arrayUnion(updatedFormData),
-            });
-          }
-
-          // Reset formData and form state after upload
-          setFormData({ ...formData, grossProfit: "" });
-          setThirdForm(false);
-          toast.success("New Sale Added Successfully");
-        }
-      );
+      // Reset formData and form state after upload
+      setFormData({ ...formData, grossProfit: "" });
+      setThirdForm(false);
+      toast.success("New Sale Added Successfully");
     }
   };
 
@@ -156,9 +165,9 @@ const EmployeeDashboard = () => {
     } catch (error) {
       console.error("Error adding sale: ", error);
     } finally {
-      setFileName("");
-      setFileType("");
-      setFile(null);
+      // setFileName("");
+      // setFileType("");
+      setFiles([]);
     }
   };
   console.log(setShowModal);
@@ -168,12 +177,16 @@ const EmployeeDashboard = () => {
         <div className="flex flex-col w-full h-full gap-y-8">
           <div className="flex flex-row items-center justify-between w-full">
             <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
-            <div className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300">
+            <div className="">
               {" "}
-              <button type="button" onClick={() => setShowModal(true)}>
+              <button
+                type="button"
+                className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
+                onClick={() => setShowModal(true)}
+              >
                 Add New Sale
+                <FaPlus size={25} />
               </button>
-              <FaPlus size={25} />
             </div>
           </div>
           <SalesRecordTable setShowModal={setShowModal} />
@@ -196,6 +209,7 @@ const EmployeeDashboard = () => {
           formData={formData}
           setThirdForm={setThirdForm}
           setFormData={setFormData}
+          setFirstForm={setFirstForm}
         />
       ) : null}
       {thirdForm ? (
@@ -205,12 +219,9 @@ const EmployeeDashboard = () => {
           handleUpload={handleUpload}
           handleLaterUpload={handleLaterUpload}
           setThirdForm={setThirdForm}
-          file={file}
-          setFile={setFile}
-          fileName={fileName}
-          setFileName={setFileName}
-          fileType={fileType}
-          setFileType={setFileType}
+          files={files}
+          setFiles={setFiles}
+          setSecondForm={setSecondForm}
         />
       ) : null}
     </>

@@ -26,7 +26,7 @@ export const theme = {
       // Add a custom 3xl breakpoint
     },
     borderWidth: {
-      "1": "1px",
+      1: "1px",
     },
     fontFamily: {
       sans: ["Inter", "Helvetica", "Arial", "sans"],
@@ -54,6 +54,9 @@ export const theme = {
   },
   container: {
     center: true,
+  },
+  boxShadow: {
+    "custom-drop": "0 3px 40px rgba(88, 88, 88, 0.25)",
   },
 };
 export const plugins = [];
