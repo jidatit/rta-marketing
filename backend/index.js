@@ -11,7 +11,7 @@ admin.initializeApp({
 });
 
 const app = express();
-app.use(cors({ origin: "https://rta-web.jidatit.uk/" }));
+app.use(cors({ origin: "https://rta-web.jidatit.uk/AdminLayout/users" }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
