@@ -22,7 +22,7 @@ const AllUsersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [currentPage, setCurrentPage] = useState(1);
-  const apiUrl = import.meta.env.VITE_BLOCK_USER_API || "http://localhost:8000";
+  const apiUrl = import.meta.env.VITE_BLOCK_USER_API || "https://rta-marketing.onrender.com";
 
   const fetchUsers = async () => {
     const employeesRef = collection(db, "employees");
