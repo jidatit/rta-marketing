@@ -10,8 +10,10 @@ admin.initializeApp({
   ),
 });
 
+console.log("cors Origin ", process.env.CORS_ORIGIN);
+
 const app = express();
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {

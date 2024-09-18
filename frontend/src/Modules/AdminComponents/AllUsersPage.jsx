@@ -22,7 +22,8 @@ const AllUsersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [currentPage, setCurrentPage] = useState(1);
-  const apiUrl = import.meta.env.VITE_BLOCK_USER_API || "http://localhost:8000";
+
+  const apiUrl = import.meta.env.VITE_BLOCK_USER_API;
 
   const fetchUsers = async () => {
     const employeesRef = collection(db, "employees");
@@ -129,17 +130,16 @@ const AllUsersPage = () => {
           });
         });
       } else {
-        toast.error("No matching document found for the given UID");
+        console.log("No matching document found for the given UID");
       }
 
-      // Update UI (you can refetch users or update state here)
       const updatedUsers = allUsers.map((user) =>
         user.uid === uid ? { ...user, userStatus: "blocked" } : user
       );
       setAllUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
 
-      toast.success("User blocked successfully");
+      toast.success("User blocked successfully", userTypeCollectionRef);
     } catch (error) {
       console.error("Error blocking user: ", error);
     }
@@ -179,7 +179,7 @@ const AllUsersPage = () => {
           });
         });
       } else {
-        toast.error("No matching document found for the given UID");
+        console.log("No matching document found for the given UID");
       }
 
       // Update the UI
@@ -272,14 +272,18 @@ const AllUsersPage = () => {
                         ) : user.userStatus === "blocked" ? (
                           <button
                             className="w-[70%] p-2.5 text-white bg-[#1a9346] rounded-lg"
-                            onClick={() => handleUnblockUser(user.uid)}
+                            onClick={() =>
+                              handleUnblockUser(user.uid, user.userType)
+                            }
                           >
                             Unblock
                           </button>
                         ) : (
                           <button
                             className="w-[70%] p-2.5 text-white bg-red-500 rounded-lg"
-                            onClick={() => handleBlockUser(user.uid)}
+                            onClick={() =>
+                              handleBlockUser(user.uid, user.userType)
+                            }
                           >
                             Block user
                           </button>
