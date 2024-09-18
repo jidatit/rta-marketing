@@ -10,8 +10,10 @@ admin.initializeApp({
   ),
 });
 
+console.log("cors Origin ", process.env.CORS_ORIGIN);
+
 const app = express();
-app.use(cors({ origin: "https://rta-web.jidatit.uk/AdminLayout/users" }));
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
@@ -55,7 +57,7 @@ app.post("/enableUser", async (req, res) => {
   }
 });
 
-const port = 10000;
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
