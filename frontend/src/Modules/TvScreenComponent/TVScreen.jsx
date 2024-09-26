@@ -230,7 +230,7 @@ const TVScreen = () => {
 					</div>
 				</header>
 
-				<div className="flex-grow grid grid-cols-4 gap-4 pb-6">
+				<div className="flex-grow grid grid-cols-4 gap-4 pb-2">
 					<div className="col-span-3 grid grid-cols-3 gap-4">
 						<InfoCard title="Total Leads" value="78" src="icon-1.png" />
 						<InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
@@ -357,12 +357,12 @@ const ClientCard = ({ name, company, color, leadSource }) => (
 
 const PersonCard = ({ name, uid, sales }) => {
 	return (
-		<div className="bg-white p-4 rounded-lg shadow-md border border-[#D9D9D9] h-[90%] overflow-auto">
+		<div className="bg-white p-4 rounded-lg shadow-md border border-[#D9D9D9] h-[100%] overflow-auto">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold mb-4">{name}</h2>
 			</div>
 
-			<div className="grid grid-cols-5 gap-4">
+			<div className="grid grid-cols-6 gap-2">
 				{sales && sales.length > 0 ? (
 					sales.map((sale, idx) => (
 						<ClientCard
