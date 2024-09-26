@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa6";
 import { db } from "../../config/firebaseConfig";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { ToastContainer, toast } from "react-toastify";
 
 const TVScreen = () => {
 	const [SalesPersons, setSalesPersons] = useState(null);
@@ -139,9 +140,6 @@ const TVScreen = () => {
 		return unsubscribe;
 	}, []);
 
-	console.log(SalesPersons);
-	console.log(updatedSalesPerson);
-
 	useEffect(() => {
 		if (updatedSalesPerson.length > 0) {
 			const sortedSalesPersons = updatedSalesPerson.sort(
@@ -205,63 +203,66 @@ const TVScreen = () => {
 	}
 
 	return (
-		<div className="min-h-screen w-full px-12 mx-auto">
-			<header className="flex justify-between items-top py-6">
-				<div className="flex items-start flex-col justify-center">
-					<div className="text-3xl font-extrabold">Logo</div>
-					<p className="text-xl font-bold mt-10">
-						People we have helped this month
-					</p>
-				</div>
-				<div className="flex items-center gap-5">
-					<div className="text-lg font-bold">{getFormattedDate()}</div>
-					<div className="flex justify-end gap-5">
-						<StatButton
-							label="22/20"
-							duration="Mid-Month"
-							color="bg-[#003160]"
-						/>
-						<StatButton
-							label="22/40"
-							duration="End-Month"
-							color="bg-[#1FABFA]"
-						/>
+		<>
+			<ToastContainer />
+			<div className="h-full w-full px-12 mx-auto flex flex-col">
+				<header className="flex justify-between items-top py-6">
+					<div className="flex items-start flex-col justify-center">
+						<div className="text-3xl font-extrabold">Logo</div>
+						<p className="text-xl font-bold mt-10">
+							People we have helped this month
+						</p>
 					</div>
-				</div>
-			</header>
+					<div className="flex items-center gap-5">
+						<div className="text-lg font-bold">{getFormattedDate()}</div>
+						<div className="flex justify-end gap-5">
+							<StatButton
+								label="22/20"
+								duration="Mid-Month"
+								color="bg-[#003160]"
+							/>
+							<StatButton
+								label="22/40"
+								duration="End-Month"
+								color="bg-[#1FABFA]"
+							/>
+						</div>
+					</div>
+				</header>
 
-			<div className="grid grid-cols-4 gap-4">
-				<div className="col-span-3 grid grid-cols-3 gap-4">
-					<InfoCard title="Total Leads" value="78" src="icon-1.png" />
-					<InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
-					<InfoCard title="Conversion Rate" value="21%" src="icon-4.png" />
-				</div>
+				<div className="flex-grow grid grid-cols-4 gap-4 pb-6">
+					<div className="col-span-3 grid grid-cols-3 gap-4">
+						<InfoCard title="Total Leads" value="78" src="icon-1.png" />
+						<InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
+						<InfoCard title="Conversion Rate" value="21%" src="icon-4.png" />
+					</div>
 
-				<div className="col-span-1 row-span-2">
-					<LeadSourcesCard leads={leads} />
-				</div>
+					<div className="col-span-1 row-span-2">
+						<LeadSourcesCard leads={leads} />
+					</div>
 
-				<div className="col-span-3">
-					<h2 className="text-xl font-bold mb-4">Sales Overview</h2>
-					<div className="grid grid-cols-1 gap-4">
-						{sortedSalesPerson && sortedSalesPerson.length > 0 ? (
-							sortedSalesPerson.map((person) => (
-								<PersonCard
-									name={person.name}
-									uid={person.uid}
-									sales={person.sales}
-									key={person.uid}
-								/>
-							))
-						) : (
-							<div className="flex items-center justify-center w-full h-full">
-								No clients to display
-							</div>
-						)}
+					<div className="col-span-3 flex flex-col">
+						<h2 className="text-xl font-bold mb-4">Sales Overview</h2>
+						<div className="flex-grow overflow-auto">
+							{sortedSalesPerson && sortedSalesPerson.length > 0 ? (
+								sortedSalesPerson.map((person) => (
+									<PersonCard
+										name={person.name}
+										uid={person.uid}
+										sales={person.sales}
+										key={person.uid}
+									/>
+								))
+							) : (
+								<div className="flex items-center justify-center w-full h-full">
+									No clients to display
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 };
 
@@ -273,8 +274,8 @@ const InfoCard = ({ title, value, src, delegate = null }) => {
 	return (
 		<div className="bg-white p-4 rounded-md shadow-custom-drop flex items-center space-x-3 justify-between">
 			<div className="w-[55%]">
-				<div className="text-lg font-semibold">{title}</div>
-				<div className="text-xl mt-3">
+				<div className="text-md font-semibold">{title}</div>
+				<div className="text-lg mt-3">
 					{value}
 					{delegate && (
 						<span className="text-xs font-normal block truncate">
@@ -284,7 +285,7 @@ const InfoCard = ({ title, value, src, delegate = null }) => {
 				</div>
 			</div>
 			<div>
-				<img src={src} className="w-20" alt={title} />
+				<img src={src} className="w-10" alt={title} />
 			</div>
 		</div>
 	);
@@ -297,7 +298,7 @@ const LeadSourcesCard = ({ leads }) => {
 	}, {});
 
 	return (
-		<div className="bg-white p-4 rounded-md shadow-custom-drop h-1/2 flex flex-col">
+		<div className="bg-white p-4 rounded-md shadow-custom-drop flex-grow flex flex-col">
 			<div className="p-4 flex-grow flex flex-col">
 				<h2 className="text-xl font-bold mb-4">Lead Sources</h2>
 				<div className="overflow-auto flex-grow">
@@ -309,12 +310,16 @@ const LeadSourcesCard = ({ leads }) => {
 							</tr>
 						</thead>
 						<tbody>
-							{Object.entries(leadSourceCounts).map(([source, count]) => (
-								<tr key={source} className="border-b">
-									<td className="py-2">{source}</td>
-									<td className="text-right py-2">{count}</td>
-								</tr>
-							))}
+							{/* {Object.entries(leadSourceCounts).map(([source, count]) => ( */}
+							<tr className="border-b">
+								<td className="py-2">Zohaib</td>
+								<td className="text-right py-2">8</td>
+							</tr>
+							<tr className="border-b">
+								<td className="py-2">Izabel</td>
+								<td className="text-right py-2">9</td>
+							</tr>
+							{/* // ))} */}
 						</tbody>
 					</table>
 				</div>
@@ -327,8 +332,8 @@ const StatButton = ({ label, color, duration }) => (
 	<button
 		className={` text-white py-4 flex  w-24 h-24 justify-center items-center flex-col rounded-full font-bold ${color}`}
 	>
-		<p className="text-xl "> {label}</p>
-		<span className="text-md">{duration}</span>
+		<p className="text-lg "> {label}</p>
+		<span className="text-sm">{duration}</span>
 	</button>
 );
 
@@ -351,10 +356,8 @@ const ClientCard = ({ name, company, color, leadSource }) => (
 );
 
 const PersonCard = ({ name, uid, sales }) => {
-	console.log("Sales From Person Card", name, sales);
-
 	return (
-		<div className="bg-white p-4 rounded-lg shadow-md border border-[#D9D9D9] h-4/5 overflow-auto">
+		<div className="bg-white p-4 rounded-lg shadow-md border border-[#D9D9D9] h-[90%] overflow-auto">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold mb-4">{name}</h2>
 			</div>
