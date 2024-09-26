@@ -38,7 +38,6 @@ app.post("/disableUser", async (req, res) => {
   }
 });
 
-// Route to enable a user
 app.post("/enableUser", async (req, res) => {
   console.log("unBlock User");
 
