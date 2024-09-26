@@ -339,7 +339,7 @@ const StatButton = ({ label, color, duration }) => (
 
 const ClientCard = ({ name, company, color, leadSource }) => (
 	<div
-		className={`p-2 rounded-lg shadow-md ${color} text-white flex justify-between items-center flex-col`}
+		className={`p-2 rounded-lg shadow-md ${color} text-white flex justify-between items-center flex-col min-w-[173px] max-w-[190px]`}
 	>
 		<div className="flex items-start justify-between gap-4 w-full p-1">
 			<h3 className="font-semibold">{name}</h3>
@@ -362,7 +362,7 @@ const PersonCard = ({ name, uid, sales }) => {
 				<h2 className="text-2xl font-bold mb-4">{name}</h2>
 			</div>
 
-			<div className="grid grid-cols-6 gap-2">
+			<div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2">
 				{sales && sales.length > 0 ? (
 					sales.map((sale, idx) => (
 						<ClientCard
