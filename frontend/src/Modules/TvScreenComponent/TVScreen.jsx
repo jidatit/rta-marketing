@@ -706,12 +706,12 @@ const StatButton = ({ label, color, duration }) => (
 const ClientCard = ({
   name,
   company,
-
+  grossProfit,
   leadSource,
   InsuranceStatus,
   FundStatus,
 }) => {
-  // console.log(name, InsuranceStatus, FundStatus);
+  console.log(name, grossProfit);
   let color = "";
 
   if (FundStatus && InsuranceStatus) {
@@ -734,8 +734,8 @@ const ClientCard = ({
     >
       <div className="flex items-center justify-between gap-4 w-full p-1">
         <h3 className="font-semibold">{name}</h3>
-        
-          <FaCircleCheck/>
+
+        {grossProfit > 10000 ? <FaCircleCheck /> : null}
       </div>
 
       <div className="flex items-start justify-between gap-4 w-full p-1">
@@ -777,6 +777,7 @@ const PersonCard = ({ name, uid, sales }) => {
               leadSource={sale.leadSource}
               FundStatus={sale.FundStatus}
               InsuranceStatus={sale.InsuranceStatus}
+              grossProfit={sale.grossProfit}
             />
           ))
         ) : (
