@@ -637,7 +637,7 @@ const TVScreen = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-4 gap-8 mb-8  w-[100%] ">
+        <div className="grid grid-cols-4 gap-3 mb-8  max-w-[1500px] ">
           <InfoCard title="Total Leads" value="78" src="icon-1.png" />
           {/* <InfoCard
             title="Lead Sources"
@@ -703,29 +703,55 @@ const StatButton = ({ label, color, duration }) => (
   </button>
 );
 
-const ClientCard = ({ name, company, color, leadSource }) => (
-  <div
-    className={`p-2 rounded-lg shadow-md ${color} text-white flex justify-between items-center flex-col`}
-  >
-    <div className="flex items-start justify-between gap-4 w-full p-1">
-      <h3 className="font-semibold">{name}</h3>
-    </div>
+const ClientCard = ({
+  name,
+  company,
 
-    <div className="flex items-start justify-between gap-4 w-full p-1">
-      <p className="text-sm">{company}</p>
+  leadSource,
+  InsuranceStatus,
+  FundStatus,
+}) => {
+  // console.log(name, InsuranceStatus, FundStatus);
+  let color = "";
 
-      <div>
-        <p className="text-sm ">{leadSource}</p>
+  if (FundStatus && InsuranceStatus) {
+    color = "#10C900";
+  } else if (InsuranceStatus && !FundStatus) {
+    console.log(
+      "InsuranceStatus && !FundStatus",
+      name,
+      InsuranceStatus,
+      FundStatus
+    );
+    color = "#0E376C";
+  } else {
+    color = "#6636C0";
+  }
+
+  return (
+    <div
+      className={`p-2 rounded-lg shadow-md bg-[${color}] max-w-[185px]  text-white flex justify-between items-center flex-col`}
+    >
+      <div className="flex items-start justify-between gap-4 w-full p-1">
+        <h3 className="font-semibold">{name}</h3>
+      </div>
+
+      <div className="flex items-start justify-between gap-4 w-full p-1">
+        <p className="text-sm">{company}</p>
+
+        <div>
+          <p className="text-sm ">{leadSource}</p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const PersonCard = ({ name, uid, sales }) => {
   console.log("Sales From Person Card", name, sales);
 
   return (
-    <div className="bg-white p-4 rounded-lg  border border-[#5f5f5f]  shadow-lg max-h-[950px] overflow-auto masonry-item">
+    <div className="bg-white p-4 rounded-lg  border border-[#989898]  m-1 shadow-lg max-w-[650px] h-fit  overflow-auto masonry-item">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold mb-4">{name}</h2>
 
@@ -739,7 +765,7 @@ const PersonCard = ({ name, uid, sales }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 ">
+      <div className="grid masonry-2 gap-4 ">
         {sales && sales.length > 0 ? (
           sales.map((sale, idx) => (
             <ClientCard
@@ -747,7 +773,8 @@ const PersonCard = ({ name, uid, sales }) => {
               name={sale.customerName}
               company={sale.vehicleMake}
               leadSource={sale.leadSource}
-              color={"bg-[#0E376C]"}
+              FundStatus={sale.FundStatus}
+              InsuranceStatus={sale.InsuranceStatus}
             />
           ))
         ) : (
