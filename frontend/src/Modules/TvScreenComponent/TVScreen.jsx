@@ -455,7 +455,7 @@
 // export default TVScreen;
 
 import React, { useEffect, useState } from "react";
-import { FaCheck, FaFacebookF } from "react-icons/fa6";
+import { FaCheck, FaCircleCheck, FaFacebookF } from "react-icons/fa6";
 import { db } from "../../config/firebaseConfig";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 
@@ -732,8 +732,11 @@ const ClientCard = ({
     <div
       className={`p-2 rounded-lg shadow-md bg-[${color}] max-w-[185px]  text-white flex justify-between items-center flex-col`}
     >
-      <div className="flex items-start justify-between gap-4 w-full p-1">
+      <div className="flex items-center justify-between gap-4 w-full p-1">
         <h3 className="font-semibold">{name}</h3>
+        {FundStatus && InsuranceStatus && (
+          <FaCircleCheck/>
+        )}
       </div>
 
       <div className="flex items-start justify-between gap-4 w-full p-1">
