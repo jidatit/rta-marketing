@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { useAuth } from "../../AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import logo from "../../images/rta-logo.png"
 
 const SignUpPage = () => {
   const [selected, setSelected] = useState("SignUp As");
@@ -131,7 +132,7 @@ const SignUpPage = () => {
   return (
     <div className="flex flex-col justify-center items-center w-screen bg-[#1332b9] h-screen">
       <div className="flex flex-col items-center w-[50%] justify-center bg-white rounded-md shadow-lg gap-y-8 px-10 py-14">
-        <h1 className="text-3xl font-bold text-black">Logo</h1>
+        <img src={logo} className="max-w-[220px]" />
         <div className="flex flex-col items-center justify-center w-full gap-y-8">
           <h1 className="text-2xl font-bold text-black">SignUp Form</h1>
           <div className="flex flex-col items-center justify-center w-full">

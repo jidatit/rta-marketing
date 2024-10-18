@@ -458,6 +458,8 @@ import React, { useEffect, useState } from "react";
 import { FaCheck, FaCircleCheck, FaFacebookF } from "react-icons/fa6";
 import { db } from "../../config/firebaseConfig";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import logo from "../../images/rta-logo.png"
+import { Link } from "react-router-dom";
 
 const TVScreen = () => {
   const [SalesPersons, setSalesPersons] = useState(null);
@@ -615,7 +617,9 @@ const TVScreen = () => {
       <div className=" min-h-screen  w-full  px-12 mx-auto">
         <header className="flex justify-between items-top pt-6 pb-2">
           <div className=" flex  gap-8  items-center justify-center">
-            <div className="text-3xl font-extrabold">Logo</div>
+            <Link to="/">
+              <img src={logo} className="max-w-[220px]" />
+            </Link>
             <p className="text-2xl font-bold">
               People we have helped this month
             </p>

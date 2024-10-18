@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../../index.css";
+import logo from "../../images/rta-logo.png"
 
 const AdminSidebar = () => {
   // Initialize activeItem with a value from localStorage or default to "Sales"
@@ -24,8 +25,8 @@ const AdminSidebar = () => {
   return (
     <div className="bg-[#234dc0] h-full w-full">
       <div className="flex flex-col items-center justify-start w-full h-full px-5 py-5 gap-y-10">
-        <div className="flex w-full">
-          <h1 className="text-2xl font-bold text-white">Logo</h1>
+        <div className="flex w-full justify-center bg-white py-2 rounded-lg">
+          <img src={logo} className="max-w-[160px]" />
         </div>
         <div className="flex flex-col w-full gap-y-4">
           {menuItems.map((item, index) => (
