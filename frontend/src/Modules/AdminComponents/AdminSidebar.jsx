@@ -9,10 +9,11 @@ const AdminSidebar = () => {
   });
 
   const [menuItems] = useState([
-    { name: "Sales", route: "sales" },
+    { name: "Sales", route: "/" },
     { name: "Lead Source", route: "leads-source" },
     // { name: "Sales Person", route: "sales-person" },
     { name: "Users", route: "users" },
+    { name: "TV Screen", route: "/tv" },
   ]);
 
   const handleItemClick = (item) => {

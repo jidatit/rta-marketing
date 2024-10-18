@@ -117,11 +117,16 @@ function App() {
                 />
               </Route>
               <Route path="/AdminLayout" element={<AdminLayout />}>
-                <Route
+                {/* <Route
                   index
                   element={
                     currentUser ? <AdminDashboard /> : <Navigate to="/" />
                   }
+                /> */}
+                <Route
+                  index
+                  // path="sales"
+                  element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                 />
                 {/* <Route
                   path="users"
@@ -136,10 +141,6 @@ function App() {
                 <Route
                   path="leads-source"
                   element={currentUser ? <LeadSource /> : <Navigate to="/" />}
-                />
-                <Route
-                  path="sales"
-                  element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                 />
                 <Route
                   path="sales-person"
