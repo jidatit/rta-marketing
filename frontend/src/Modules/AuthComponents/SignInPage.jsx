@@ -144,7 +144,7 @@ const SignInPage = () => {
                   <p className="text-black cursor-pointer">Not a member?</p>
                   <Link to={"/signUp"} className="w-full">
                     <button className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full">
-                      SignUp
+                      Sign Up
                     </button>
                   </Link>
                 </div>

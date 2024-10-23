@@ -32,6 +32,23 @@ const SideBar = () => {
               Sales
             </p>
           </Link>
+          <Link
+            to="/tv"
+            className={`w-full transition-all duration-300 ease-in-out rounded-md ${
+              activeItem === "tv"
+                ? "bg-white rounded-md shadow-lg"
+                : "hover:bg-white rounded-md hover:text-blue-900"
+            }`}
+            onClick={() => handleItemClick("tv")}
+          >
+            <p
+              className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
+                activeItem === "tv" ? "text-blue-800" : "text-white"
+              }`}
+            >
+              TV Screen
+            </p>
+          </Link>
         </div>
       </div>
     </div>

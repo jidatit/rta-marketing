@@ -16,9 +16,9 @@ export const AuthProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("isEmailVerified")) || false
   );
   const [loading, setLoading] = useState(true);
-  console.log(currentUser);
+  // console.log(currentUser);
   const getUserInfo = async (uid) => {
-    console.log(uid);
+    // console.log(uid);
 
     const queryCollection = async (collectionName) => {
       const q = query(collection(db, collectionName), where("uid", "==", uid));
@@ -35,23 +35,23 @@ export const AuthProvider = ({ children }) => {
 
     let userData = await queryCollection("admins");
     if (userData) {
-      console.log("User Data from admins:", userData);
+      // console.log("User Data from admins:", userData);
       return userData;
     }
 
     userData = await queryCollection("employees");
     if (userData) {
-      console.log("User Data from employees:", userData);
+      // console.log("User Data from employees:", userData);
       return userData;
     }
 
     userData = await queryCollection("virtual-assistants");
     if (userData) {
-      console.log("User Data from virtual-assistants:", userData);
+      // console.log("User Data from virtual-assistants:", userData);
       return userData;
     }
 
-    console.log("No such document!");
+    // console.log("No such document!");
     return null;
   };
 
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("isEmailVerified");
       localStorage.removeItem("userType");
 
-      console.log("User signed out successfully");
+      // console.log("User signed out successfully");
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
   const verifyEmail = async () => {
     try {
       await sendEmailVerification(auth.currentUser);
-      console.log("Email verification sent!");
+      // console.log("Email verification sent!");
     } catch (error) {
       toast.error("Error sending email verification:", error);
     }

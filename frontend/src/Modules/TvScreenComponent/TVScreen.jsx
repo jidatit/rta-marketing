@@ -547,8 +547,8 @@ const TVScreen = () => {
     return unsubscribe;
   }, [SalesPersons]);
 
-  console.log(SalesPersons);
-  console.log(updatedSalesPerson);
+  // console.log(SalesPersons);
+  // console.log(updatedSalesPerson);
 
   useEffect(() => {
     if (updatedSalesPerson.length > 0) {
@@ -556,10 +556,10 @@ const TVScreen = () => {
         (a, b) => b.totalSales - a.totalSales
       );
       setSortedSalesPerson(sortedSalesPersons);
-      const totalSalesCount = updatedSalesPerson.reduce(
-        (total, person) => total + person.totalSales,
-        0
-      );
+      const totalSalesCount = updatedSalesPerson.reduce((total, person) => {
+        return total + (person?.totalSales || 0); // Check if person and totalSales exist
+      }, 0);
+      
       setTotalSales(totalSalesCount);
     }
   }, [updatedSalesPerson]);
@@ -659,10 +659,10 @@ const TVScreen = () => {
             sortedSalesPerson.map((person) => {
               return (
                 <PersonCard
-                  name={person.name}
-                  uid={person.uid}
-                  sales={person.sales}
-                  key={person.uid}
+                  name={person?.name}
+                  uid={person?.uid}
+                  sales={person?.sales}
+                  key={person?.uid}
                 />
               );
             })
@@ -715,18 +715,18 @@ const ClientCard = ({
   InsuranceStatus,
   FundStatus,
 }) => {
-  console.log(name, grossProfit);
+  // console.log(name, grossProfit);
   let color = "";
 
   if (FundStatus && InsuranceStatus) {
     color = "#10C900";
   } else if (InsuranceStatus && !FundStatus) {
-    console.log(
-      "InsuranceStatus && !FundStatus",
-      name,
-      InsuranceStatus,
-      FundStatus
-    );
+    // console.log(
+    //   "InsuranceStatus && !FundStatus",
+    //   name,
+    //   InsuranceStatus,
+    //   FundStatus
+    // );
     color = "#0E376C";
   } else {
     color = "#6636C0";
@@ -754,7 +754,7 @@ const ClientCard = ({
 };
 
 const PersonCard = ({ name, uid, sales }) => {
-  console.log("Sales From Person Card", name, sales);
+  // console.log("Sales From Person Card", name, sales);
 
   return (
     <div className="bg-white p-4 rounded-lg  border border-[#989898]  m-1 shadow-lg max-w-[650px] h-fit  overflow-auto masonry-item">

@@ -57,11 +57,11 @@ const EmployeeSales = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        console.log("Document data:", docSnap.data());
-        console.log("Getted Data", docSnap.data().sales);
+        // console.log("Document data:", docSnap.data());
+        // console.log("Getted Data", docSnap.data().sales);
         setAllSales(docSnap.data().sales);
       } else {
-        console.log("No such document!");
+        // console.log("No such document!");
       }
     } catch (error) {
       console.error("Error getting document:", error);
@@ -71,7 +71,7 @@ const EmployeeSales = () => {
   const fetchLeads = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "leads"));
-      console.log(querySnapshot);
+      // console.log(querySnapshot);
       const fetchedLeads = querySnapshot.docs.map((doc) => doc.data().leadName);
       setLeadSources(fetchedLeads);
     } catch (error) {
@@ -81,7 +81,7 @@ const EmployeeSales = () => {
   };
 
   const handleOpenViewModal = (sale) => {
-    console.log("Open View Model", sale);
+    // console.log("Open View Model", sale);
     setSale(sale);
     setIsViewModalOpen(true);
   };
@@ -102,11 +102,11 @@ const EmployeeSales = () => {
       const updatedArrayItems = arrayItem.filter(
         (item) => item.saleId !== saleId
       );
-      console.log(arrayItem);
-      console.log(updatedArrayItems);
+      // console.log(arrayItem);
+      // console.log(updatedArrayItems);
       await updateDoc(docRef, { sales: updatedArrayItems });
       fetchSales();
-      console.log(`Object with salesid ${saleId} deleted successfully!`);
+      // console.log(`Object with salesid ${saleId} deleted successfully!`);
       toast.success("sale deleted Successfully");
     } catch (error) {
       console.error("Error deleting object:", error);
@@ -122,7 +122,7 @@ const EmployeeSales = () => {
     setRowsPerPage(Number(event.target.value));
     setCurrentPage(1);
   };
-  console.log("ALL sales from sales page", allSales);
+  // console.log("ALL sales from sales page", allSales);
 
   const handleFilter = () => {
     let filtered = allSales;
@@ -159,7 +159,7 @@ const EmployeeSales = () => {
     setCurrentPage(1);
     setSelectedLeadSource("");
     setShowDateFilter(false);
-    console.log(showDateFilter);
+    // console.log(showDateFilter);
   };
   const handleFilterToggle = () => {
     setShowFilters(!showFilters);
@@ -182,12 +182,12 @@ const EmployeeSales = () => {
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   const handleSelect = (event, setValue) => {
-    console.log(event.target.value);
+    // console.log(event.target.value);
     if (event.target.value === "") setFilteredClients(allSales);
 
     setValue(event.target.value);
   };
-  console.log(selectedLeadSource);
+  // console.log(selectedLeadSource);
 
   if (!allSales) {
     return <div>loading...</div>;

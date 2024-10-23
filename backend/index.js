@@ -10,7 +10,7 @@ admin.initializeApp({
   ),
 });
 
-console.log("cors Origin ", process.env.CORS_ORIGIN);
+// console.log("cors Origin ", process.env.CORS_ORIGIN);
 
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN }));
@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/disableUser", async (req, res) => {
-  console.log("Block User");
+  // console.log("Block User");
 
   const { uid } = req.body;
 
@@ -39,7 +39,7 @@ app.post("/disableUser", async (req, res) => {
 });
 
 app.post("/enableUser", async (req, res) => {
-  console.log("unBlock User");
+  // console.log("unBlock User");
 
   const { uid } = req.body;
 
@@ -58,5 +58,5 @@ app.post("/enableUser", async (req, res) => {
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  // console.log(`Server running on port ${port}`);
 });
