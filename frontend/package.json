@@ -44,6 +44,7 @@
     "dotenv": "^16.4.5",
     "firebase": "^10.12.5",
     "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.453.0",
     "mock-aws-s3": "^4.0.2",
     "nock": "^13.5.4",
     "pdfjs-dist": "^3.11.174",

@@ -23,6 +23,7 @@ import {
 import { FaCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import SalesTable from "./SalesTable";
+import SalesHeader from "./SalesHeader";
 
 const SalesPage = ({ setShowModal }) => {
   const [allSales, setAllSales] = useState([]);
@@ -242,7 +243,8 @@ const SalesPage = ({ setShowModal }) => {
     <>
       <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
         <div className="flex flex-col w-full h-full gap-y-8  ">
-          <div className="text-[24px] pt-4 font-bold">Sales</div>
+          <SalesHeader />
+
           <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
             <div className="w-full text-end flex justify-end">
               <button
