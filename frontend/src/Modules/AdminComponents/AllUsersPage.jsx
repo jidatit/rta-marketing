@@ -130,7 +130,7 @@ const AllUsersPage = () => {
           });
         });
       } else {
-        console.log("No matching document found for the given UID");
+        // console.log("No matching document found for the given UID");
       }
 
       const updatedUsers = allUsers.map((user) =>
@@ -179,7 +179,7 @@ const AllUsersPage = () => {
           });
         });
       } else {
-        console.log("No matching document found for the given UID");
+        // console.log("No matching document found for the given UID");
       }
 
       // Update the UI

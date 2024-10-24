@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useAuth } from "../../AuthContext";
 import "react-toastify/dist/ReactToastify.css";
+import logo from "../../images/rta-logo.png"
+
 const SignInPage = () => {
   const [email, setEmail] = useState("");
   const { currentUser } = useAuth();
@@ -75,7 +77,7 @@ const SignInPage = () => {
   return (
     <div className="flex flex-col justify-center items-center w-screen bg-[#061861] h-screen">
       <div className="flex flex-col items-center w-[50%] justify-center bg-white rounded-md shadow-lg gap-y-12 p-10">
-        <h1 className="text-3xl font-bold text-black">Logo</h1>
+        <img src={logo} className="max-w-[220px]" />
         <div className="flex flex-col items-center justify-center w-full gap-y-8">
           <h1 className="text-2xl font-bold text-black">Login Form</h1>
           <div className="flex flex-col items-center justify-center w-full">
@@ -144,11 +146,8 @@ const SignInPage = () => {
                 <div className="flex flex-col items-end justify-end w-full">
                   <p className="text-black cursor-pointer">Not a member?</p>
                   <Link to={"/signUp"} className="w-full">
-                    <button
-                      className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full"
-                      type="button"
-                    >
-                      SignUp
+                    <button className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full">
+                      Sign Up
                     </button>
                   </Link>
                 </div>
