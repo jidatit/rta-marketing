@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 import { useAuth } from "../../AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../../images/rta-logo.png"
+import logo from "../../images/rta-logo.png";
 
 const SignUpPage = () => {
   const [selected, setSelected] = useState("SignUp As");
@@ -210,7 +210,10 @@ const SignUpPage = () => {
                 <div className="flex flex-col items-end justify-end w-full">
                   <p className="text-black cursor-pointer">Already a member?</p>
                   <Link to={"/signIn"} className="w-full">
-                    <button className="bg-[#043758] rounded-md text-white shadow-lg p-4 w-full">
+                    <button
+                      className="bg-[#043758] rounded-md text-white shadow-lg p-4 w-full"
+                      type="button"
+                    >
                       Login
                     </button>
                   </Link>
