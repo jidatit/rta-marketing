@@ -14,20 +14,121 @@ import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 
 const SalesHeader = () => {
   const [showModal, setShowModal] = useState(false);
-
+  const [showLimitModal, setShowLimitModal] = useState(false);
   return (
     <>
       <div className="flex items-center justify-between w-full">
         <div className="text-2xl pt-4 font-bold">Sales</div>
-        <button
-          className="bg-blue-900 text-white px-10 py-2 rounded-full text-2xl"
-          onClick={() => setShowModal(true)}
-        >
-          Lead sources
-        </button>
+        <div className="flex flex-row gap-4">
+          <button
+            className="bg-blue-900 text-white px-10 py-2 rounded-full text-2xl"
+            onClick={() => setShowModal(true)}
+          >
+            Lead sources
+          </button>
+          <button
+            className="bg-blue-900 text-white px-10 py-2 rounded-full text-2xl"
+            onClick={() => setShowLimitModal(true)}
+          >
+            Set Limit
+          </button>
+        </div>
       </div>
       <LeadSourceModal open={showModal} onClose={() => setShowModal(false)} />
+      <LimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+      />
     </>
+  );
+};
+
+const LimitModal = ({ open, onClose }) => {
+  const [limit, setLimit] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (limit.trim() === "") {
+      toast.error("Limit cannot be empty");
+      return;
+    }
+    try {
+      await addDoc(collection(db, "SalesLimit"), {
+        limit: limit,
+        createdAt: new Date(),
+      });
+      toast.success("Limit added successfully!");
+      onClose();
+      setLimit("");
+    } catch (error) {
+      toast.error("Error adding lead: " + error.message);
+    }
+  };
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          width: "60%",
+          maxWidth: "700px",
+          margin: "32px auto",
+          borderRadius: "12px",
+          height: "auto",
+          maxHeight: "90vh",
+        },
+      }}
+    >
+      <DialogContent
+        sx={{
+          padding: "24px",
+          overflow: "auto",
+        }}
+      >
+        <DialogTitle sx={{ padding: "0 0 24px 0" }}>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold font-radios">Set Limit</h1>
+          </div>
+        </DialogTitle>
+        <div className="w-full px-6">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col w-full items-end"
+          >
+            <label
+              htmlFor="sales-limit"
+              className="text-xl font-medium self-start"
+            >
+              {"Sales Limit"}
+            </label>
+            <input
+              type="number"
+              value={limit}
+              placeholder="Sales Limit"
+              className="block border-2 w-full border-gray-300 p-3 rounded-md my-2"
+              onChange={(e) => setLimit(e.target.value)}
+            />
+            <div className="flex gap-4 mt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-8 py-2 text-xl rounded-md border-2 border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-blue-900 text-white py-2 px-8 text-xl rounded-md"
+              >
+                Upload
+              </button>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

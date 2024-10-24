@@ -5,6 +5,7 @@ import { useAuth } from "../../AuthContext";
 import { useEffect } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import FloatingTVButton from "../../shared/TvFloatingButton";
 const EmployeeLayout = () => {
   const navigate = useNavigate();
   const { isEmailVerified } = useAuth();
@@ -24,8 +25,9 @@ const EmployeeLayout = () => {
         </div>
         <div className="w-[85%] flex flex-col h-screen overflow-y-auto">
           <Navbar />
-          <div className="flex items-start justify-center flex-grow w-full">
+          <div className="flex flex-col items-start justify-center flex-grow w-full">
             <Outlet />
+            <FloatingTVButton />
           </div>
         </div>
       </div>

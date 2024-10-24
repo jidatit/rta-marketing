@@ -12,7 +12,8 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // State to manage loading
   const navigate = useNavigate();
-  const handleForgotPassword = () => {
+  const handleForgotPassword = (e) => {
+    e.preventDefault(); // Prevent form submission when clicking forgot password
     navigate("/forgotPassword");
   };
   const LoginUser = async (e) => {
@@ -47,7 +48,7 @@ const SignInPage = () => {
       // Check in "admins" collection
       let userData = await queryCollection("admins");
       if (userData) {
-        navigate("/AdminLayout");
+        navigate("/AdminLayout/sales");
       }
 
       // Check in "employees" collection
@@ -81,6 +82,7 @@ const SignInPage = () => {
             <form
               className="w-[45%] flex flex-col items-center justify-center gap-y-6"
               onSubmit={LoginUser}
+              noValidate
             >
               <input
                 type="text"
@@ -101,6 +103,7 @@ const SignInPage = () => {
               <div className="flex flex-col items-center justify-center w-full gap-y-5">
                 <div className="flex flex-col items-end justify-end w-full">
                   <button
+                    type="button"
                     className="text-black cursor-pointer"
                     onClick={handleForgotPassword} // Handle forgot password navigation
                   >
@@ -141,7 +144,10 @@ const SignInPage = () => {
                 <div className="flex flex-col items-end justify-end w-full">
                   <p className="text-black cursor-pointer">Not a member?</p>
                   <Link to={"/signUp"} className="w-full">
-                    <button className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full">
+                    <button
+                      className="bg-[#004e81] rounded-md text-white shadow-lg p-4 w-full"
+                      type="button"
+                    >
                       SignUp
                     </button>
                   </Link>

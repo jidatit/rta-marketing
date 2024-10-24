@@ -212,7 +212,7 @@ const EmployeeSales = () => {
               </div>
             </div>
           </div>
-          <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
+          <div className="relative p-2 bg-white shadow-lg sm:rounded-lg  ">
             <div className="w-full text-end flex justify-end">
               <button
                 onClick={handleFilterToggle}

@@ -4,6 +4,7 @@ import "../../index.css";
 import AdminSidebar from "./AdminSidebar";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import FloatingTVButton from "../../shared/TvFloatingButton";
 const AdminLayout = () => {
   return (
     <>
@@ -13,8 +14,9 @@ const AdminLayout = () => {
         </div>
         <div className="w-[85%] flex flex-col h-full">
           <Navbar />
-          <div className="flex items-center justify-center flex-grow w-full overflow-auto">
+          <div className="flex flex-col items-center justify-center flex-grow w-full overflow-auto">
             <Outlet />
+            <FloatingTVButton />
           </div>
         </div>
       </div>{" "}

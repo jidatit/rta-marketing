@@ -4,7 +4,7 @@ const SalesTable = ({
   handleOpenViewModal,
 }) => {
   return (
-    <table className="w-full  text-sm text-left text-black rtl:text-right dark:text-black font-radios">
+    <table className="w-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
       <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white rounded-t-md">
         <tr>
           <th scope="col" className="px-4 py-4 rounded-tl-md">
