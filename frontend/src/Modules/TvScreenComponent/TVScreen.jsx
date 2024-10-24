@@ -457,9 +457,17 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck, FaCircleCheck, FaFacebookF } from "react-icons/fa6";
 import { db } from "../../config/firebaseConfig";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import logo from "../../images/rta-logo.png"
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import logo from "../../images/rta-logo.png";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const TVScreen = () => {
   const [SalesPersons, setSalesPersons] = useState(null);
@@ -559,7 +567,7 @@ const TVScreen = () => {
       const totalSalesCount = updatedSalesPerson.reduce((total, person) => {
         return total + (person?.totalSales || 0); // Check if person and totalSales exist
       }, 0);
-      
+
       setTotalSales(totalSalesCount);
     }
   }, [updatedSalesPerson]);
@@ -715,6 +723,25 @@ const ClientCard = ({
   InsuranceStatus,
   FundStatus,
 }) => {
+  const [limit, setLimit] = useState([]);
+  React.useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "SalesLimit"));
+      const fetchedLimits = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        limit: doc.data().limit,
+      }));
+
+      setLimit(fetchedLimits);
+    } catch (error) {
+      console.error("Error fetching leads: ", error);
+      toast.error("Failed to fetch leads: " + error.message);
+    }
+  };
   // console.log(name, grossProfit);
   let color = "";
 
@@ -739,7 +766,7 @@ const ClientCard = ({
       <div className="flex items-center justify-between gap-4 w-full p-1">
         <h3 className="font-semibold">{name}</h3>
 
-        {grossProfit >= 10000 ? <FaCircleCheck /> : null}
+        {grossProfit >= Number(limit[0]?.limit) ? <FaCircleCheck /> : null}
       </div>
 
       <div className="flex items-start justify-between gap-4 w-full p-1">

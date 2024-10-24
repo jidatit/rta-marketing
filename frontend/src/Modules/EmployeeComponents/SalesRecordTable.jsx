@@ -172,7 +172,7 @@ const SaleRecordTable = ({ setShowModal }) => {
 
   return (
     <>
-      <div className="relative h-full p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
+      <div className="relative p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
         <div className="w-full text-end flex justify-end">
           <button
             onClick={handleFilterToggle}
@@ -228,7 +228,7 @@ const SaleRecordTable = ({ setShowModal }) => {
           </div>
         </div>
 
-        <table className="w-full h-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
+        <table className="w-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
           <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white rounded-t-md">
             <tr>
               <th scope="col" className="px-4 py-4 rounded-tl-md">

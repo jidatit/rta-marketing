@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useAuth } from "../../AuthContext";
 import "react-toastify/dist/ReactToastify.css";
-import logo from "../../images/rta-logo.png"
+import logo from "../../images/rta-logo.png";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -50,7 +50,7 @@ const SignInPage = () => {
       // Check in "admins" collection
       let userData = await queryCollection("admins");
       if (userData) {
-        navigate("/AdminLayout/sales");
+        navigate("/AdminLayout");
       }
 
       // Check in "employees" collection

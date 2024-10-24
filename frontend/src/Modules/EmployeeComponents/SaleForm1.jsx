@@ -5,12 +5,17 @@ import { GrLinkNext } from "react-icons/gr";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { db } from "../../config/firebaseConfig";
-
+import { format } from "date-fns";
+const getCurrentDate = () => {
+  const now = new Date();
+  return format(now, "dd MMMM yyyy");
+};
 const SaleForm1 = ({
   setShowModal,
   setSecondForm,
   handleInputChange,
   formData,
+  setFormData,
 }) => {
   const [leadSources, setLeadSources] = useState([]);
   const [selectedLeadSource, setSelectedLeadSource] = useState("");
@@ -25,6 +30,7 @@ const SaleForm1 = ({
     ];
     return requiredFields.every((value) => value.trim() !== "");
   };
+
   const handleFirstNext = () => {
     if (isFormDataValid()) {
       console.log(formData);

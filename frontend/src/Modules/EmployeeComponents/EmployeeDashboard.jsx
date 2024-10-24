@@ -61,10 +61,11 @@ const EmployeeDashboard = () => {
     const randomNum = Math.floor(Math.random() * 10000); // Generate a random number from 0 to 9999
     return timestamp + randomNum; // Combine timestamp and random number
   };
-
+  const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
   const handleUpload = async () => {
     if (files.length > 0) {
-      console.log(files);
+      setLoading(true);
       const saleId = generateSaleId();
       const documentURLsArray = []; // To store download URLs of all files
 
@@ -128,7 +129,31 @@ const EmployeeDashboard = () => {
       }
 
       // Reset formData and form state after upload
-      setFormData({ ...formData, grossProfit: "" });
+      setLoading(false);
+      setFiles([]);
+      setFormData({
+        saleId: "",
+        customerName: "",
+        vehicleMake: "",
+        vehicleModel: "",
+        stockNumber: "",
+        VIN: "",
+        leadSource: "",
+        salePrice: "",
+        unitCost: "",
+        warCost: "",
+        warr: "",
+        gap: "",
+        gapCost: "",
+        admin: "",
+        pac: "",
+        safety: "",
+        reserve: "",
+        grossProfit: "",
+        saleDate: getCurrentDate(),
+        InsuranceStatus: false,
+        FundStatus: false,
+      });
       setThirdForm(false);
       toast.success("New Sale Added Successfully");
     }
@@ -136,6 +161,7 @@ const EmployeeDashboard = () => {
 
   const handleLaterUpload = async () => {
     try {
+      setLoading2(true);
       const saleId = generateSaleId(); // Generate a unique sale ID
       const updatedFormData = {
         ...formData,
@@ -157,9 +183,34 @@ const EmployeeDashboard = () => {
       }
 
       // Wait for the update to complete before updating the formData state
-      setFormData({ ...formData, grossProfit: "" });
+      // setFormData({ ...formData, grossProfit: "" });
 
       // Reset grossProfit
+      setLoading2(false);
+      setFiles([]);
+      setFormData({
+        saleId: "",
+        customerName: "",
+        vehicleMake: "",
+        vehicleModel: "",
+        stockNumber: "",
+        VIN: "",
+        leadSource: "",
+        salePrice: "",
+        unitCost: "",
+        warCost: "",
+        warr: "",
+        gap: "",
+        gapCost: "",
+        admin: "",
+        pac: "",
+        safety: "",
+        reserve: "",
+        grossProfit: "",
+        saleDate: getCurrentDate(),
+        InsuranceStatus: false,
+        FundStatus: false,
+      });
       setThirdForm(false);
       toast.success("New Sale Added Successfully");
     } catch (error) {
@@ -173,7 +224,7 @@ const EmployeeDashboard = () => {
   console.log(setShowModal);
   return (
     <>
-      <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto ">
+      <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full ">
         <div className="flex flex-col w-full h-full gap-y-8">
           <div className="flex flex-row items-center justify-between w-full">
             <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
@@ -199,6 +250,7 @@ const EmployeeDashboard = () => {
           setSecondForm={setSecondForm}
           handleInputChange={handleInputChange}
           formData={formData}
+          setFormData={setFormData}
         />
       ) : null}
       {secondForm ? (
@@ -222,6 +274,8 @@ const EmployeeDashboard = () => {
           files={files}
           setFiles={setFiles}
           setSecondForm={setSecondForm}
+          loading={loading}
+          loading2={loading2}
         />
       ) : null}
     </>
