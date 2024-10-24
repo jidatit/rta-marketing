@@ -21,13 +21,13 @@ const SalesHeader = () => {
         <div className="text-2xl pt-4 font-bold">Sales</div>
         <div className="flex flex-row gap-4">
           <button
-            className="bg-blue-900 text-white px-10 py-2 rounded-full text-2xl"
+            className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
             onClick={() => setShowModal(true)}
           >
             Lead sources
           </button>
           <button
-            className="bg-blue-900 text-white px-10 py-2 rounded-full text-2xl"
+            className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
             onClick={() => setShowLimitModal(true)}
           >
             Set Limit
