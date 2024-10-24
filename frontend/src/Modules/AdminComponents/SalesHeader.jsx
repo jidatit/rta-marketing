@@ -89,10 +89,12 @@ const LimitModal = ({ open, onClose }) => {
       >
         <DialogTitle sx={{ padding: "0 0 24px 0" }}>
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold font-radios">Set Limit</h1>
+            <h1 className="text-2xl font-bold font-radios">
+              Gross Profit BenchMark
+            </h1>
           </div>
         </DialogTitle>
-        <div className="w-full px-6">
+        <div className="w-full ">
           <form
             onSubmit={handleSubmit}
             className="flex flex-col w-full items-end"
@@ -101,12 +103,12 @@ const LimitModal = ({ open, onClose }) => {
               htmlFor="sales-limit"
               className="text-xl font-medium self-start"
             >
-              {"Sales Limit"}
+              {"Set Limit"}
             </label>
             <input
               type="number"
               value={limit}
-              placeholder="Sales Limit"
+              placeholder="Set Limit"
               className="block border-2 w-full border-gray-300 p-3 rounded-md my-2"
               onChange={(e) => setLimit(e.target.value)}
             />
@@ -122,7 +124,7 @@ const LimitModal = ({ open, onClose }) => {
                 type="submit"
                 className="bg-blue-900 text-white py-2 px-8 text-xl rounded-md"
               >
-                Upload
+                Submit
               </button>
             </div>
           </form>

@@ -1,32 +1,45 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "../../index.css";
 import logo from "../../images/rta-logo.png";
 
 const AdminSidebar = () => {
-  // Initialize activeItem with a value from localStorage or default to "Sales"
-  const [activeItem, setActiveItem] = useState(() => {
-    return localStorage.getItem("activeItem") || "Sales";
-  });
+  const location = useLocation();
+  const [activeItem, setActiveItem] = useState("");
 
-  const [menuItems] = useState([
-    { name: "Sales", route: "/" },
-    // { name: "Lead Source", route: "leads-source" },
-    // { name: "Sales Person", route: "sales-person" },
-    { name: "Users", route: "users" },
-    { name: "TV Screen", route: "/tv" },
-  ]);
+  const menuItems = [
+    {
+      name: "Sales",
+      route: "/",
+      matcher: (route) => route === "/AdminLayout",
+    },
+    {
+      name: "Users",
+      route: "users",
+      matcher: (route) => route === "/AdminLayout/users",
+    },
+    {
+      name: "TV Screen",
+      route: "/tv",
+      matcher: (route) => route === "/tv",
+    },
+  ];
 
-  const handleItemClick = (item) => {
-    setActiveItem(item);
-    localStorage.setItem("activeItem", item);
-  };
+  // Update active item whenever location changes
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const matchedItem = menuItems.find((item) => item.matcher(currentPath));
+    if (matchedItem) {
+      console.log("matchedItem", matchedItem);
+      setActiveItem(matchedItem.name);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="bg-[#011c64] h-full w-full">
       <div className="flex flex-col items-center justify-start w-full h-full px-5 py-5 gap-y-10">
         <div className="flex w-full justify-center bg-white py-2 rounded-lg">
-          <img src={logo} className="max-w-[160px]" />
+          <img src={logo} alt="RTA Logo" className="max-w-[160px]" />
         </div>
         <div className="flex flex-col w-full gap-y-4">
           {menuItems.map((item, index) => (
@@ -38,7 +51,6 @@ const AdminSidebar = () => {
                   ? "bg-white rounded-md shadow-lg"
                   : "hover:bg-white rounded-md hover:text-blue-900"
               }`}
-              onClick={() => handleItemClick(item.name)}
             >
               <p
                 className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${

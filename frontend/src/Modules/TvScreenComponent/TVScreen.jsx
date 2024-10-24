@@ -769,11 +769,11 @@ const ClientCard = ({
         {grossProfit >= Number(limit[0]?.limit) ? <FaCircleCheck /> : null}
       </div>
 
-      <div className="flex items-start justify-between gap-4 w-full p-1">
+      <div className="fle flex-col gap-4 w-full p-1">
         <p className="text-sm">{company}</p>
 
-        <div>
-          <p className="text-sm ">{leadSource}</p>
+        <div className="w-full">
+          <p className="text-sm w-full text-end">{leadSource}</p>
         </div>
       </div>
     </div>
