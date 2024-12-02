@@ -761,7 +761,7 @@ const ClientCard = ({
 
   return (
     <div
-      className={`p-2 rounded-lg shadow-md bg-[${color}] max-w-[185px]  text-white flex justify-between items-center flex-col`}
+      className={`p-2 rounded-lg shadow-md bg-[${color}] w-full max-w-[185px] xl:max-w-none  text-white flex justify-between items-center flex-col`}
     >
       <div className="flex items-center justify-between gap-4 w-full p-1">
         <h3 className="font-semibold">{name}</h3>
@@ -784,7 +784,7 @@ const PersonCard = ({ name, uid, sales }) => {
   // console.log("Sales From Person Card", name, sales);
 
   return (
-    <div className="bg-white p-4 rounded-lg  border border-[#989898]  m-1 shadow-lg max-w-[650px] h-fit  overflow-auto masonry-item">
+    <div className="bg-white p-4 rounded-lg  border border-[#989898]  m-1 shadow-lg w-full max-w-[650px] h-fit  overflow-auto masonry-item">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold mb-4">{name}</h2>
 

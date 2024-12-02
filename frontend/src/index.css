@@ -38,7 +38,7 @@
 @media only screen and (min-width: 2051px) {
   .masonry {
     display: block;
-    column-count: 6;
+    column-count: 5;
   }
 }
 
