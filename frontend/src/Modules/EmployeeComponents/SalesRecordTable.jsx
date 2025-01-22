@@ -78,7 +78,8 @@ const SaleRecordTable = ({ setShowModal }) => {
 
     fetchSalesData();
   }, [currentUser]);
-  const handleFundStatus = async (clientId, index) => {
+  const handleFundStatus = async (clientId, index, saleId) => {
+    // console.log("car funded");
     try {
       const docRef = doc(db, "sales", clientId); // Use clientId here
       const docSnap = await getDoc(docRef);
@@ -86,15 +87,18 @@ const SaleRecordTable = ({ setShowModal }) => {
       if (docSnap.exists()) {
         // Get the sales array
         const salesArray = docSnap.data().sales;
+        console.log("sales", salesArray);
 
         // Update the FundStatus field within the specific array element
-        const updatedSales = salesArray.map((sale, idx) =>
-          idx === index ? { ...sale, FundStatus: true } : sale
-        );
+        const updatedSales = salesArray.map((sale, idx) => {
+          console.log(sale, idx, index, saleId);
+          return saleId === sale.saleId ? { ...sale, FundStatus: true } : sale;
+        });
 
         // Update Firestore document
         await updateDoc(docRef, { sales: updatedSales });
 
+        console.log("updated sales", updatedSales);
         // Update local state
         setClients((prevClients) =>
           prevClients.map((client) =>
@@ -115,7 +119,7 @@ const SaleRecordTable = ({ setShowModal }) => {
       toast.error("Error funding car: " + error.message);
     }
   };
-  // Handle page change
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -297,7 +301,11 @@ const SaleRecordTable = ({ setShowModal }) => {
                             : "bg-[#2c81ff] px-6"
                         }`}
                         onClick={() =>
-                          handleFundStatus(currentUser.uid, saleIndex)
+                          handleFundStatus(
+                            currentUser.uid,
+                            saleIndex,
+                            sale.saleId
+                          )
                         }
                         disabled={sale.FundStatus}
                       >
