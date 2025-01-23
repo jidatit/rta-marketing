@@ -41,7 +41,7 @@ const InsuranceUploadForm = ({
       return <IoDocumentText size={20} className="text-blue-600 mr-2" />;
     }
   };
-  console.log(files);
+  // console.log(files);
 
   const handleGoBack = () => {
     //code here
@@ -98,7 +98,7 @@ const InsuranceUploadForm = ({
                 <button
                   onClick={() => {
                     handleGoBack();
-                    console.log("go to second");
+                    // console.log("go to second");
                   }}
                 >
                   <IoArrowBack size={20} />

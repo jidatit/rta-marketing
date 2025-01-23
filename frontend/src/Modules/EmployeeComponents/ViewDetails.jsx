@@ -11,7 +11,7 @@ import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 const InsuranceUpload = ({ onClose, sale }) => {
-  console.log(sale);
+  // console.log(sale);
   const { currentUser } = getAuth();
   const [fileURL, setFileURL] = useState("");
   const [fileType, setFileType] = useState("");
@@ -58,7 +58,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
 
     getFileURL();
   }, [sale, currentUser.uid]);
-  console.log(sale);
+  // console.log(sale);
 
   const openDocument = (url) => {
     setSelectedURL(url);

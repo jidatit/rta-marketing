@@ -29,7 +29,7 @@ const SignInPage = () => {
         password
       );
       const user = userCredential.user;
-      console.log("User signed in:", user);
+      // console.log("User signed in:", user);
 
       const queryCollection = async (collectionName) => {
         const q = query(
@@ -65,7 +65,7 @@ const SignInPage = () => {
         navigate("/VirtualAssistantLayout");
       }
 
-      console.log(currentUser);
+      // console.log(currentUser);
     } catch (error) {
       console.error("Error signing in:", error.message);
       toast.error("Sign-in failed: " + error.message);

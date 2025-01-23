@@ -30,7 +30,7 @@ const AdminSidebar = () => {
     const currentPath = location.pathname;
     const matchedItem = menuItems.find((item) => item.matcher(currentPath));
     if (matchedItem) {
-      console.log("matchedItem", matchedItem);
+      // console.log("matchedItem", matchedItem);
       setActiveItem(matchedItem.name);
     }
   }, [location.pathname]);

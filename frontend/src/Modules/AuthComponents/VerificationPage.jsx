@@ -13,7 +13,7 @@ const VerificationPage = () => {
 
   useEffect(() => {
     if (isEmailVerified) {
-      console.log("emailVerified");
+      // console.log("emailVerified");
       if (currentUser.userType === "Employee") {
         toast.success("redirecting to Employee dashboard");
         setTimeout(() => {
@@ -27,7 +27,7 @@ const VerificationPage = () => {
         }, 3000);
       }
     } else {
-      console.log("email not Verified");
+      // console.log("email not Verified");
     }
   }, []);
 

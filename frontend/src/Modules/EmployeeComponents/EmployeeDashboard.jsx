@@ -87,10 +87,10 @@ const EmployeeDashboard = () => {
           uploadTask.on(
             "state_changed",
             (snapshot) => {
-              console.log(
-                "Upload progress:",
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
-              );
+              // console.log(
+              //   "Upload progress:",
+              //   (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
+              // );
             },
             (error) => {
               console.error("Error uploading file:", error);
@@ -221,7 +221,7 @@ const EmployeeDashboard = () => {
       setFiles([]);
     }
   };
-  console.log(setShowModal);
+  // console.log(setShowModal);
   return (
     <>
       <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full ">

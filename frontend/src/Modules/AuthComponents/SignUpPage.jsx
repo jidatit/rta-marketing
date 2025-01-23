@@ -20,7 +20,6 @@ const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  console.log(currentUser);
   const options = [
     // { value: "admin", label: "Admin" },
     { value: "employee", label: "Employee" },
@@ -68,7 +67,7 @@ const SignUpPage = () => {
         userType: selected,
         dateCreated: new Date(),
       });
-      console.log(collectionName);
+      // console.log(collectionName);
       if (collectionName !== "admins") {
         await sendEmailVerification(user);
       }

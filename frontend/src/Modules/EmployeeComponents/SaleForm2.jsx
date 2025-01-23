@@ -45,7 +45,7 @@ const SaleForm2 = ({
         grossProfit: grossProfit.toFixed(2),
       }));
 
-      console.log(formData);
+      // console.log(formData);
     } else {
       toast.error("Please fill in all required fields.");
     }

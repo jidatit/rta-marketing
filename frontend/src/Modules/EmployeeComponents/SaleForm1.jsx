@@ -33,7 +33,7 @@ const SaleForm1 = ({
 
   const handleFirstNext = () => {
     if (isFormDataValid()) {
-      console.log(formData);
+      // console.log(formData);
       setShowModal(false);
       setSecondForm(true);
     } else {
@@ -44,7 +44,7 @@ const SaleForm1 = ({
   const fetchLeads = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "leads"));
-      console.log(querySnapshot);
+      // console.log(querySnapshot);
       const fetchedLeads = querySnapshot.docs.map((doc) => doc.data().leadName);
       setLeadSources(fetchedLeads);
     } catch (error) {
@@ -58,11 +58,11 @@ const SaleForm1 = ({
   }, []);
 
   const handleSelect = (event, setValue) => {
-    console.log(event.target.value);
+    // console.log(event.target.value);
 
     setValue(event.target.value);
   };
-  console.log(selectedLeadSource);
+  // console.log(selectedLeadSource);
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">

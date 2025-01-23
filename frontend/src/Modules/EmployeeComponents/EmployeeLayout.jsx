@@ -11,7 +11,7 @@ const EmployeeLayout = () => {
   const { isEmailVerified } = useAuth();
 
   useEffect(() => {
-    console.log(isEmailVerified);
+    // console.log(isEmailVerified);
     if (!isEmailVerified) {
       navigate("/signIn");
     }

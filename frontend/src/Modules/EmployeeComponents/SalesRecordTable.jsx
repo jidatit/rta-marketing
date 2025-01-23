@@ -45,7 +45,7 @@ const SaleRecordTable = ({ setShowModal }) => {
     setIsModalOpen(false);
   };
   const handleOpenViewModal = (sale) => {
-    console.log(sale);
+    // console.log(sale);
     setSale(sale);
     setIsViewModalOpen(true);
   };
@@ -61,7 +61,7 @@ const SaleRecordTable = ({ setShowModal }) => {
           onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
               const salesData = docSnap.data().sales || [];
-              console.log(salesData);
+              // console.log(salesData);
               setClients(salesData);
               setFilteredClients(salesData); // Initially set filteredClients to all clients
             } else {
@@ -87,18 +87,18 @@ const SaleRecordTable = ({ setShowModal }) => {
       if (docSnap.exists()) {
         // Get the sales array
         const salesArray = docSnap.data().sales;
-        console.log("sales", salesArray);
+        // console.log("sales", salesArray);
 
         // Update the FundStatus field within the specific array element
         const updatedSales = salesArray.map((sale, idx) => {
-          console.log(sale, idx, index, saleId);
+          // console.log(sale, idx, index, saleId);
           return saleId === sale.saleId ? { ...sale, FundStatus: true } : sale;
         });
 
         // Update Firestore document
         await updateDoc(docRef, { sales: updatedSales });
 
-        console.log("updated sales", updatedSales);
+        // console.log("updated sales", updatedSales);
         // Update local state
         setClients((prevClients) =>
           prevClients.map((client) =>

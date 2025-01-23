@@ -99,7 +99,7 @@ const TVScreen = () => {
       const tempUpdatedSalesPerson = [...updatedSalesPerson];
 
       const currentMonth = new Date().getMonth(); // Get current month (0-indexed)
-      console.log("month", currentMonth);
+      // console.log("month", currentMonth);
 
       const unsubscribeList = SalesPersons.map((person, index) => {
         const salesRef = doc(db, "sales", person.uid);
@@ -110,15 +110,15 @@ const TVScreen = () => {
             let leadSource = "--";
             let sales = 0;
             let filteredSales = [];
-            console.log("person ", index, data);
+            // console.log("person ", index, data);
 
             if (data?.sales?.length > 0) {
               // Filter sales by current month
               filteredSales = data.sales.filter((sale) => {
                 if (!sale.saleDate) return false;
                 const saleDate = new Date(sale.saleDate);
-                console.log(sale);
-                console.log("get month", saleDate.getMonth());
+                // console.log(sale);
+                // console.log("get month", saleDate.getMonth());
                 return saleDate.getMonth() === currentMonth;
               });
 
@@ -213,7 +213,7 @@ const TVScreen = () => {
     return `${day}${suffix(day)} ${month}, ${year}`;
   }
 
-  console.log(totalSales);
+  // console.log(totalSales);
 
   if (!SalesPersons) {
     return (

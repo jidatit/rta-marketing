@@ -3,7 +3,7 @@ import Modal from "react-modal";
 Modal.setAppElement("#root"); // Set this to the root element of your app
 
 const DocumentModal = ({ isOpen, onRequestClose, fileURL }) => {
-  console.log(fileURL);
+  // console.log(fileURL);
   return (
     <Modal
       isOpen={isOpen}

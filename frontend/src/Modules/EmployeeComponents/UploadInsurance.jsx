@@ -12,13 +12,13 @@ import { useAuth } from "../../AuthContext";
 const InsuranceUpload = ({ onClose, sale }) => {
   const [files, setFiles] = useState([]);
   const { currentUser } = useAuth();
-  console.log(sale);
+  // console.log(sale);
 
   const handleUpload = async () => {
     if (files.length > 0) {
       for (const fileObj of files) {
         const { file, name } = fileObj;
-        console.log(file);
+        // console.log(file);
         const storageRef = ref(storage, `files/${name}`);
         const metadata = { contentType: file.type };
 
@@ -26,10 +26,10 @@ const InsuranceUpload = ({ onClose, sale }) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            console.log(
-              "Upload progress:",
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
-            );
+            // console.log(
+            //   "Upload progress:",
+            //   (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + "%"
+            // );
           },
           (error) => {
             console.log(error);
@@ -64,10 +64,11 @@ const InsuranceUpload = ({ onClose, sale }) => {
 
                 toast.success("Insurance document uploaded successfully");
               } else {
-                console.log("Sale not found");
+                // console.log("Sale not found");
+                toast.error("Sale not found");
               }
             } else {
-              console.log("No document found for the current user");
+              toast.error("No document found for the current user");
             }
           }
         );
