@@ -31,7 +31,6 @@ const EmployeeLayout = () => {
           </div>
         </div>
       </div>
-      <ToastContainer />
     </>
   ) : null;
   // Return null while navigating to avoid rendering unnecessary UI

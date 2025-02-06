@@ -68,7 +68,6 @@ const ChangePassword = () => {
   return (
     <>
       <div className="w-[60%] flex flex-col justify-center items-center mt-8 mb-20 bg-white shadow-lg rounded-md">
-        <ToastContainer />
         <div className="py-12 text-2xl font-semibold"> Change Password </div>
         <div className="w-[85%] lg:w-[70%] flex flex-col justify-center items-center gap-4 mb-10">
           <TextField

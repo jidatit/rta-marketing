@@ -7,9 +7,8 @@ const AuthLayout = () => {
     <>
       <div className="flex items-center justify-center w-full">
         <Outlet />
-        <FloatingTVButton/>
+        <FloatingTVButton />
       </div>
-      <ToastContainer />
     </>
   );
 };

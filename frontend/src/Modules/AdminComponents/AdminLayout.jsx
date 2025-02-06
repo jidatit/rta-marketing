@@ -20,7 +20,6 @@ const AdminLayout = () => {
           </div>
         </div>
       </div>{" "}
-      <ToastContainer />
     </>
   );
 };

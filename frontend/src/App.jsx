@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import "react-toastify/dist/ReactToastify.css";
 import SignUpPage from "./Modules/AuthComponents/SignUpPage";
 import { AuthProvider, useAuth } from "./AuthContext";
 import AuthLayout from "./Modules/AuthComponents/AuthLayout";
@@ -20,7 +19,6 @@ import VerificationPage from "./Modules/AuthComponents/VerificationPage";
 import SignInPage from "./Modules/AuthComponents/SignInPage";
 import ForgotPassword from "./Modules/AuthComponents/ForgotPasswordAdmin";
 import ChangePassword from "./Modules/AuthComponents/ChangePassword";
-import { ToastContainer } from "react-toastify";
 import InsuranceUploadForm from "./Modules/EmployeeComponents/InsuranceUploadForm";
 import LeadSource from "./Modules/AdminComponents/LeadSource";
 import SalesPage from "./Modules/AdminComponents/SalesPage";
@@ -29,7 +27,11 @@ import SalesPersonPage from "./Modules/AdminComponents/SalesPersonPage";
 import EmployeeSales from "./Modules/AdminComponents/EmployeeSales";
 import AllUsersPage from "./Modules/AdminComponents/AllUsersPage";
 import TVScreen from "./Modules/TvScreenComponent/TVScreen";
-
+import LeadsPage from "./Modules/VirtualAssistantComponents/pages/LeadsPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import SalesPerson from "./Modules/AdminComponents/pages/SalesPerson.jsx";
+import SalesOfSalesPerson from "./Modules/AdminComponents/pages/SalesOfSalesPerson.jsx";
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
     <div className="w-16 h-16 border-4 rounded-full border-t-transparent border-gray-900/50 animate-spin"></div>
@@ -107,6 +109,10 @@ function App() {
               >
                 <Route
                   index
+                  element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
+                />
+                {/* <Route
+                  index
                   element={
                     currentUser ? (
                       <VirtualAssistantDashboard />
@@ -114,6 +120,10 @@ function App() {
                       <Navigate to="/" />
                     )
                   }
+                /> */}
+                <Route
+                  path="leads"
+                  element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
                 />
               </Route>
               <Route path="/AdminLayout" element={<AdminLayout />}>
@@ -143,6 +153,16 @@ function App() {
                   element={currentUser ? <LeadSource /> : <Navigate to="/" />}
                 />
                 <Route
+                  path="SalesPersons"
+                  element={currentUser ? <SalesPerson /> : <Navigate to="/" />}
+                />
+                <Route
+                  path="SalesOfSalesPerson/:id"
+                  element={
+                    currentUser ? <SalesOfSalesPerson /> : <Navigate to="/" />
+                  }
+                />
+                <Route
                   path="sales-person"
                   element={
                     currentUser ? <SalesPersonPage /> : <Navigate to="/" />
@@ -163,6 +183,7 @@ function App() {
             </Routes>
           )}
         </AuthProvider>
+        <ToastContainer />
       </Router>
     </div>
   );
