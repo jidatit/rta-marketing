@@ -57,6 +57,9 @@ const SaleForm1 = ({
     fetchLeads();
   }, []);
 
+  const closeModal = () => {
+    setShowModal(false);
+  };
   const handleSelect = (event, setValue) => {
     // console.log(event.target.value);
 

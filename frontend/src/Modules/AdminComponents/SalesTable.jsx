@@ -11,7 +11,7 @@ const SalesTable = ({
             Client Name
           </th>
           <th scope="col" className="px-4 py-4">
-            Car Name
+            Vehicle Type
           </th>
           <th scope="col" className="px-4 py-4">
             Sale Date
@@ -37,7 +37,9 @@ const SalesTable = ({
               <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
                 {sale.customerName}
               </td>
-              <td className="px-4 py-4 text-gray-900">{sale.vehicleMake}</td>
+              <td className="px-4 py-4 text-gray-900">
+                {sale.vehicleMake} {sale.vehicleModel}
+              </td>
               <td className="px-4 py-4 text-gray-900">{sale.saleDate}</td>
               <td className="px-4 py-4">
                 <span

@@ -98,7 +98,7 @@ const SalesPerson = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 w-[75vw] h-screen">
+    <div className="p-6 bg-gray-100 w-[75vw] min-h-[90vh]">
       <div className="w-full mx-auto">
         <div className="mb-4 flex justify-between w-full">
           <h1 className="text-black font-bold text-xl">Sales Persons</h1>

@@ -19,7 +19,7 @@ const HeaderComponent = ({
 
   return (
     <div
-      className={`flex justify-between items-start bg-white px-6 py-3 border-b border-gray-200 ${className}`}
+      className={`flex justify-between items-start bg-white px-6  mt-6     ${className}`}
     >
       <h2 className="text-2xl font-bold text-gray-900">
         {showButton ? title : `${title} sales`}

@@ -32,6 +32,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SalesPerson from "./Modules/AdminComponents/pages/SalesPerson.jsx";
 import SalesOfSalesPerson from "./Modules/AdminComponents/pages/SalesOfSalesPerson.jsx";
+import MonthlyTarget from "./Modules/AdminComponents/MonthlyTarget.jsx";
+import { SalesDataProvider } from "./SalesDataContext.jsx";
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
     <div className="w-16 h-16 border-4 rounded-full border-t-transparent border-gray-900/50 animate-spin"></div>
@@ -57,61 +59,70 @@ function App() {
   return (
     <div className="w-full h-auto overflow-hidden bg-white">
       <Router>
-        <AuthProvider>
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <Routes>
-              <Route path="/" element={<AuthLayout />}>
+        <SalesDataProvider>
+          <AuthProvider>
+            {loading ? (
+              <LoadingSpinner />
+            ) : (
+              <Routes>
+                <Route path="/" element={<AuthLayout />}>
+                  <Route
+                    index
+                    element={
+                      currentUser ? (
+                        <Navigate to={getDashboardPath(currentUser.userType)} />
+                      ) : (
+                        <SignInPage />
+                      )
+                    }
+                  />
+                  <Route path="signUp" element={<SignUpPage />} />
+                  <Route
+                    path="verificationPage"
+                    element={<VerificationPage />}
+                  />
+                  <Route path="signIn" element={<SignInPage />} />
+                  <Route path="forgotPassword" element={<ForgotPassword />} />
+                  <Route path="changePassword" element={<ChangePassword />} />
+                </Route>
+                <Route path="/EmployeeLayout" element={<EmployeeLayout />}>
+                  <Route
+                    index
+                    element={
+                      currentUser ? <EmployeeDashboard /> : <Navigate to="/" />
+                    }
+                  />
+
+                  <Route
+                    path="changePassword"
+                    element={
+                      currentUser ? <ChangePassword /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="insuranceUpload"
+                    element={
+                      currentUser ? (
+                        <InsuranceUploadForm />
+                      ) : (
+                        <Navigate to="/" />
+                      )
+                    }
+                  />
+                  <Route
+                    path="saleForm1"
+                    element={currentUser ? <SaleForm1 /> : <Navigate to="/" />}
+                  />
+                </Route>
                 <Route
-                  index
-                  element={
-                    currentUser ? (
-                      <Navigate to={getDashboardPath(currentUser.userType)} />
-                    ) : (
-                      <SignInPage />
-                    )
-                  }
-                />
-                <Route path="signUp" element={<SignUpPage />} />
-                <Route path="verificationPage" element={<VerificationPage />} />
-                <Route path="signIn" element={<SignInPage />} />
-                <Route path="forgotPassword" element={<ForgotPassword />} />
-                <Route path="changePassword" element={<ChangePassword />} />
-              </Route>
-              <Route path="/EmployeeLayout" element={<EmployeeLayout />}>
-                <Route
-                  index
-                  element={
-                    currentUser ? <EmployeeDashboard /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="changePassword"
-                  element={
-                    currentUser ? <ChangePassword /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="insuranceUpload"
-                  element={
-                    currentUser ? <InsuranceUploadForm /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="saleForm1"
-                  element={currentUser ? <SaleForm1 /> : <Navigate to="/" />}
-                />
-              </Route>
-              <Route
-                path="/VirtualAssistantLayout"
-                element={<VirtualAssistantLayout />}
-              >
-                <Route
-                  index
-                  element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
-                />
-                {/* <Route
+                  path="/VirtualAssistantLayout"
+                  element={<VirtualAssistantLayout />}
+                >
+                  <Route
+                    index
+                    element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
+                  />
+                  {/* <Route
                   index
                   element={
                     currentUser ? (
@@ -121,68 +132,79 @@ function App() {
                     )
                   }
                 /> */}
-                <Route
-                  path="leads"
-                  element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
-                />
-              </Route>
-              <Route path="/AdminLayout" element={<AdminLayout />}>
-                {/* <Route
+                  <Route
+                    path="leads"
+                    element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
+                  />
+                </Route>
+                <Route path="/AdminLayout" element={<AdminLayout />}>
+                  {/* <Route
                   index
                   element={
                     currentUser ? <AdminDashboard /> : <Navigate to="/" />
                   }
                 /> */}
-                <Route
-                  index
-                  // path="sales"
-                  element={currentUser ? <SalesPage /> : <Navigate to="/" />}
-                />
-                {/* <Route
+                  <Route
+                    index
+                    // path="sales"
+                    element={currentUser ? <SalesPage /> : <Navigate to="/" />}
+                  />
+                  {/* <Route
                   path="users"
                   element={currentUser ? <AllUsers /> : <Navigate to="/" />}
                 /> */}
-                <Route
-                  path="changePassword"
-                  element={
-                    currentUser ? <ChangePassword /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="leads-source"
-                  element={currentUser ? <LeadSource /> : <Navigate to="/" />}
-                />
-                <Route
-                  path="SalesPersons"
-                  element={currentUser ? <SalesPerson /> : <Navigate to="/" />}
-                />
-                <Route
-                  path="SalesOfSalesPerson/:id"
-                  element={
-                    currentUser ? <SalesOfSalesPerson /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="sales-person"
-                  element={
-                    currentUser ? <SalesPersonPage /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="sale/:id"
-                  element={
-                    currentUser ? <EmployeeSales /> : <Navigate to="/" />
-                  }
-                />
-                <Route
-                  path="users"
-                  element={currentUser ? <AllUsersPage /> : <Navigate to="/" />}
-                />
-              </Route>
-              <Route path="/tv" element={<TVScreen />} />
-            </Routes>
-          )}
-        </AuthProvider>
+                  <Route
+                    path="changePassword"
+                    element={
+                      currentUser ? <ChangePassword /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="leads-source"
+                    element={currentUser ? <LeadSource /> : <Navigate to="/" />}
+                  />
+                  <Route
+                    path="SalesPersons"
+                    element={
+                      currentUser ? <SalesPerson /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="SalesOfSalesPerson/:id"
+                    element={
+                      currentUser ? <SalesOfSalesPerson /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="sales-person"
+                    element={
+                      currentUser ? <SalesPersonPage /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="sale/:id"
+                    element={
+                      currentUser ? <EmployeeSales /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="users"
+                    element={
+                      currentUser ? <AllUsersPage /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="monthly-target"
+                    element={
+                      currentUser ? <MonthlyTarget /> : <Navigate to="/" />
+                    }
+                  />
+                </Route>
+                <Route path="/tv" element={<TVScreen />} />
+              </Routes>
+            )}
+          </AuthProvider>
+        </SalesDataProvider>
         <ToastContainer />
       </Router>
     </div>

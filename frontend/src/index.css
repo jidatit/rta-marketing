@@ -54,3 +54,27 @@
   margin-bottom: 1rem;
   overflow: hidden;
 }
+
+input[type="month"] {
+  appearance: none; /* Removes default styling in some browsers */
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+}
+
+input[type="month"] {
+  background: url("calendar-icon.png") no-repeat right 10px center;
+  background-size: 20px;
+  padding-right: 20px; /* Adjust to fit the icon */
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

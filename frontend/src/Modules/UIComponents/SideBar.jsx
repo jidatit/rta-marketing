@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import logo from "../../images/rta-logo.png"
+import logo from "../../images/rta-logo.png";
 
 const SideBar = () => {
   const [activeItem, setActiveItem] = useState("Sales");

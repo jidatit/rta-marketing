@@ -176,7 +176,7 @@ const SaleRecordTable = ({ setShowModal }) => {
 
   return (
     <>
-      <div className="relative p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
+      <div className="relative p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg ">
         <div className="w-full text-end flex justify-end">
           <button
             onClick={handleFilterToggle}

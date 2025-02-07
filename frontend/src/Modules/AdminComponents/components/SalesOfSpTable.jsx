@@ -226,7 +226,7 @@ const SalesOfSPTable = ({ id }) => {
     { key: "customerName", label: "Client Name" },
     {
       key: "carName",
-      label: "Car Name",
+      label: "Vehicle Type",
       render: (value, row) => `${row.vehicleMake} ${row.vehicleModel}`,
     },
     { key: "saleDate", label: "Sale Date" },
@@ -299,8 +299,8 @@ const SalesOfSPTable = ({ id }) => {
         message="Are you sure you want to delete this sale? This action cannot be undone."
       />
 
-      <div className="px-4 flex items-start justify-start w-full h-full overflow-y-auto">
-        <div className="flex flex-col w-full h-full gap-y-8 overflow-y-auto">
+      <div className="px-4 flex items-start justify-start w-full h-full overflow-y-auto ">
+        <div className="flex flex-col w-full h-full gap-y-8 overflow-y-auto ">
           <Filters
             onFilterChange={handleFilterChange}
             showFilters={showFilters}

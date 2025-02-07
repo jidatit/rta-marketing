@@ -3,11 +3,12 @@ const SalesTableVA = ({
   data,
   handleDeleteSale,
   handleOpenViewModal,
+  loading,
 }) => {
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full text-sm text-left text-black rtl:text-right dark:text-black font-radios">
-        <thead className="text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white">
+        <thead className="text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white ">
           <tr>
             {columns?.map((col, index) => (
               <th
@@ -55,7 +56,7 @@ const SalesTableVA = ({
                 colSpan={columns.length}
                 className="w-full p-4 text-center text-gray-500"
               >
-                No sales data available
+                {loading ? "loading" : " No data available"}
               </td>
             </tr>
           )}
