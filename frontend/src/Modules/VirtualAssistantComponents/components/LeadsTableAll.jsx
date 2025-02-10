@@ -93,7 +93,7 @@ const LeadsPageVA = ({
                   saleId: doc.id,
                   salesPerson: name,
                   leadSource: leadSources,
-                  amount: `$${totalAmount}`,
+                  amount: `${totalAmount}`,
                   allLeads: vaLeads,
                   salesPersonId: uid,
                 });
@@ -234,7 +234,7 @@ const LeadsPageVA = ({
   const salesColumns = [
     { key: "salesPerson", label: "Sales Person" },
     { key: "leadSource", label: "Lead Source" },
-    { key: "amount", label: "Amount" },
+    { key: "amount", label: "Lead Amount" },
     {
       key: "actions",
       label: "Actions",
