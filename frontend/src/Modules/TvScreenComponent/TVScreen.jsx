@@ -454,7 +454,80 @@ const StatButton = ({ label, color, duration }) => (
     <span className="text-xl">{duration}</span>
   </button>
 );
+// const ClientCard = ({
+//   name,
+//   company,
+//   grossProfit,
+//   leadSource,
+//   InsuranceStatus,
+//   FundStatus,
+//   vehicleModel,
+// }) => {
+//   const [limit, setLimit] = useState(null);
+//   const [currentMonth, setCurrentMonth] = useState("");
 
+//   useEffect(() => {
+//     const monthNames = [
+//       "January", "February", "March", "April", "May", "June",
+//       "July", "August", "September", "October", "November", "December"
+//     ];
+
+//     // Get the current month
+//     const currentMonthName = monthNames[new Date().getMonth()];
+//     setCurrentMonth(currentMonthName);
+
+//     fetchLimit(currentMonthName);
+//   }, []);
+
+//   const fetchLimit = async (month) => {
+//     try {
+//       const q = query(collection(db, "SalesLimit"), where("month", "==", month));
+//       const querySnapshot = await getDocs(q);
+
+//       if (!querySnapshot.empty) {
+//         const doc = querySnapshot.docs[0];
+//         setLimit(Number(doc.data().limit));
+//       } else {
+//         setLimit(null); // No limit set for this month
+//       }
+//     } catch (error) {
+//       console.error("Error fetching sales limit: ", error);
+//       toast.error("Failed to fetch sales limit: " + error.message);
+//     }
+//   };
+
+//   let color = "";
+//   if (FundStatus && InsuranceStatus) {
+//     color = "#10C900";
+//   } else if (InsuranceStatus && !FundStatus) {
+//     color = "#0E376C";
+//   } else {
+//     color = "#6636C0";
+//   }
+
+//   return (
+//     <div
+//       className={`p-2 rounded-lg shadow-md bg-[${color}] w-full max-w-[185px] xl:max-w-none text-white flex justify-between items-center flex-col`}
+//     >
+//       <div className="flex items-center justify-between gap-4 w-full p-1">
+//         <h3 className="font-semibold">{name}</h3>
+
+//         {/* Compare with the current month's limit */}
+//         {limit !== null && grossProfit >= limit ? <FaCircleCheck /> : null}
+//       </div>
+
+//       <div className="flex flex-col gap-4 w-full p-1">
+//         <p className="text-sm">
+//           {company} {vehicleModel}
+//         </p>
+
+//         <div className="w-full">
+//           <p className="text-sm w-full text-end">{leadSource}</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 const ClientCard = ({
   name,
   company,
