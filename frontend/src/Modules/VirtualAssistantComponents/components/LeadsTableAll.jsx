@@ -40,8 +40,8 @@ const LeadsPageVA = ({
   const [modalMode, setModalMode] = useState("create");
   const [modalData, setModalData] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  console.log(currentUser);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
-  // Single source of truth for real-time data
   useEffect(() => {
     const unsubscribeEmployees = setupEmployeesListener();
     const unsubscribeLeads = setupLeadsListener();
@@ -58,53 +58,70 @@ const LeadsPageVA = ({
       return onSnapshot(
         employeesCollection,
         (querySnapshot) => {
-          const salesData = [];
+          let salesData = [];
           const salesPersonData = [];
-          let totalLeadsCount = 0; // Add counter for all leads
+          let totalLeadsCount = 0;
 
           querySnapshot.forEach((doc) => {
             const employeeData = doc.data();
             const { leads, name, uid } = employeeData;
+            console.log("leads data../", leads);
 
-            // Count total leads for this employee
             if (leads && Array.isArray(leads)) {
-              totalLeadsCount += leads.length; // Add this employee's leads to total
+              totalLeadsCount += leads.length;
             }
 
-            // Store sales person data
             salesPersonData.push({ name, uid });
 
             if (leads && Array.isArray(leads)) {
-              const vaLeads = leads.filter(
-                (lead) => lead.VAUid === currentUser?.uid
-              );
+              let relevantLeads = leads;
 
-              if (vaLeads.length > 0) {
-                const leadSources = vaLeads
-                  .slice(0, 3)
-                  .map((lead) => lead.leadSource.trim())
-                  .join(", ");
-                const totalAmount = vaLeads.reduce(
-                  (sum, lead) => sum + lead.leadAmount,
-                  0
+              if (currentUser?.userType !== "Admin") {
+                relevantLeads = leads.filter(
+                  (lead) => lead.VAUid === currentUser?.uid
                 );
+              }
 
-                salesData.push({
-                  saleId: doc.id,
-                  salesPerson: name,
-                  leadSource: leadSources,
-                  amount: `${totalAmount}`,
-                  allLeads: vaLeads,
-                  salesPersonId: uid,
+              if (relevantLeads.length > 0) {
+                const groupedSales = {}; // Object to store grouped sales
+
+                relevantLeads.forEach((lead) => {
+                  const leadDateTime = lead.timestamp
+                    ?.toDate()
+                    .toISOString()
+                    .slice(0, 16); // Format YYYY-MM-DD HH:MM
+
+                  const key = `${name}-${leadDateTime}`; // Unique key to group by salesperson & timestamp
+
+                  if (!groupedSales[key]) {
+                    groupedSales[key] = {
+                      saleId: doc.id,
+                      salesPerson: name,
+                      leadSource: new Set(),
+                      amount: 0,
+                      dateTime: leadDateTime.replace("T", " "), // Format properly
+                      salesPersonId: uid,
+                    };
+                  }
+
+                  groupedSales[key].leadSource.add(lead.leadSource.trim());
+                  groupedSales[key].amount += lead.leadAmount;
                 });
+
+                salesData.push(
+                  ...Object.values(groupedSales).map((sale) => ({
+                    ...sale,
+                    leadSource: Array.from(sale.leadSource).join(", "), // Convert Set to comma-separated string
+                  }))
+                );
               }
             }
           });
 
-          console.log("Total leads across all employees:", totalLeadsCount); // Log the total count
+          console.log("Total leads across all employees:", totalLeadsCount);
           setSalesPerson(salesPersonData);
           setAllSales(salesData);
-          setTotalLeads(totalLeadsCount); // Add this state setter if you want to use the count in your UI
+          setTotalLeads(totalLeadsCount);
         },
         (error) => {
           console.error("Error in employees listener:", error);
@@ -139,7 +156,6 @@ const LeadsPageVA = ({
     }
   };
 
-  // Filter logic
   useEffect(() => {
     handleFilter();
   }, [selectedLeadSource, selectedSalesPerson, startDate, endDate, allSales]);
@@ -160,12 +176,15 @@ const LeadsPageVA = ({
     }
 
     if (startDate && endDate) {
-      filteredSales = filteredSales.filter((sale) =>
-        sale.allLeads.some((lead) => {
-          const leadDate = lead.timestamp.toDate();
-          return leadDate >= startDate && leadDate <= endDate;
-        })
-      );
+      filteredSales = filteredSales.filter((sale) => {
+        if (!sale.dateTime) return false; // Ensure date exists
+
+        const saleDate = new Date(sale.dateTime); // Convert to Date object
+        const start = new Date(startDate).setHours(0, 0, 0, 0); // Reset time for accuracy
+        const end = new Date(endDate).setHours(23, 59, 59, 999); // Include the full day
+
+        return saleDate.getTime() >= start && saleDate.getTime() <= end;
+      });
     }
 
     setFilteredClients(filteredSales);
@@ -195,7 +214,6 @@ const LeadsPageVA = ({
   };
   const handleConfirmDelete = async () => {
     try {
-      // Query the employees collection to find document with matching uid
       const employeesRef = collection(db, "employees");
       const q = query(employeesRef, where("uid", "==", employeeToDelete));
       const querySnapshot = await getDocs(q);
@@ -205,18 +223,15 @@ const LeadsPageVA = ({
         return;
       }
 
-      // Get the first (and should be only) document
       const employeeDoc = querySnapshot.docs[0];
       const employeeData = employeeDoc.data();
 
-      // Create updated employee data keeping everything but clearing their leads
       const updatedEmployeeData = {
         ...employeeData,
-        leads: [], // Reset leads to empty array
-        lastUpdated: new Date(), // Update the lastUpdated timestamp
+        leads: [],
+        lastUpdated: new Date(),
       };
 
-      // Update the document
       await updateDoc(
         doc(db, "employees", employeeDoc.id),
         updatedEmployeeData
@@ -230,8 +245,9 @@ const LeadsPageVA = ({
       setEmployeeToDelete(null);
     }
   };
-  // Table columns configuration
+
   const salesColumns = [
+    { key: "dateTime", label: "Date & Time" },
     { key: "salesPerson", label: "Sales Person" },
     { key: "leadSource", label: "Lead Source" },
     { key: "amount", label: "Lead Amount" },
@@ -257,7 +273,6 @@ const LeadsPageVA = ({
     },
   ];
 
-  // Pagination calculations
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const currentClients = filteredClients.slice(startIndex, endIndex);
@@ -292,7 +307,7 @@ const LeadsPageVA = ({
         setModalMode={setModalMode}
         initialData={modalData}
       />
-      <div className="px-4 flex items-start justify-start w-full h-full py-8 overflow-y-auto">
+      <div className="px-4 flex items-start justify-start w-full h-full pb-8 overflow-y-auto ">
         <div className="flex flex-col w-full h-full gap-y-8 overflow-y-auto">
           <Filters
             leadSources={leadSources}

@@ -22,12 +22,12 @@ const SalesHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="text-2xl pt-4 font-bold">Sales</div>
         <div className="flex flex-row gap-4">
-          <button
+          {/* <button
             className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
             onClick={() => setShowModal(true)}
           >
             Lead sources
-          </button>
+          </button> */}
           <button
             className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
             onClick={() => setShowLimitModal(true)}
@@ -190,6 +190,7 @@ const months = [
 //     </Dialog>
 //   );
 // };
+
 const LimitModal = ({ open, onClose }) => {
   const [limit, setLimit] = useState("");
   const [docId, setDocId] = useState(null); // Store document ID for updates
@@ -301,7 +302,7 @@ const LimitModal = ({ open, onClose }) => {
   );
 };
 
-const LeadSourceModal = ({ open, onClose }) => {
+export const LeadSourceModal = ({ open, onClose }) => {
   const [leads, setLeads] = useState([]);
   const [inputLead, setInputLead] = useState("");
   const [showForm, setShowForm] = useState(false);

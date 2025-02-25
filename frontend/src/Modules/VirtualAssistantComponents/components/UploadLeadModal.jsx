@@ -22,7 +22,7 @@ const UploadLeadModal = ({
   initialData = null,
 }) => {
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
-  const [leadRows, setLeadRows] = useState([{ leadSource: "", leadAmount: 1 }]);
+  const [leadRows, setLeadRows] = useState([{ leadSource: "", leadAmount: 0 }]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
@@ -46,7 +46,7 @@ const UploadLeadModal = ({
   }, [initialData, mode]);
   console.log("iniaitaldata", initialData);
   const addNewRow = () => {
-    setLeadRows([...leadRows, { leadSource: "", leadAmount: 1 }]);
+    setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
   };
 
   const removeRow = (index) => {
@@ -63,8 +63,10 @@ const UploadLeadModal = ({
 
   const handleLeadAmountChange = (index, value) => {
     if (!isEditing && mode === "view") return;
+
+    const parsedValue = value === "" ? "" : Math.max(0, parseInt(value) || 0);
     const newRows = [...leadRows];
-    newRows[index].leadAmount = Math.max(1, parseInt(value) || 1);
+    newRows[index].leadAmount = parsedValue;
     setLeadRows(newRows);
   };
 

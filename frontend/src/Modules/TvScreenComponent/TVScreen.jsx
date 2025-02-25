@@ -274,7 +274,7 @@ const TVScreen = () => {
     if (updatedSalesPerson.length > 0 && salesData.length > 0) {
       const mergedSalesPersons = updatedSalesPerson.map((person) => {
         const matchingSalesData = salesData.find(
-          (sale) => sale.userId === person.uid
+          (sale) => sale?.userId === person?.uid
         );
 
         return {

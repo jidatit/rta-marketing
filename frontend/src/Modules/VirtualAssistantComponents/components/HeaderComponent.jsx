@@ -1,5 +1,6 @@
 import React from "react";
 import { FaPlus } from "react-icons/fa6";
+import { useAuth } from "../../../AuthContext";
 
 const HeaderComponent = ({
   title = "Monthly Targets",
@@ -11,11 +12,14 @@ const HeaderComponent = ({
   totalLeads = "",
   totalSales = "",
   showStats = false,
+  showModal,
+  setShowModal,
 }) => {
   const metrics = [
     { label: "Total Leads", value: totalLeads, color: "bg-[#003160]" },
     { label: "Total Sales", value: totalSales, color: "bg-sky-400" },
   ];
+  const { currentUser } = useAuth();
 
   return (
     <div
@@ -26,13 +30,24 @@ const HeaderComponent = ({
       </h2>
 
       {showButton && (
-        <button
-          onClick={onButtonClick}
-          className="bg-[#003160] font-bold text-xl hover:bg-blue-900 text-white rounded-full shadow-sm py-4 px-14 flex items-center justify-center gap-2 h-fit transition-colors"
-        >
-          <FaPlus className="w-4 h-4" />
-          {buttonText}
-        </button>
+        <div className="flex flex-row gap-4 ">
+          {currentUser.userType === "Admin" && (
+            <button
+              className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
+              onClick={() => setShowModal(true)}
+            >
+              Lead sources
+            </button>
+          )}
+
+          <button
+            onClick={onButtonClick}
+            className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg flex items-center gap-1"
+          >
+            <FaPlus className="w-4 h-4" />
+            {buttonText}
+          </button>
+        </div>
       )}
       {showStats && (
         <div className="flex gap-8 p-8 items-start justify-start -mt-10">

@@ -30,11 +30,11 @@ const MonthlyTarget = () => {
             <h1 className="text-2xl font-semibold">Monthly Targets</h1>
             <button
               type="button"
-              className="flex flex-row px-10 py-3 text-xl font-bold text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
+              className="flex flex-row items-center px-10 py-2 text-lg  text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
               onClick={() => setShowModal(true)}
             >
               Add Sales Target
-              <FaPlus size={25} />
+              <FaPlus className="w-4 h-4" />
             </button>
           </div>
 

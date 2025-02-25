@@ -34,6 +34,7 @@ import SalesPerson from "./Modules/AdminComponents/pages/SalesPerson.jsx";
 import SalesOfSalesPerson from "./Modules/AdminComponents/pages/SalesOfSalesPerson.jsx";
 import MonthlyTarget from "./Modules/AdminComponents/MonthlyTarget.jsx";
 import { SalesDataProvider } from "./SalesDataContext.jsx";
+import LeadsPages from "./Modules/AdminComponents/LeadsPages.jsx";
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
     <div className="w-16 h-16 border-4 rounded-full border-t-transparent border-gray-900/50 animate-spin"></div>
@@ -149,6 +150,7 @@ function App() {
                     // path="sales"
                     element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                   />
+
                   {/* <Route
                   path="users"
                   element={currentUser ? <AllUsers /> : <Navigate to="/" />}
@@ -158,6 +160,10 @@ function App() {
                     element={
                       currentUser ? <ChangePassword /> : <Navigate to="/" />
                     }
+                  />
+                  <Route
+                    path="leads"
+                    element={currentUser ? <LeadsPages /> : <Navigate to="/" />}
                   />
                   <Route
                     path="leads-source"

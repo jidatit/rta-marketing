@@ -33,6 +33,11 @@ const AdminSidebar = () => {
       route: "monthly-target",
       matcher: (route) => route === "/AdminLayout/monthly-target",
     },
+    {
+      name: "Leads",
+      route: "leads",
+      matcher: (route) => route === "/AdminLayout/leads",
+    },
   ];
 
   // Update active item whenever location changes
