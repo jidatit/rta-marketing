@@ -1,40 +1,3 @@
-// import TabContext from "@mui/lab/TabContext";
-// import TabList from "@mui/lab/TabList";
-// import TabPanel from "@mui/lab/TabPanel";
-// import { Box, Tab, Tabs } from "@mui/material";
-// import React, { useState } from "react";
-
-// const LeadTabs = ({
-//   leadSources,
-//   setLeadSources,
-//   SalesPerson,
-//   setSalesPerson,
-//   setTotalLeads,
-// }) => {
-//   const [value, setValue] = useState("one");
-//   console.log("value", value);
-
-//   const handleChange = (newValue) => {
-//     setValue(newValue);
-//   };
-//   return (
-//     <div className="px-6">
-//       <Box sx={{ width: "100%" }}>
-//         <Tabs
-//           value={value}
-//           onChange={handleChange}
-//           aria-label="wrapped label tabs example"
-//         >
-//           <Tab value="one" label="Source Analytics" wrapped />
-//           <Tab value="two" label="Leads" />
-//         </Tabs>
-//       </Box>
-//     </div>
-//   );
-// };
-
-// export default LeadTabs;
-
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
@@ -70,7 +33,7 @@ const LeadTabs = ({
           >
             <Tab
               value="one"
-              label="Source Analytics"
+              label="Leads"
               wrapped
               sx={{
                 fontWeight: "bold",
@@ -80,7 +43,7 @@ const LeadTabs = ({
             />
             <Tab
               value="two"
-              label="Leads"
+              label=" Lead Source Analytics"
               sx={{
                 fontWeight: "bold",
                 "&.Mui-selected": { color: "#003160" },
@@ -92,9 +55,6 @@ const LeadTabs = ({
 
         {/* Tab Panels */}
         <TabPanel value="one">
-          <LeadPagesAnalytics />
-        </TabPanel>
-        <TabPanel value="two">
           <LeadsPageVA
             leadSources={leadSources}
             setLeadSources={setLeadSources}
@@ -102,6 +62,9 @@ const LeadTabs = ({
             setSalesPerson={setSalesPerson}
             setTotalLeads={setTotalLeads}
           />
+        </TabPanel>
+        <TabPanel value="two">
+          <LeadPagesAnalytics />
         </TabPanel>
       </TabContext>
     </div>
