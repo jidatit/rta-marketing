@@ -56,7 +56,7 @@ const SalesTableVA = ({
                 colSpan={columns.length}
                 className="w-full p-4 text-center text-gray-500"
               >
-                {loading ? "loading" : " No data available"}
+                {loading ? "loading..." : " No data available"}
               </td>
             </tr>
           )}

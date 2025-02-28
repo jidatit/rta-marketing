@@ -22,7 +22,10 @@ const UploadLeadModal = ({
   initialData = null,
 }) => {
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
-  const [leadRows, setLeadRows] = useState([{ leadSource: "", leadAmount: 0 }]);
+  // const [leadRows, setLeadRows] = useState([{ leadSource: "", leadAmount: 0 }]);
+  const [leadRows, setLeadRows] = useState([
+    { leadSource: "", leadAmount: 0, leadCost: 0 },
+  ]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
@@ -45,15 +48,25 @@ const UploadLeadModal = ({
     }
   }, [initialData, mode]);
   console.log("iniaitaldata", initialData);
+  // const addNewRow = () => {
+  //   setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
+  // };
   const addNewRow = () => {
-    setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
+    setLeadRows([...leadRows, { leadSource: "", leadAmount: 0, leadCost: 0 }]);
   };
 
   const removeRow = (index) => {
     const newRows = leadRows.filter((_, idx) => idx !== index);
     setLeadRows(newRows);
   };
+  const handleLeadCostChange = (index, value) => {
+    if (!isEditing && mode === "view") return;
 
+    const parsedValue = value === "" ? "" : Math.max(0, parseInt(value) || 0);
+    const newRows = [...leadRows];
+    newRows[index].leadCost = parsedValue;
+    setLeadRows(newRows);
+  };
   const handleLeadSourceChange = (index, value) => {
     if (!isEditing && mode === "view") return;
     const newRows = [...leadRows];
@@ -91,6 +104,51 @@ const UploadLeadModal = ({
     setIsEditing(false);
   };
 
+  // const handleUpdateLeads = async () => {
+  //   setLoading(true);
+
+  //   try {
+  //     const employeesRef = collection(db, "employees");
+  //     const q = query(
+  //       employeesRef,
+  //       where("uid", "==", initialData.salesPersonId)
+  //     );
+  //     const querySnapshot = await getDocs(q);
+
+  //     if (querySnapshot.empty) {
+  //       toast.error("Sales Person not found in database!");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     const employeeDocRef = querySnapshot.docs[0].ref;
+
+  //     // Update leads array, without serverTimestamp inside array elements
+  //     const updatedLeads = leadRows.map((lead) => ({
+  //       leadSource: lead.leadSource,
+  //       leadAmount: lead.leadAmount,
+  //       VAName: lead.VAName || currentUser.email,
+  //       VAUid: lead.VAUid || currentUser.uid,
+  //       timestamp: lead.timestamp || new Date(),
+  //     }));
+
+  //     // Use serverTimestamp for the lastUpdated field
+  //     await updateDoc(employeeDocRef, {
+  //       leads: updatedLeads,
+  //       lastUpdated: serverTimestamp(),
+  //     });
+  //     onClose();
+  //     toast.success("Leads updated successfully!");
+  //     setIsEditing(false);
+  //     onClose();
+  //   } catch (error) {
+  //     console.error("Error updating leads:", error);
+  //     toast.error("Failed to update leads.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleUpdateLeads = async () => {
     setLoading(true);
 
@@ -114,6 +172,7 @@ const UploadLeadModal = ({
       const updatedLeads = leadRows.map((lead) => ({
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
+        leadCost: lead.leadCost,
         VAName: lead.VAName || currentUser.email,
         VAUid: lead.VAUid || currentUser.uid,
         timestamp: lead.timestamp || new Date(),
@@ -136,6 +195,66 @@ const UploadLeadModal = ({
     }
   };
 
+  // const handleUpload = async () => {
+  //   if (mode === "edit" && isEditing) {
+  //     await handleUpdateLeads();
+  //     return;
+  //   }
+
+  //   // Original upload logic for new leads
+  //   if (!selectedSalesPerson) {
+  //     toast.error("Please select a Sales Person.");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   try {
+  //     const employeesRef = collection(db, "employees");
+  //     const q = query(employeesRef, where("uid", "==", selectedSalesPerson));
+  //     const querySnapshot = await getDocs(q);
+
+  //     if (querySnapshot.empty) {
+  //       toast.error("Sales Person not found in database!");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     const employeeDocRef = querySnapshot.docs[0].ref;
+  //     const employeeData = querySnapshot.docs[0].data();
+
+  //     // New leads to add
+  //     const newLeads = leadRows.map((lead) => ({
+  //       leadSource: lead.leadSource,
+  //       leadAmount: lead.leadAmount,
+  //       VAName: currentUser.email,
+  //       VAUid: currentUser.uid,
+  //       timestamp: new Date(),
+  //     }));
+
+  //     // Check for existing leads
+  //     const existingLeads = employeeData.leads || [];
+
+  //     // Merge existing and new leads
+  //     const updatedLeads = [...existingLeads, ...newLeads];
+
+  //     // Update the employee's leads and set lastUpdated timestamp
+  //     await updateDoc(employeeDocRef, {
+  //       leads: updatedLeads,
+  //       lastUpdated: serverTimestamp(),
+  //     });
+
+  //     toast.success("Leads uploaded successfully!");
+  //     onClose();
+  //     setLeadRows([{ leadSource: "", leadAmount: 1 }]);
+  //     setSelectedSalesPerson("");
+  //   } catch (error) {
+  //     console.error("Error handling leads:", error);
+  //     toast.error("Failed to upload leads.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleUpload = async () => {
     if (mode === "edit" && isEditing) {
       await handleUpdateLeads();
@@ -168,6 +287,7 @@ const UploadLeadModal = ({
       const newLeads = leadRows.map((lead) => ({
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
+        leadCost: lead.leadCost,
         VAName: currentUser.email,
         VAUid: currentUser.uid,
         timestamp: new Date(),
@@ -187,7 +307,7 @@ const UploadLeadModal = ({
 
       toast.success("Leads uploaded successfully!");
       onClose();
-      setLeadRows([{ leadSource: "", leadAmount: 1 }]);
+      setLeadRows([{ leadSource: "", leadAmount: 1, leadCost: 0 }]);
       setSelectedSalesPerson("");
     } catch (error) {
       console.error("Error handling leads:", error);
@@ -279,6 +399,19 @@ const UploadLeadModal = ({
                   onChange={(e) =>
                     handleLeadAmountChange(index, e.target.value)
                   }
+                  disabled={!isEditing && mode === "view"}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lead Cost
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={row.leadCost}
+                  onChange={(e) => handleLeadCostChange(index, e.target.value)}
                   disabled={!isEditing && mode === "view"}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />

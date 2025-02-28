@@ -251,6 +251,7 @@ const LeadsPageVA = ({
     { key: "salesPerson", label: "Sales Person" },
     { key: "leadSource", label: "Lead Source" },
     { key: "amount", label: "Lead Amount" },
+
     {
       key: "actions",
       label: "Actions",
