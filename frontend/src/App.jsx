@@ -35,6 +35,7 @@ import SalesOfSalesPerson from "./Modules/AdminComponents/pages/SalesOfSalesPers
 import MonthlyTarget from "./Modules/AdminComponents/MonthlyTarget.jsx";
 import { SalesDataProvider } from "./SalesDataContext.jsx";
 import LeadsPages from "./Modules/AdminComponents/LeadsPages.jsx";
+import { LeadMonitor } from "./Modules/AdminComponents/components/LeadsMonitor.jsx";
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
     <div className="w-16 h-16 border-4 rounded-full border-t-transparent border-gray-900/50 animate-spin"></div>

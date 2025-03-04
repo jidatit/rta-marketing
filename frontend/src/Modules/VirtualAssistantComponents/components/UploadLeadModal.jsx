@@ -7,10 +7,13 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
+  doc,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { db } from "../../../config/firebaseConfig";
 import { useAuth } from "../../../AuthContext";
+import { useLeadMonitoring } from "../../AdminComponents/components/LeadsMonitor";
 
 const UploadLeadModal = ({
   isOpen,
@@ -39,6 +42,7 @@ const UploadLeadModal = ({
           initialData.allLeads.map((lead) => ({
             leadSource: lead.leadSource,
             leadAmount: lead.leadAmount,
+            leadCost: lead.leadCost,
             VAName: lead.VAName,
             VAUid: lead.VAUid,
             timestamp: lead.timestamp,
@@ -183,15 +187,62 @@ const UploadLeadModal = ({
         leads: updatedLeads,
         lastUpdated: serverTimestamp(),
       });
-      onClose();
+
       toast.success("Leads updated successfully!");
       setIsEditing(false);
       onClose();
+
+      // Check if the updated lead count falls below 10 for the current month
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      const monthYearKey = `${currentYear}-${currentMonth + 1}`;
+
+      const currentMonthLeads = updatedLeads.filter((lead) => {
+        const leadDate = lead.timestamp?.toDate
+          ? lead.timestamp.toDate()
+          : new Date(lead.timestamp);
+        return (
+          leadDate.getMonth() === currentMonth &&
+          leadDate.getFullYear() === currentYear
+        );
+      });
+
+      if (currentMonthLeads.length < 10) {
+        // Reference to notification history document
+        const notificationDocRef = doc(
+          db,
+          "notificationHistory",
+          "leadThresholds",
+          "monthlyRecords",
+          monthYearKey
+        );
+
+        const notificationDocSnap = await getDoc(notificationDocRef);
+
+        if (notificationDocSnap.exists()) {
+          const notificationData = notificationDocSnap.data();
+          const updatedNotifiedUserIds = (
+            notificationData.notifiedUserIds || []
+          ).filter((uid) => uid !== initialData.salesPersonId);
+
+          // Update Firestore with the modified list
+          await updateDoc(notificationDocRef, {
+            notifiedUserIds: updatedNotifiedUserIds,
+            updatedAt: new Date(),
+          });
+
+          console.log(
+            `Removed ${initialData.salesPersonId} from notification history as their lead count fell below 10`
+          );
+        }
+      }
     } catch (error) {
       console.error("Error updating leads:", error);
       toast.error("Failed to update leads.");
     } finally {
       setLoading(false);
+      await triggerCheck();
     }
   };
 
@@ -255,6 +306,8 @@ const UploadLeadModal = ({
   //     setLoading(false);
   //   }
   // };
+  const { status, triggerCheck } = useLeadMonitoring(db, 10, 60);
+
   const handleUpload = async () => {
     if (mode === "edit" && isEditing) {
       await handleUpdateLeads();
@@ -314,11 +367,12 @@ const UploadLeadModal = ({
       toast.error("Failed to upload leads.");
     } finally {
       setLoading(false);
+      await triggerCheck();
     }
   };
 
   if (!isOpen) return null;
-  console.log("salesperson", SalesPerson);
+  console.log("salespersonasdasd", leadRows);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">

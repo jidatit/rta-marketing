@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
 import { db } from "../../config/firebaseConfig";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
+  setDoc,
   where,
 } from "firebase/firestore";
 import logo from "../../images/rta-logo.png";
@@ -22,61 +24,12 @@ const TVScreen = () => {
   const [totalSalestarget, setTotalSalestarget] = useState(0);
   const [totalCompletedSales, setTotalCompletedSales] = useState(0);
   const [midMonthSales, setMidMonthSales] = useState(0);
+  const [sortedCardsPerson, setSortedCardsPerson] = useState([]);
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
   const [totalLeadsCount, setTotalLeads] = useState(0);
   const { salesData, loading, selectedMonth, setSelectedMonth } =
     useSalesData();
-
-  // useEffect(() => {
-  //   setSelectedMonth(() => {
-  //     const today = new Date();
-  //     return today.toISOString().slice(0, 7);
-  //   });
-  //   console.log(salesData);
-  //   if (salesData?.length > 0) {
-  //     // Compute total completed sales
-  //     const totalSalesCount = salesData.reduce(
-  //       (total, person) => total + (person.salesCompleted || 0),
-  //       0
-  //     );
-
-  //     // Compute mid-month sales total (sales before or on the 15th)
-  //     const midMonthSalesTotal = salesData.reduce(
-  //       (total, person) => total + (person.midMonthSales || 0),
-  //       0
-  //     );
-
-  //     setTotalCompletedSales(totalSalesCount);
-  //     setMidMonthSales(midMonthSalesTotal);
-  //   }
-  // }, [salesData]);
-
-  // useEffect(() => {
-  //   console.log("salesData", salesData);
-  //   if (salesData?.length > 0) {
-  //     // Compute total target
-  //     const totalTarget = salesData.reduce(
-  //       (total, person) => total + (person.target || 0),
-  //       0
-  //     );
-
-  //     // Compute total completed sales
-  //     const totalSalesCount = salesData.reduce(
-  //       (total, person) => total + (person.salesCompleted || 0),
-  //       0
-  //     );
-
-  //     // Compute mid-month sales total
-  //     const midMonthSalesTotal = salesData.reduce(
-  //       (total, person) => total + (person.midMonth || 0),
-  //       0
-  //     );
-
-  //     setTotalSales(totalTarget); // Store total target
-  //     setTotalCompletedSales(totalSalesCount);
-  //     setMidMonthSales(midMonthSalesTotal);
-  //   }
-  // }, [salesData]);
-
   useEffect(() => {
     setSelectedMonth(() => {
       const today = new Date();
@@ -84,8 +37,20 @@ const TVScreen = () => {
     });
   }, []);
   useEffect(() => {
-    // console.log("salesData", salesData);
-
+    const fetchSortedSalesPerson = async () => {
+      try {
+        const docRef = doc(db, "settings", "salesOrder");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSortedCardsPerson(docSnap.data().order);
+        }
+      } catch (error) {
+        console.error("Error fetching sorted sales persons: ", error);
+      }
+    };
+    fetchSortedSalesPerson();
+  }, []);
+  useEffect(() => {
     if (salesData?.length > 0) {
       // Compute total target
       const totalTarget = salesData.reduce((total, person, index) => {
@@ -353,6 +318,39 @@ const TVScreen = () => {
     );
   }
 
+  // Function to handle drag start
+
+  const saveOrderToFirebase = async (order) => {
+    try {
+      await setDoc(doc(db, "settings", "salesOrder"), { order });
+    } catch (error) {
+      console.error("Error saving order: ", error);
+    }
+  };
+
+  // Function to handle drag start
+  const handleDragStart = (index) => {
+    dragItem.current = index;
+  };
+
+  // Function to handle drag enter
+  const handleDragEnter = (index) => {
+    dragOverItem.current = index;
+  };
+
+  // Function to handle drop
+  const handleDrop = () => {
+    const items = [...sortedCardsPerson];
+    const draggedItem = items[dragItem.current];
+    items.splice(dragItem.current, 1);
+    items.splice(dragOverItem.current, 0, draggedItem);
+
+    setSortedCardsPerson(items);
+    saveOrderToFirebase(items);
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
   return (
     <div>
       <div className=" min-h-screen  w-full  px-12 mx-auto">
@@ -399,26 +397,27 @@ const TVScreen = () => {
         </div>
 
         {/* People Grid */}
-        <div className="masonry">
-          {sortedSalesPerson && sortedSalesPerson?.length > 0 ? (
-            sortedSalesPerson.map((person) => {
-              return (
-                <PersonCard
-                  name={person?.name}
-                  uid={person?.uid}
-                  sales={person?.sales}
-                  key={person?.uid}
-                  target={person?.target}
-                  salesCompleted={person?.salesCompleted}
-                  midMonthSales={person?.midMonthSales}
-                />
-              );
-            })
-          ) : !SalesPersons ? (
-            <div className="flex items-center justify-center w-full h-full">
-              Loading...
+        <div className="flex flex-row gap-4 flex-wrap">
+          {sortedCardsPerson.map((person, index) => (
+            <div
+              key={person.uid}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragEnter={() => handleDragEnter(index)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              className="cursor-pointer"
+            >
+              <PersonCard
+                name={person?.name}
+                uid={person?.uid}
+                sales={person?.sales}
+                target={person?.target}
+                salesCompleted={person?.salesCompleted}
+                midMonthSales={person?.midMonthSales}
+              />
             </div>
-          ) : null}
+          ))}
         </div>
       </div>
     </div>
@@ -604,10 +603,8 @@ const PersonCard = ({
   salesCompleted,
   midMonthSales,
 }) => {
-  // console.log("Sales From Person Card", name, sales);
-
   return (
-    <div className="bg-white p-4 rounded-lg  border border-[#989898]  m-1 shadow-lg w-full max-w-[650px] h-fit  overflow-auto masonry-item ">
+    <div className="bg-white p-4 rounded-lg border border-[#989898] m-1 shadow-lg w-[95vw] h-fit overflow-auto masonry-item cursor-grab">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold mb-4">{name}</h2>
 
@@ -621,7 +618,7 @@ const PersonCard = ({
         </div>
       </div>
 
-      <div className="grid masonry-2 gap-4 ">
+      <div className="grid masonry-2 gap-4">
         {sales && sales.length > 0 ? (
           sales.map((sale, idx) => (
             <ClientCard
@@ -636,7 +633,7 @@ const PersonCard = ({
             />
           ))
         ) : (
-          <div className="flex items-center justify-center w-full h-full col-span-4 row-span-4">
+          <div className="flex items-center justify-center w-screen h-full col-span-4 row-span-4">
             No sales yet
           </div>
         )}
