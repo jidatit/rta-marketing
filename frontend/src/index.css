@@ -78,3 +78,6 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+.css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input {
+padding: 8px !important;
+}

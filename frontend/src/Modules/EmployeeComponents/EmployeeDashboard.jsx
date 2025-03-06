@@ -23,7 +23,10 @@ const EmployeeDashboard = () => {
   const [thirdForm, setThirdForm] = useState(false);
   const [firstForm, setFirstForm] = useState(false);
   const { currentUser } = useAuth();
-
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString("en-US", { hour12: false }); // Format: HH:mm:ss
+  };
   const [formData, setFormData] = useState({
     saleId: "",
     customerName: "",
@@ -44,6 +47,7 @@ const EmployeeDashboard = () => {
     reserve: "",
     grossProfit: "",
     saleDate: getCurrentDate(),
+    saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
     InsuranceStatus: false,
     FundStatus: false,
   });
@@ -151,6 +155,7 @@ const EmployeeDashboard = () => {
         reserve: "",
         grossProfit: "",
         saleDate: getCurrentDate(),
+        saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
       });
@@ -208,6 +213,7 @@ const EmployeeDashboard = () => {
         reserve: "",
         grossProfit: "",
         saleDate: getCurrentDate(),
+        saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
       });

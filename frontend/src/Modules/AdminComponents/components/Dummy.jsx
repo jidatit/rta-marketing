@@ -2,22 +2,10 @@ import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
-import {
-  FaChartLine,
-  FaChevronCircleDown,
-  FaDollarSign,
-  FaExchangeAlt,
-  FaUsers,
-} from "react-icons/fa";
-import { Menu } from "@headlessui/react";
-import CustomDateRangePicker from "./MuiDatePicker";
+// Import icons from react-icons
+import { FaChartLine, FaUsers, FaExchangeAlt, FaDollarSign } from 'react-icons/fa';
 
 const SalesAnalysisChart = () => {
-  // Helper to get label from value for time range
-  const getTimeRangeLabel = (value) => {
-    const option = timeRangeOptions.find((opt) => opt.value === value);
-    return option ? option.label : "";
-  };
   const [chartData, setChartData] = useState({
     series: [],
     options: {
@@ -39,7 +27,7 @@ const SalesAnalysisChart = () => {
         scrollbar: {
           enabled: true,
         },
-        background: "#ffffff",
+        background: "#f8fafc",
         fontFamily: "'Inter', 'Helvetica', sans-serif",
       },
       colors: ["#00c22a", "#0a99ff", "#FFC107", "#ff0008"],
@@ -307,20 +295,21 @@ const SalesAnalysisChart = () => {
       ],
     },
   });
+
+  // New state for the summary stats
   const [summaryStats, setSummaryStats] = useState({
     totalLeads: 0,
     totalSales: 0,
     conversionRate: 0,
-    costPerSale: 0,
+    costPerSale: 0
   });
+
   const [dateFrom, setDateFrom] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1)
   );
   const [dateTo, setDateTo] = useState(new Date());
   const [leadSources, setLeadSources] = useState([]);
   const [selectedLeadSource, setSelectedLeadSource] = useState("All");
-  const [TotalConversionRate, setTotalConversionRate] = useState(0);
-  const [TotalSalePerLead, setTotalSalePerLead] = useState(0);
   const [dateGrouping, setDateGrouping] = useState("day"); // 'day', 'month', 'year', or 'hour'
   const [timeRangeFilter, setTimeRangeFilter] = useState("custom"); // New time range filter
 
@@ -363,7 +352,6 @@ const SalesAnalysisChart = () => {
           59,
           59
         );
-        // Ensure we're using hourly grouping for today view
         setDateGrouping("hour");
         break;
       case "yesterday":
@@ -384,29 +372,22 @@ const SalesAnalysisChart = () => {
           59,
           59
         );
-        // Ensure we're using hourly grouping for yesterday view
         setDateGrouping("hour");
         break;
       case "thisMonth":
         // Set from to first day of current month and to to today
-        newDateFrom = new Date(now.getFullYear(), now.getMonth(), 2);
+        newDateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
         newDateTo = new Date(now);
         break;
       case "lastWeek":
-        // Find the previous Monday
-        const lastMonday = new Date(now);
-        lastMonday.setDate(now.getDate() - now.getDay() - 6); // Move back to last week's Monday
-        lastMonday.setUTCHours(0, 0, 0, 0);
-
-        // Find the previous Sunday
-        const lastSunday = new Date(lastMonday);
-        lastSunday.setDate(lastMonday.getDate() + 6); // Move to last week's Sunday
-        lastSunday.setUTCHours(23, 59, 59, 999);
-
-        newDateFrom = lastMonday;
-        newDateTo = lastSunday;
+        // Set from to 7 days ago and to to today
+        newDateFrom = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 7
+        );
+        newDateTo = new Date(now);
         break;
-
       case "lastYear":
         // Set from to 1 year ago and to to today
         newDateFrom = new Date(
@@ -433,7 +414,7 @@ const SalesAnalysisChart = () => {
     fetchLeadSources();
   }, []);
 
-  // Updated: Determine appropriate date grouping based on date range
+  // Determine appropriate date grouping based on date range
   useEffect(() => {
     // Only set date grouping if not already set by time range filter
     if (timeRangeFilter !== "today" && timeRangeFilter !== "yesterday") {
@@ -442,14 +423,12 @@ const SalesAnalysisChart = () => {
       );
 
       let newGrouping = "day";
-
       if (daysDifference <= 2) {
         newGrouping = "hour"; // For 1-2 day differences, show hourly data
-      } else if (daysDifference > 730) {
-        // 2 years (365*2)
-        newGrouping = "year"; // For more than 2 years, show yearly data
       } else if (daysDifference > 90) {
-        newGrouping = "month"; // For more than 90 days, show monthly data
+        newGrouping = "month";
+      } else if (daysDifference > 730) {
+        newGrouping = "year";
       }
 
       setDateGrouping(newGrouping);
@@ -457,18 +436,13 @@ const SalesAnalysisChart = () => {
   }, [dateFrom, dateTo, timeRangeFilter]);
 
   // Helper function to format dates based on grouping
-  // Update the formatDate function to account for timezone offset
   const formatDate = (date, grouping) => {
     const d = new Date(date);
-
     if (grouping === "hour") {
-      // Format date with the exact hour, no timezone adjustment
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      return `${d.toISOString().split("T")[0]}-${String(d.getHours()).padStart(
         2,
         "0"
-      )}-${String(d.getDate()).padStart(2, "0")} ${String(
-        d.getHours()
-      ).padStart(2, "0")}:00`;
+      )}`;
     } else if (grouping === "day") {
       return d.toISOString().split("T")[0];
     } else if (grouping === "month") {
@@ -477,26 +451,13 @@ const SalesAnalysisChart = () => {
       return `${d.getFullYear()}`;
     }
   };
-  // Improved getDisplayFormat for better hour display with AM/PM
+
+  // Helper function for displaying formatted dates in UI
   const getDisplayFormat = (dateStr, grouping) => {
     if (grouping === "hour") {
-      // Extract the hour part and format it as "12:00 PM" using Date object
-      // to ensure proper timezone handling
-      const [datePart, timePart] = dateStr.split(" ");
-      const [year, month, day] = datePart.split("-");
-      const [hourStr] = timePart.split(":");
-      const hour = parseInt(hourStr, 10);
-
-      // Create a date object using local components to avoid timezone issues
-      const localDate = new Date(year, month - 1, day, hour);
-
-      return localDate
-        .toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-        .replace(":00", "");
+      const [datePart, hour] = dateStr.split("-");
+      const dateObj = new Date(datePart);
+      return `${dateObj.toLocaleDateString()} ${hour}:00`;
     } else if (grouping === "day") {
       return new Date(dateStr).toLocaleDateString();
     } else if (grouping === "month") {
@@ -505,7 +466,7 @@ const SalesAnalysisChart = () => {
         month: "short",
       })} ${year}`;
     } else {
-      return dateStr;
+      return dateStr; // Year
     }
   };
 
@@ -515,85 +476,60 @@ const SalesAnalysisChart = () => {
     const startDate = new Date(start);
     const endDate = new Date(end);
 
+    // Set time based on grouping
     if (grouping !== "hour") {
-      // Normalize to start of the day (to avoid timezone issues)
-      startDate.setUTCHours(0, 0, 0, 0);
-      endDate.setUTCHours(23, 59, 59, 999); // Ensure we include the last day
+      // Set time to beginning of day for non-hourly groupings
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999); // End of the day
     }
 
     if (grouping === "year") {
-      // Yearly grouping
+      // For yearly grouping
       const startYear = startDate.getFullYear();
       const endYear = endDate.getFullYear();
+
       for (let year = startYear; year <= endYear; year++) {
         dates.push(year.toString());
       }
     } else if (grouping === "month") {
-      // Monthly grouping
+      // For monthly grouping
       const currentDate = new Date(startDate);
-      currentDate.setDate(1); // Start from the first day of the month
+      // Set to the 1st day of month to ensure consistent month iteration
+      currentDate.setDate(1);
 
       while (currentDate <= endDate) {
-        dates.push(formatDate(currentDate, "month"));
-        currentDate.setMonth(currentDate.getMonth() + 1); // Move to next month
+        const dateStr = formatDate(currentDate, "month");
+        dates.push(dateStr);
+
+        // Move to the first day of the next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
       }
     } else if (grouping === "hour") {
-      // Hourly grouping
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        dates.push(formatDate(currentDate, "hour"));
-        currentDate.setHours(currentDate.getHours() + 1); // Move to next hour
-      }
-    } else {
-      // **Daily grouping fix**
+      // For hourly grouping
       const currentDate = new Date(startDate);
 
       while (currentDate <= endDate) {
-        dates.push(formatDate(currentDate, "day"));
-        currentDate.setDate(currentDate.getDate() + 1); // Move to next day
+        const dateStr = formatDate(currentDate, "hour");
+        dates.push(dateStr);
+
+        // Move to the next hour
+        currentDate.setHours(currentDate.getHours() + 1);
+      }
+    } else {
+      // For daily grouping
+      const currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const dateStr = formatDate(currentDate, "day");
+        dates.push(dateStr);
+
+        // Move to the next day
+        currentDate.setDate(currentDate.getDate() + 1);
       }
     }
 
     return dates;
   };
-
-  useEffect(() => {
-    const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-    console.log("Generated Date Range:", dateRange);
-  }, [dateFrom, dateTo, dateGrouping]);
-  useEffect(() => {
-    if (chartData.series.length === 0) return;
-
-    let newConversionRate = 0;
-    let newSalePerLead = 0;
-
-    const conversionSeries = chartData.series.find(
-      (s) => s.name === "Conversion Rate"
-    );
-    const salePerLeadSeries = chartData.series.find(
-      (s) => s.name === "Cost Per Sale"
-    );
-
-    if (conversionSeries) {
-      newConversionRate = conversionSeries.data.reduce(
-        (sum, val) => sum + parseFloat(val || 0),
-        0
-      );
-    }
-
-    if (salePerLeadSeries) {
-      newSalePerLead = salePerLeadSeries.data.reduce(
-        (sum, val) => sum + parseFloat(val || 0),
-        0
-      );
-    }
-
-    setSummaryStats((prev) => ({
-      ...prev,
-      conversionRate: newConversionRate.toFixed(2),
-      costPerSale: newSalePerLead.toFixed(2),
-    }));
-  }, [chartData]); // Runs when chartData changes
 
   useEffect(() => {
     const fetchData = async () => {
@@ -608,10 +544,13 @@ const SalesAnalysisChart = () => {
       let salesBySource = {};
       const start = dateFrom.getTime();
       const end = dateTo.getTime();
+
+      // For summary stats
       let totalLeads = 0;
       let totalSales = 0;
       let totalLeadAmount = 0;
       let totalLeadCost = 0;
+
       // Generate all dates between start and end based on grouping
       const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
 
@@ -630,15 +569,12 @@ const SalesAnalysisChart = () => {
               selectedLeadSource === "All" ||
               leadSource === selectedLeadSource
             ) {
-              // Create a Date object with the exact timestamp
-              const leadTime = lead.timestamp.seconds * 1000; // Convert to milliseconds
-              const exactDate = new Date(leadTime);
-              const dateStr = formatDate(exactDate, dateGrouping);
-
-              // Now dateStr will contain the exact hour information
+              const dateStr = formatDate(new Date(leadTime), dateGrouping);
               leadsData[dateStr] = (leadsData[dateStr] || 0) + 1;
-              totalLeads++;
 
+              // Increment total leads for summary stats
+              totalLeads++;
+              
               // Add lead amount to total
               totalLeadAmount += lead.leadAmount;
 
@@ -656,70 +592,10 @@ const SalesAnalysisChart = () => {
       });
 
       // Collect sales
-      // Collect sales - updated to handle "HH:MM:SS" format
       salesSnapshot.forEach((doc) => {
         const salesArray = doc.data().sales || [];
         salesArray.forEach((sale) => {
-          // Handle the case where saleTime comes as a time string
-          let saleTime;
-
-          if (sale.saleDate && sale.saleTime) {
-            const [day, monthStr, year] = sale.saleDate.split(" "); // "06 March 2025"
-            const months = {
-              January: 0,
-              February: 1,
-              March: 2,
-              April: 3,
-              May: 4,
-              June: 5,
-              July: 6,
-              August: 7,
-              September: 8,
-              October: 9,
-              November: 10,
-              December: 11,
-            };
-
-            const [hours, minutes, seconds] = sale.saleTime
-              .split(":")
-              .map(Number);
-            const saleDateObj = new Date(
-              year,
-              months[monthStr],
-              Number(day),
-              hours,
-              minutes,
-              seconds
-            );
-
-            saleTime = saleDateObj.getTime(); // Correct timestamp
-          } else if (
-            typeof sale.saleTime === "string" &&
-            sale.saleTime.match(/\d{1,2}:\d{2}:\d{2}/)
-          ) {
-            // Handle time string format like "17:20:02"
-            const [hours, minutes, seconds] = sale.saleTime
-              .split(":")
-              .map(Number);
-
-            // Create date with today's date and the specific time
-            const today = new Date();
-            const saleDate = new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate(),
-              hours,
-              minutes,
-              seconds
-            );
-
-            saleTime = saleDate.getTime();
-          } else {
-            // Fallback in case the time format is unexpected
-            console.warn("Unexpected sale time format:", sale.saleTime);
-            return; // Skip this sale record
-          }
-
+          const saleTime = new Date(sale.saleDate).getTime();
           if (saleTime >= start && saleTime <= end) {
             const leadSource = sale.leadSource?.trim() || "Unknown";
 
@@ -730,23 +606,33 @@ const SalesAnalysisChart = () => {
               selectedLeadSource === "All" ||
               leadSource === selectedLeadSource
             ) {
-              // Create a Date object with the exact timestamp
-              const exactDate = new Date(saleTime);
-              const dateStr = formatDate(exactDate, dateGrouping);
-
-              // Now dateStr will contain the exact hour information
+              const dateStr = formatDate(new Date(saleTime), dateGrouping);
               salesData[dateStr] = (salesData[dateStr] || 0) + 1;
+              
+              // Increment total sales for summary stats
               totalSales++;
             }
           }
         });
       });
+
+      // Calculate summary stats
+      const conversionRate = totalLeadAmount > 0 
+        ? ((totalSales / totalLeadAmount) * 100).toFixed(2) 
+        : 0;
+      
+      const costPerSale = totalSales > 0 
+        ? (totalLeadCost / totalSales).toFixed(2) 
+        : 0;
+
+      // Update summary stats state
       setSummaryStats({
         totalLeads,
         totalSales,
-        conversionRate: TotalConversionRate,
-        costPerSale: TotalSalePerLead,
+        conversionRate,
+        costPerSale
       });
+
       // Prepare series data for full date range
       const seriesDataLeads = dateRange.map((date) => leadsData[date] || 0);
       const seriesDataSales = dateRange.map((date) => salesData[date] || 0);
@@ -1044,237 +930,13 @@ const SalesAnalysisChart = () => {
       setDateTo(new Date(date));
     }
   };
+
+  // Function to get the title for the stats section based on selected time range
   const getStatsTitle = () => {
     if (timeRangeFilter !== "custom") {
-      const option = timeRangeOptions.find(
-        (opt) => opt.value === timeRangeFilter
-      );
-      return `${option?.label || "Custom"} Stats`;
+      const option = timeRangeOptions.find(opt => opt.value === timeRangeFilter);
+      return `${option?.label || 'Custom'} Stats`;
     } else {
-      return "Custom Range Stats";
+      return 'Custom Range Stats';
     }
   };
-  return (
-    <div className="w-full rounded-lg px-4 py-6">
-      <div className="flex flex-wrap gap-10 mb-4">
-        {/* Time Range Preset Filter */}
-        <div className="flex flex-col gap-2">
-          <label className="block text-gray-700 text-sm font-medium mb-1">
-            Lead Source:
-          </label>
-          <Menu
-            as="div"
-            className="relative inline-block text-left min-w-[200px]"
-          >
-            <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-              {selectedLeadSource}
-              <FaChevronCircleDown className="ml-2 h-4 w-4" />
-            </Menu.Button>
-            <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-              {leadSources.map((source) => (
-                <Menu.Item key={source}>
-                  {({ active }) => (
-                    <button
-                      className={`${
-                        active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                      } group flex w-full items-center px-4 py-2 text-sm ${
-                        selectedLeadSource === source
-                          ? "bg-gray-100 font-medium"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedLeadSource(source)}
-                    >
-                      {source}
-                    </button>
-                  )}
-                </Menu.Item>
-              ))}
-            </Menu.Items>
-          </Menu>
-        </div>
-
-        {/* Custom Date Inputs (only shown when custom filter is selected) */}
-        {/* {timeRangeFilter !== "custom" ? (
-          ""
-        ) : (
-          <div
-            className={`flex gap-6 ${
-              timeRangeFilter !== "custom" ? "opacity-50" : ""
-            }`}
-          >
-            <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Date From:
-              </label>
-              <input
-                type="date"
-                value={dateFrom.toISOString().split("T")[0]}
-                onChange={(e) => handleCustomDateChange(e.target.value, true)}
-                className="border p-2 rounded text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                disabled={timeRangeFilter !== "custom"}
-              />{" "}
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Date To:
-              </label>
-              <input
-                type="date"
-                value={dateTo.toISOString().split("T")[0]}
-                onChange={(e) => handleCustomDateChange(e.target.value, false)}
-                className="border p-2 rounded text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                disabled={timeRangeFilter !== "custom"}
-              />{" "}
-            </div>
-          </div>
-        )} */}
-        <CustomDateRangePicker
-          timeRangeFilter={timeRangeFilter}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          handleCustomDateChange={handleCustomDateChange}
-        />
-        {/* Lead Source Filter */}
-        <div className="flex flex-col gap-2">
-          <label className="block text-gray-700 text-sm font-medium mb-1">
-            Time Range:
-          </label>
-          <div className="min-w-[200px]">
-            <Menu as="div" className="relative inline-block text-left w-full">
-              <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-                {getTimeRangeLabel(timeRangeFilter)}
-                <FaChevronCircleDown className="ml-2 h-4 w-4" />
-              </Menu.Button>
-              <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                {timeRangeOptions.map((option) => (
-                  <Menu.Item key={option.value}>
-                    {({ active }) => (
-                      <button
-                        className={`${
-                          active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                        } group flex w-full items-center px-4 py-2 text-sm ${
-                          timeRangeFilter === option.value
-                            ? "bg-gray-100 font-medium"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setTimeRangeFilter(option.value);
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    )}
-                  </Menu.Item>
-                ))}
-              </Menu.Items>
-            </Menu>
-          </div>
-        </div>
-
-        {/* Current View Indicator */}
-      </div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          {getStatsTitle()}
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-semibold text-gray-500">
-                  Total Leads
-                </h3>
-                <div className="p-2 bg-green-100 rounded-full">
-                  <FaUsers className="text-green-600 text-lg" />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  {summaryStats.totalLeads.toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">leads</span>
-              </div>
-            </div>
-            <div className="h-1 w-full bg-green-500"></div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-semibold text-gray-500">
-                  Total Sales
-                </h3>
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <FaChartLine className="text-blue-600 text-lg" />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  {summaryStats.totalSales.toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">sales</span>
-              </div>
-            </div>
-            <div className="h-1 w-full bg-blue-500"></div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-semibold text-gray-500">
-                  Conversion Rate
-                </h3>
-                <div className="p-2 bg-yellow-100 rounded-full">
-                  <FaExchangeAlt className="text-yellow-600 text-lg" />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  {summaryStats.conversionRate}%
-                </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">
-                  conversion
-                </span>
-              </div>
-            </div>
-            <div className="h-1 w-full bg-yellow-500"></div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-semibold text-gray-500">
-                  Cost Per Sale
-                </h3>
-                <div className="p-2 bg-red-100 rounded-full">
-                  <FaDollarSign className="text-red-600 text-lg" />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  ${parseFloat(summaryStats.costPerSale).toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">
-                  per sale
-                </span>
-              </div>
-            </div>
-            <div className="h-1 w-full bg-red-500"></div>
-          </div>
-        </div>
-      </div>
-      <div id="chart">
-        <ReactApexChart
-          options={chartData.options}
-          series={chartData.series}
-          type="line"
-          height={500}
-          className="w-full bg-white"
-        />
-      </div>
-    </div>
-  );
-};
-
-export default SalesAnalysisChart;
