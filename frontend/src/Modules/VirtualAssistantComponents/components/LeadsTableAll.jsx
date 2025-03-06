@@ -137,7 +137,6 @@ const LeadsPageVA = ({
       return null;
     }
   };
-
   const setupLeadsListener = () => {
     try {
       const leadsCollection = collection(db, "leads");
@@ -340,7 +339,7 @@ const LeadsPageVA = ({
     1,
     Math.ceil(filteredClients.length / rowsPerPage)
   );
-  console.log("currentClients: " + allSales);
+
   return (
     <>
       <ConfirmationModal

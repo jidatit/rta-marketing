@@ -123,7 +123,7 @@ const LeadPagesAnalytics = () => {
       const totalLeads = leadCounts[leadSource] || 0;
       const totalSales = salesCounts[leadSource] || 0;
       const totalLeadCost = leadCosts[leadSource] || 0;
-
+      console.log("toaster", totalLeadCost);
       const conversionRate = totalLeads
         ? ((totalSales / totalLeads) * 100).toFixed(2)
         : "0.00";
@@ -149,7 +149,7 @@ const LeadPagesAnalytics = () => {
 
     setData(tableData);
     console.log("table data", tableData);
-    s;
+
     setLoading(false);
   };
 
