@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
+import { IoChevronDown } from "react-icons/io5";
 import {
   FaChartLine,
-  FaChevronCircleDown,
   FaDollarSign,
   FaExchangeAlt,
   FaUsers,
@@ -329,11 +329,25 @@ const SalesAnalysisChart = () => {
     { value: "today", label: "Today" },
     { value: "yesterday", label: "Yesterday" },
     { value: "thisMonth", label: "This Month" },
+    { value: "thisYear", label: "This Year" }, // New option
     { value: "lastWeek", label: "Last Week" },
     { value: "lastYear", label: "Last Year" },
     { value: "custom", label: "Custom Range" },
   ];
+  // When setting custom dates, adjust time to cover full days
+  const handleDateFromChange = (date) => {
+    const adjustedDate = new Date(date);
+    adjustedDate.setHours(0, 0, 0, 0);
+    setDateFrom(adjustedDate);
+    setTimeRangeFilter("custom");
+  };
 
+  const handleDateToChange = (date) => {
+    const adjustedDate = new Date(date);
+    adjustedDate.setHours(23, 59, 59, 999);
+    setDateTo(adjustedDate);
+    setTimeRangeFilter("custom");
+  };
   // Apply time range filter
   useEffect(() => {
     if (timeRangeFilter === "custom") {
@@ -346,74 +360,43 @@ const SalesAnalysisChart = () => {
 
     switch (timeRangeFilter) {
       case "today":
-        // Set from and to to today (00:00 to 23:59)
-        newDateFrom = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          0,
-          0,
-          0
-        );
-        newDateTo = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          23,
-          59,
-          59
-        );
-        // Ensure we're using hourly grouping for today view
+        newDateFrom = new Date(now.setHours(0, 0, 0, 0));
+        newDateTo = new Date(now.setHours(23, 59, 59, 999));
         setDateGrouping("hour");
         break;
       case "yesterday":
-        // Set from and to to yesterday (00:00 to 23:59)
-        newDateFrom = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - 1,
-          0,
-          0,
-          0
-        );
-        newDateTo = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - 1,
-          23,
-          59,
-          59
-        );
-        // Ensure we're using hourly grouping for yesterday view
+        newDateFrom = new Date(now);
+        newDateFrom.setDate(now.getDate() - 1);
+        newDateFrom.setHours(0, 0, 0, 0);
+        newDateTo = new Date(newDateFrom);
+        newDateTo.setHours(23, 59, 59, 999);
         setDateGrouping("hour");
         break;
       case "thisMonth":
-        // Set from to first day of current month and to to today
-        newDateFrom = new Date(now.getFullYear(), now.getMonth(), 2);
+        newDateFrom = new Date(now.getFullYear(), now.getMonth(), 1); // Fixed to 1st day
         newDateTo = new Date(now);
+        newDateTo.setHours(23, 59, 59, 999);
+        break;
+      case "thisYear":
+        // First day of current year to today
+        newDateFrom = new Date(now.getFullYear(), 0, 1); // January 1st
+        newDateTo = new Date(now);
+        // Force month grouping for yearly view
+        setDateGrouping("month");
         break;
       case "lastWeek":
-        // Find the previous Monday
+        // Correct last week calculation
         const lastMonday = new Date(now);
-        lastMonday.setDate(now.getDate() - now.getDay() - 6); // Move back to last week's Monday
-        lastMonday.setUTCHours(0, 0, 0, 0);
-
-        // Find the previous Sunday
+        lastMonday.setDate(now.getDate() - now.getDay() - 6); // Previous Monday
+        lastMonday.setHours(0, 0, 0, 0);
         const lastSunday = new Date(lastMonday);
-        lastSunday.setDate(lastMonday.getDate() + 6); // Move to last week's Sunday
-        lastSunday.setUTCHours(23, 59, 59, 999);
-
+        lastSunday.setDate(lastMonday.getDate() + 6);
+        lastSunday.setHours(23, 59, 59, 999);
         newDateFrom = lastMonday;
         newDateTo = lastSunday;
         break;
-
       case "lastYear":
-        // Set from to 1 year ago and to to today
-        newDateFrom = new Date(
-          now.getFullYear() - 1,
-          now.getMonth(),
-          now.getDate()
-        );
+        newDateFrom = new Date(now.getFullYear() - 1, 0, 1); // Jan 1 of last year
         newDateTo = new Date(now);
         break;
       default:
@@ -435,22 +418,16 @@ const SalesAnalysisChart = () => {
 
   // Updated: Determine appropriate date grouping based on date range
   useEffect(() => {
-    // Only set date grouping if not already set by time range filter
-    if (timeRangeFilter !== "today" && timeRangeFilter !== "yesterday") {
+    // Only override grouping if not in special views
+    if (!["today", "yesterday", "thisYear"].includes(timeRangeFilter)) {
       const daysDifference = Math.ceil(
         (dateTo - dateFrom) / (1000 * 60 * 60 * 24)
       );
 
       let newGrouping = "day";
-
-      if (daysDifference <= 2) {
-        newGrouping = "hour"; // For 1-2 day differences, show hourly data
-      } else if (daysDifference > 730) {
-        // 2 years (365*2)
-        newGrouping = "year"; // For more than 2 years, show yearly data
-      } else if (daysDifference > 90) {
-        newGrouping = "month"; // For more than 90 days, show monthly data
-      }
+      if (daysDifference <= 2) newGrouping = "hour";
+      else if (daysDifference > 730) newGrouping = "year";
+      else if (daysDifference > 90) newGrouping = "month";
 
       setDateGrouping(newGrouping);
     }
@@ -462,7 +439,6 @@ const SalesAnalysisChart = () => {
     const d = new Date(date);
 
     if (grouping === "hour") {
-      // Format date with the exact hour, no timezone adjustment
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
         "0"
@@ -470,7 +446,11 @@ const SalesAnalysisChart = () => {
         d.getHours()
       ).padStart(2, "0")}:00`;
     } else if (grouping === "day") {
-      return d.toISOString().split("T")[0];
+      // Use local date components
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(d.getDate()).padStart(2, "0")}`;
     } else if (grouping === "month") {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     } else if (grouping === "year") {
@@ -510,57 +490,63 @@ const SalesAnalysisChart = () => {
   };
 
   // Generate date range based on grouping
+  // Generate date range based on grouping
   const generateDateRange = (start, end, grouping) => {
     const dates = [];
     const startDate = new Date(start);
     const endDate = new Date(end);
 
-    if (grouping !== "hour") {
-      // Normalize to start of the day (to avoid timezone issues)
-      startDate.setUTCHours(0, 0, 0, 0);
-      endDate.setUTCHours(23, 59, 59, 999); // Ensure we include the last day
-    }
-
     if (grouping === "year") {
-      // Yearly grouping
       const startYear = startDate.getFullYear();
       const endYear = endDate.getFullYear();
       for (let year = startYear; year <= endYear; year++) {
         dates.push(year.toString());
       }
     } else if (grouping === "month") {
-      // Monthly grouping
-      const currentDate = new Date(startDate);
-      currentDate.setDate(1); // Start from the first day of the month
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth();
+      const endYear = endDate.getFullYear();
+      const endMonth = endDate.getMonth();
 
-      while (currentDate <= endDate) {
-        dates.push(formatDate(currentDate, "month"));
-        currentDate.setMonth(currentDate.getMonth() + 1); // Move to next month
+      let currentYear = startYear;
+      let currentMonth = startMonth;
+
+      while (
+        currentYear < endYear ||
+        (currentYear === endYear && currentMonth <= endMonth)
+      ) {
+        dates.push(
+          `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`
+        );
+        if (currentMonth === 11) {
+          currentYear++;
+          currentMonth = 0;
+        } else {
+          currentMonth++;
+        }
       }
     } else if (grouping === "hour") {
-      // Hourly grouping
-      const currentDate = new Date(startDate);
+      let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         dates.push(formatDate(currentDate, "hour"));
-        currentDate.setHours(currentDate.getHours() + 1); // Move to next hour
+        currentDate.setHours(currentDate.getHours() + 1);
       }
     } else {
-      // **Daily grouping fix**
-      const currentDate = new Date(startDate);
-
+      // Default to day grouping
+      let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         dates.push(formatDate(currentDate, "day"));
-        currentDate.setDate(currentDate.getDate() + 1); // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
       }
     }
 
     return dates;
   };
 
-  useEffect(() => {
-    const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-    console.log("Generated Date Range:", dateRange);
-  }, [dateFrom, dateTo, dateGrouping]);
+  // useEffect(() => {
+  //   const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
+  //   console.log("Generated Date Range:", dateRange);
+  // }, [dateFrom, dateTo, dateGrouping]);
   useEffect(() => {
     if (chartData.series.length === 0) return;
 
@@ -614,7 +600,7 @@ const SalesAnalysisChart = () => {
       let totalLeadCost = 0;
       // Generate all dates between start and end based on grouping
       const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-
+      console.log("Starting daterange: " + dateRange);
       // Collect leads, lead amounts, and lead costs
       leadsSnapshot.forEach((doc) => {
         const employeeLeads = doc.data().leads || [];
@@ -1039,9 +1025,9 @@ const SalesAnalysisChart = () => {
     }
 
     if (isFrom) {
-      setDateFrom(new Date(date));
+      setDateFrom(date); // Use the full date object with time set to 00:00:00
     } else {
-      setDateTo(new Date(date));
+      setDateTo(date); // Use the full date object with time set to 23:59:59
     }
   };
   const getStatsTitle = () => {
@@ -1058,41 +1044,42 @@ const SalesAnalysisChart = () => {
     <div className="w-full rounded-lg px-4 py-6">
       <div className="flex flex-wrap gap-10 mb-4">
         {/* Time Range Preset Filter */}
+
         <div className="flex flex-col gap-2">
           <label className="block text-gray-700 text-sm font-medium mb-1">
-            Lead Source:
+            Time Range:
           </label>
-          <Menu
-            as="div"
-            className="relative inline-block text-left min-w-[200px]"
-          >
-            <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-              {selectedLeadSource}
-              <FaChevronCircleDown className="ml-2 h-4 w-4" />
-            </Menu.Button>
-            <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-              {leadSources.map((source) => (
-                <Menu.Item key={source}>
-                  {({ active }) => (
-                    <button
-                      className={`${
-                        active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                      } group flex w-full items-center px-4 py-2 text-sm ${
-                        selectedLeadSource === source
-                          ? "bg-gray-100 font-medium"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedLeadSource(source)}
-                    >
-                      {source}
-                    </button>
-                  )}
-                </Menu.Item>
-              ))}
-            </Menu.Items>
-          </Menu>
+          <div className="min-w-[200px]">
+            <Menu as="div" className="relative inline-block text-left w-full">
+              <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                {getTimeRangeLabel(timeRangeFilter)}
+                <IoChevronDown className="ml-2 h-4 w-4" />
+              </Menu.Button>
+              <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                {timeRangeOptions.map((option) => (
+                  <Menu.Item key={option.value}>
+                    {({ active }) => (
+                      <button
+                        className={`${
+                          active ? "bg-blue-100 text-blue-900" : "text-gray-900"
+                        } group flex w-full items-center px-4 py-2 text-sm ${
+                          timeRangeFilter === option.value
+                            ? "bg-gray-100 font-medium"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          setTimeRangeFilter(option.value);
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    )}
+                  </Menu.Item>
+                ))}
+              </Menu.Items>
+            </Menu>
+          </div>
         </div>
-
         {/* Custom Date Inputs (only shown when custom filter is selected) */}
         {/* {timeRangeFilter !== "custom" ? (
           ""
@@ -1137,40 +1124,38 @@ const SalesAnalysisChart = () => {
         {/* Lead Source Filter */}
         <div className="flex flex-col gap-2">
           <label className="block text-gray-700 text-sm font-medium mb-1">
-            Time Range:
+            Lead Source:
           </label>
-          <div className="min-w-[200px]">
-            <Menu as="div" className="relative inline-block text-left w-full">
-              <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-                {getTimeRangeLabel(timeRangeFilter)}
-                <FaChevronCircleDown className="ml-2 h-4 w-4" />
-              </Menu.Button>
-              <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                {timeRangeOptions.map((option) => (
-                  <Menu.Item key={option.value}>
-                    {({ active }) => (
-                      <button
-                        className={`${
-                          active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                        } group flex w-full items-center px-4 py-2 text-sm ${
-                          timeRangeFilter === option.value
-                            ? "bg-gray-100 font-medium"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setTimeRangeFilter(option.value);
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    )}
-                  </Menu.Item>
-                ))}
-              </Menu.Items>
-            </Menu>
-          </div>
+          <Menu
+            as="div"
+            className="relative inline-block text-left min-w-[200px]"
+          >
+            <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+              {selectedLeadSource}
+              <IoChevronDown className="ml-2 h-4 w-4" />
+            </Menu.Button>
+            <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              {leadSources.map((source) => (
+                <Menu.Item key={source}>
+                  {({ active }) => (
+                    <button
+                      className={`${
+                        active ? "bg-blue-100 text-blue-900" : "text-gray-900"
+                      } group flex w-full items-center px-4 py-2 text-sm ${
+                        selectedLeadSource === source
+                          ? "bg-gray-100 font-medium"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedLeadSource(source)}
+                    >
+                      {source}
+                    </button>
+                  )}
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Menu>
         </div>
-
         {/* Current View Indicator */}
       </div>
       <div className="mb-6">

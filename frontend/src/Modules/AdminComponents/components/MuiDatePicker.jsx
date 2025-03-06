@@ -29,10 +29,18 @@ const CustomDateRangePicker = ({
                 value={dateFrom}
                 onChange={(newDate) => {
                   if (newDate) {
-                    handleCustomDateChange(
-                      newDate.toISOString().split("T")[0],
-                      true
+                    // Create a new date set to exactly midnight of the selected day
+                    const exactDate = new Date(
+                      newDate.getFullYear(),
+                      newDate.getMonth(),
+                      newDate.getDate(),
+                      0,
+                      0,
+                      0,
+                      0
                     );
+                    console.log("Selected date from:", exactDate); // For debugging
+                    handleCustomDateChange(exactDate, true);
                   }
                 }}
                 disabled={timeRangeFilter !== "custom"}
@@ -58,10 +66,18 @@ const CustomDateRangePicker = ({
                 value={dateTo}
                 onChange={(newDate) => {
                   if (newDate) {
-                    handleCustomDateChange(
-                      newDate.toISOString().split("T")[0],
-                      false
+                    // Create a new date set to exactly midnight of the selected day
+                    const exactDate = new Date(
+                      newDate.getFullYear(),
+                      newDate.getMonth(),
+                      newDate.getDate(),
+                      0,
+                      0,
+                      0,
+                      0
                     );
+                    console.log("Selected date from:", exactDate); // For debugging
+                    handleCustomDateChange(exactDate, true);
                   }
                 }}
                 disabled={timeRangeFilter !== "custom"}
