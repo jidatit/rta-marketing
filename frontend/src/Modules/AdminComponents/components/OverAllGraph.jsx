@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
@@ -14,10 +14,33 @@ import CustomDateRangePicker from "./MuiDatePicker";
 
 const SalesAnalysisChart = () => {
   // Helper to get label from value for time range
+  const [dateRange, setDateRange] = useState([]);
   const getTimeRangeLabel = (value) => {
     const option = timeRangeOptions.find((opt) => opt.value === value);
     return option ? option.label : "";
   };
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
   const [chartData, setChartData] = useState({
     series: [],
     options: {
@@ -314,11 +337,12 @@ const SalesAnalysisChart = () => {
     costPerSale: 0,
   });
   const [dateFrom, setDateFrom] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1)
+    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
   );
+
   const [dateTo, setDateTo] = useState(new Date());
   const [leadSources, setLeadSources] = useState([]);
-  const [selectedLeadSource, setSelectedLeadSource] = useState("All");
+  const [selectedLeadSource, setSelectedLeadSource] = useState(["All"]); // Change to array
   const [TotalConversionRate, setTotalConversionRate] = useState(0);
   const [TotalSalePerLead, setTotalSalePerLead] = useState(0);
   const [dateGrouping, setDateGrouping] = useState("day"); // 'day', 'month', 'year', or 'hour'
@@ -335,19 +359,7 @@ const SalesAnalysisChart = () => {
     { value: "custom", label: "Custom Range" },
   ];
   // When setting custom dates, adjust time to cover full days
-  const handleDateFromChange = (date) => {
-    const adjustedDate = new Date(date);
-    adjustedDate.setHours(0, 0, 0, 0);
-    setDateFrom(adjustedDate);
-    setTimeRangeFilter("custom");
-  };
 
-  const handleDateToChange = (date) => {
-    const adjustedDate = new Date(date);
-    adjustedDate.setHours(23, 59, 59, 999);
-    setDateTo(adjustedDate);
-    setTimeRangeFilter("custom");
-  };
   // Apply time range filter
   useEffect(() => {
     if (timeRangeFilter === "custom") {
@@ -460,23 +472,22 @@ const SalesAnalysisChart = () => {
   // Improved getDisplayFormat for better hour display with AM/PM
   const getDisplayFormat = (dateStr, grouping) => {
     if (grouping === "hour") {
-      // Extract the hour part and format it as "12:00 PM" using Date object
-      // to ensure proper timezone handling
+      // Split the date string into parts
       const [datePart, timePart] = dateStr.split(" ");
       const [year, month, day] = datePart.split("-");
       const [hourStr] = timePart.split(":");
       const hour = parseInt(hourStr, 10);
 
-      // Create a date object using local components to avoid timezone issues
-      const localDate = new Date(year, month - 1, day, hour);
+      // Create start and end dates in local timezone
+      const startDate = new Date(year, month - 1, day, hour);
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add 1 hour
 
-      return localDate
-        .toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-        .replace(":00", "");
+      // Format times without minutes
+      const options = { hour: "numeric", hour12: true };
+      const startTime = startDate.toLocaleTimeString([], options);
+      const endTime = endDate.toLocaleTimeString([], options);
+
+      return `${startTime} - ${endTime}`;
     } else if (grouping === "day") {
       return new Date(dateStr).toLocaleDateString();
     } else if (grouping === "month") {
@@ -600,7 +611,7 @@ const SalesAnalysisChart = () => {
       let totalLeadCost = 0;
       // Generate all dates between start and end based on grouping
       const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-      console.log("Starting daterange: " + dateRange);
+      setDateRange(dateRange);
       // Collect leads, lead amounts, and lead costs
       leadsSnapshot.forEach((doc) => {
         const employeeLeads = doc.data().leads || [];
@@ -613,8 +624,8 @@ const SalesAnalysisChart = () => {
             leadsBySource[leadSource] = (leadsBySource[leadSource] || 0) + 1;
 
             if (
-              selectedLeadSource === "All" ||
-              leadSource === selectedLeadSource
+              selectedLeadSource.includes("All") ||
+              selectedLeadSource.includes(leadSource)
             ) {
               // Create a Date object with the exact timestamp
               const leadTime = lead.timestamp.seconds * 1000; // Convert to milliseconds
@@ -707,14 +718,14 @@ const SalesAnalysisChart = () => {
           }
 
           if (saleTime >= start && saleTime <= end) {
-            const leadSource = sale.leadSource?.trim() || "Unknown";
+            const leadSource = sale.leadSource || "Unknown";
 
             // Track total sales by source
             salesBySource[leadSource] = (salesBySource[leadSource] || 0) + 1;
 
             if (
-              selectedLeadSource === "All" ||
-              leadSource === selectedLeadSource
+              selectedLeadSource.includes("All") ||
+              selectedLeadSource.includes(leadSource)
             ) {
               // Create a Date object with the exact timestamp
               const exactDate = new Date(saleTime);
@@ -891,10 +902,9 @@ const SalesAnalysisChart = () => {
             },
           },
           subtitle: {
-            text:
-              selectedLeadSource !== "All"
-                ? `Lead Source: ${selectedLeadSource}`
-                : "All Lead Sources",
+            text: selectedLeadSource.includes("All")
+              ? "All Lead Sources"
+              : `Selected Sources: ${selectedLeadSource.join(", ")}`,
             align: "center",
             margin: 5,
             offsetY: 35,
@@ -1017,7 +1027,31 @@ const SalesAnalysisChart = () => {
     };
     fetchData();
   }, [dateFrom, dateTo, selectedLeadSource, dateGrouping]);
+  useEffect(() => {
+    // Check if we have chart data and categories
+    if (dateRange?.length > 0) {
+      // Get the number of categories/labels
+      const labelCount = dateRange.length;
 
+      // Update the chart options based on label count
+      setChartData((prevState) => ({
+        ...prevState,
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            labels: {
+              ...prevState.options.xaxis.labels,
+              // If 7 or fewer labels, make horizontal (rotate: 0), otherwise keep -45 degrees
+              rotate: labelCount <= 7 ? 0 : -45,
+              // Only rotate always if there are more than 7 labels
+              rotateAlways: labelCount > 7,
+            },
+          },
+        },
+      }));
+    }
+  }, [dateRange]);
   // Handler for custom date inputs to reset time range filter
   const handleCustomDateChange = (date, isFrom) => {
     if (timeRangeFilter !== "custom") {
@@ -1040,13 +1074,14 @@ const SalesAnalysisChart = () => {
       return "Custom Range Stats";
     }
   };
+
   return (
     <div className="w-full rounded-lg px-4 py-6">
       <div className="flex flex-wrap gap-10 mb-4">
         {/* Time Range Preset Filter */}
 
         <div className="flex flex-col gap-2">
-          <label className="block text-gray-700 text-sm font-medium mb-1">
+          <label className="block text-gray-700 text-sm font-bold mb-1">
             Time Range:
           </label>
           <div className="min-w-[200px]">
@@ -1123,38 +1158,89 @@ const SalesAnalysisChart = () => {
         />
         {/* Lead Source Filter */}
         <div className="flex flex-col gap-2">
-          <label className="block text-gray-700 text-sm font-medium mb-1">
-            Lead Source:
+          <label className="block text-gray-700 text-sm font-bold mb-1">
+            Lead Sources:
           </label>
-          <Menu
-            as="div"
-            className="relative inline-block text-left min-w-[200px]"
+          <div
+            className="relative inline-block text-left min-w-[200px] max-w-[300px]"
+            ref={menuRef}
           >
-            <Menu.Button className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-              {selectedLeadSource}
-              <IoChevronDown className="ml-2 h-4 w-4" />
-            </Menu.Button>
-            <Menu.Items className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-              {leadSources.map((source) => (
-                <Menu.Item key={source}>
-                  {({ active }) => (
-                    <button
-                      className={`${
-                        active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                      } group flex w-full items-center px-4 py-2 text-sm ${
-                        selectedLeadSource === source
-                          ? "bg-gray-100 font-medium"
-                          : ""
-                      }`}
-                      onClick={() => setSelectedLeadSource(source)}
+            <button
+              className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              onClick={toggleMenu}
+            >
+              <div
+                className="flex-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2"
+                style={{
+                  maxWidth: "calc(100% - 20px)",
+                  overflowX: "auto",
+                  msOverflowStyle: "none" /* IE and Edge */,
+                  scrollbarWidth: "thin" /* Firefox */,
+                }}
+              >
+                <div className="flex flex-nowrap gap-1 min-w-min">
+                  {selectedLeadSource.length === 0 && "Select sources..."}
+                  {selectedLeadSource.map((source) => (
+                    <span
+                      key={source}
+                      className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs whitespace-nowrap"
                     >
                       {source}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <IoChevronDown
+                className={`ml-2 h-4 w-4 transition-transform duration-200 flex-shrink-0 ${
+                  isOpen ? "transform rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                {leadSources.map((source) => (
+                  <div key={source}>
+                    <button
+                      className={`group flex w-full items-center px-4 py-2 text-sm hover:bg-blue-100 hover:text-blue-900 text-gray-900`}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent closing
+                        setSelectedLeadSource((prev) => {
+                          const newSelection = [...prev];
+                          if (source === "All") {
+                            return ["All"];
+                          }
+                          if (newSelection.includes(source)) {
+                            // Remove source
+                            const updated = newSelection.filter(
+                              (s) => s !== source
+                            );
+                            // If last item removed, default to All
+                            return updated.length > 0 ? updated : ["All"];
+                          } else {
+                            // Add source and remove All if present
+                            const withoutAll = newSelection.filter(
+                              (s) => s !== "All"
+                            );
+                            return [...withoutAll, source];
+                          }
+                        });
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedLeadSource.includes(source)}
+                        readOnly
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {source}
                     </button>
-                  )}
-                </Menu.Item>
-              ))}
-            </Menu.Items>
-          </Menu>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {/* Current View Indicator */}
       </div>
@@ -1164,7 +1250,7 @@ const SalesAnalysisChart = () => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-gray-500">
@@ -1184,7 +1270,7 @@ const SalesAnalysisChart = () => {
             <div className="h-1 w-full bg-green-500"></div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-gray-500">
@@ -1204,7 +1290,7 @@ const SalesAnalysisChart = () => {
             <div className="h-1 w-full bg-blue-500"></div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-gray-500">
@@ -1226,7 +1312,7 @@ const SalesAnalysisChart = () => {
             <div className="h-1 w-full bg-yellow-500"></div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-gray-500">

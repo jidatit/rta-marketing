@@ -22,7 +22,7 @@ const CustomDateRangePicker = ({
             }`}
           >
             <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
+              <label className="block text-gray-700 text-sm font-bold mb-1">
                 Date From:
               </label>
               <DatePicker
@@ -59,7 +59,7 @@ const CustomDateRangePicker = ({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
+              <label className="block text-gray-700 text-sm font-bold mb-1">
                 Date To:
               </label>
               <DatePicker

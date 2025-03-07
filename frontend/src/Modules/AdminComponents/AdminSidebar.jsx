@@ -39,7 +39,7 @@ const AdminSidebar = () => {
       matcher: (route) => route === "/AdminLayout/leads",
     },
     {
-      name: "Graphs",
+      name: "Analytics",
       route: "graphs",
       matcher: (route) => route === "/AdminLayout/graphs",
     },
