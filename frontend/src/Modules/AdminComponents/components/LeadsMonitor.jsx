@@ -37,9 +37,9 @@ const sendLeadNotification = async (employee, manager, threshold) => {
   try {
     console.log("employee: " + JSON.stringify(employee));
     // Configure EmailJS with your service ID, template ID, and user ID
-    const serviceId = "service_di9im8l";
-    const templateId = "template_lwosdgu";
-    const userId = "lOpuK2hUYkurUURIk";
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const userId = import.meta.env.VITE_EMAILJS_USER_ID;
 
     const currentMonth = new Date().toLocaleString("default", {
       month: "long",
