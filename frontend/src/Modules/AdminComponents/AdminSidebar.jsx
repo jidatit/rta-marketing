@@ -24,7 +24,7 @@ const AdminSidebar = () => {
       matcher: (route) => route === "/tv",
     },
     {
-      name: "SalesPersons",
+      name: "Salespeople",
       route: "SalesPersons",
       matcher: (route) => route === "/AdminLayout/SalesPersons",
     },

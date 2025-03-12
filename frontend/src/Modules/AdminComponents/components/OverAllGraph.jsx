@@ -20,7 +20,9 @@ const SalesAnalysisChart = () => {
     return option ? option.label : "";
   };
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpen2, setIsOpen2] = useState(false);
   const menuRef = useRef(null);
+  const menuRef2 = useRef(null);
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -36,11 +38,27 @@ const SalesAnalysisChart = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef2.current && !menuRef2.current.contains(event.target)) {
+        setIsOpen2(false);
+      }
+    };
 
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen2]);
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
-
+  const toggleMenu2 = () => {
+    setIsOpen2(!isOpen2);
+  };
   const [chartData, setChartData] = useState({
     series: [],
     options: {
@@ -343,6 +361,8 @@ const SalesAnalysisChart = () => {
   const [dateTo, setDateTo] = useState(new Date());
   const [leadSources, setLeadSources] = useState([]);
   const [selectedLeadSource, setSelectedLeadSource] = useState(["All"]); // Change to array
+  const [SalesPersons, setSalesPersons] = useState([]);
+  const [selectedSalesPerson, setSelectedSalesPerson] = useState(["All"]); // Change to array
   const [TotalConversionRate, setTotalConversionRate] = useState(0);
   const [TotalSalePerLead, setTotalSalePerLead] = useState(0);
   const [dateGrouping, setDateGrouping] = useState("day"); // 'day', 'month', 'year', or 'hour'
@@ -427,7 +447,20 @@ const SalesAnalysisChart = () => {
     };
     fetchLeadSources();
   }, []);
-
+  // Add this useEffect to fetch sales persons
+  useEffect(() => {
+    const fetchSalesPersons = async () => {
+      const querySnapshot = await getDocs(collection(db, "employees"));
+      const employees = querySnapshot.docs
+        .filter((doc) => doc.data().userType === "Employee")
+        .map((doc) => ({
+          name: doc.data().name,
+          uid: doc.data().uid,
+        }));
+      setSalesPersons([{ name: "All", uid: "All" }, ...employees]);
+    };
+    fetchSalesPersons();
+  }, []);
   // Updated: Determine appropriate date grouping based on date range
   useEffect(() => {
     // Only override grouping if not in special views
@@ -594,7 +627,22 @@ const SalesAnalysisChart = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Get selected sales person UIDs
+      const selectedSalesPersonUIDs = selectedSalesPerson.includes("All")
+        ? null // null indicates all employees
+        : selectedSalesPerson;
+
+      // Fetch employees to build UID map (if needed elsewhere)
+      const employeeSnapshot = await getDocs(collection(db, "employees"));
+      const employeeMap = {};
+      employeeSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.userType === "Employee") {
+          employeeMap[doc.id] = data.uid; // Map UID to name (optional)
+        }
+      });
       const leadsSnapshot = await getDocs(collection(db, "employees"));
+      // Fetch sales data
       const salesSnapshot = await getDocs(collection(db, "sales"));
 
       let leadsData = {};
@@ -609,141 +657,160 @@ const SalesAnalysisChart = () => {
       let totalSales = 0;
       let totalLeadAmount = 0;
       let totalLeadCost = 0;
+
       // Generate all dates between start and end based on grouping
       const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
       setDateRange(dateRange);
+
       // Collect leads, lead amounts, and lead costs
-      leadsSnapshot.forEach((doc) => {
-        const employeeLeads = doc.data().leads || [];
-        employeeLeads.forEach((lead) => {
-          const leadTime = lead.timestamp.seconds * 1000;
-          if (leadTime >= start && leadTime <= end) {
-            const leadSource = lead.leadSource || "Unknown";
+      employeeSnapshot.forEach((doc) => {
+        const employeeUID = doc.data().uid; // Use doc.data().uid instead of doc.id
+        const shouldIncludeEmployee =
+          selectedSalesPersonUIDs === null ||
+          (selectedSalesPersonUIDs &&
+            selectedSalesPersonUIDs.includes(employeeUID));
+        if (shouldIncludeEmployee) {
+          const employeeLeads = doc.data().leads || [];
+          employeeLeads.forEach((lead) => {
+            const leadTime = lead.timestamp.seconds * 1000;
+            if (leadTime >= start && leadTime <= end) {
+              const leadSource = lead.leadSource || "Unknown";
 
-            // Track total leads by source
-            leadsBySource[leadSource] = (leadsBySource[leadSource] || 0) + 1;
+              // Track total leads by source
+              leadsBySource[leadSource] = (leadsBySource[leadSource] || 0) + 1;
 
-            if (
-              selectedLeadSource.includes("All") ||
-              selectedLeadSource.includes(leadSource)
-            ) {
-              // Create a Date object with the exact timestamp
-              const leadTime = lead.timestamp.seconds * 1000; // Convert to milliseconds
-              const exactDate = new Date(leadTime);
-              const dateStr = formatDate(exactDate, dateGrouping);
+              if (
+                selectedLeadSource.includes("All") ||
+                selectedLeadSource.includes(leadSource)
+              ) {
+                // Create a Date object with the exact timestamp
+                const exactDate = new Date(leadTime);
+                const dateStr = formatDate(exactDate, dateGrouping);
 
-              // Now dateStr will contain the exact hour information
-              leadsData[dateStr] = (leadsData[dateStr] || 0) + 1;
-              totalLeads++;
+                // Now dateStr will contain the exact hour information
+                leadsData[dateStr] =
+                  (leadsData[dateStr] || 0) + lead.leadAmount; // Changed from +1
+                totalLeads += lead.leadAmount; // Already correct
 
-              // Add lead amount to total
-              totalLeadAmount += lead.leadAmount;
+                // Add lead amount to total
+                totalLeadAmount += lead.leadAmount;
 
-              // Sum lead amounts for each date
-              leadAmountData[dateStr] =
-                (leadAmountData[dateStr] || 0) + lead.leadAmount;
+                // Sum lead amounts for each date
+                leadAmountData[dateStr] =
+                  (leadAmountData[dateStr] || 0) + lead.leadAmount;
 
-              // Calculate total lead cost (lead amount * lead cost)
-              const leadCost = lead.leadAmount * lead.leadCost;
-              totalLeadCost += leadCost;
-              leadCostData[dateStr] = (leadCostData[dateStr] || 0) + leadCost;
+                // Calculate total lead cost (lead amount * lead cost)
+                const leadCost = lead.leadAmount * lead.leadCost;
+                totalLeadCost += leadCost;
+                leadCostData[dateStr] = (leadCostData[dateStr] || 0) + leadCost;
+              }
             }
-          }
-        });
+          });
+        }
       });
 
-      // Collect sales
-      // Collect sales - updated to handle "HH:MM:SS" format
+      // Collect sales data
       salesSnapshot.forEach((doc) => {
-        const salesArray = doc.data().sales || [];
-        salesArray.forEach((sale) => {
-          // Handle the case where saleTime comes as a time string
-          let saleTime;
+        const salesPersonUID = doc.id; // The document ID is the UID of the sales person
+        const shouldIncludeSalesPerson =
+          selectedSalesPerson.includes("All") ||
+          (selectedSalesPersonUIDs &&
+            selectedSalesPersonUIDs.includes(salesPersonUID));
 
-          if (sale.saleDate && sale.saleTime) {
-            const [day, monthStr, year] = sale.saleDate.split(" "); // "06 March 2025"
-            const months = {
-              January: 0,
-              February: 1,
-              March: 2,
-              April: 3,
-              May: 4,
-              June: 5,
-              July: 6,
-              August: 7,
-              September: 8,
-              October: 9,
-              November: 10,
-              December: 11,
-            };
+        if (shouldIncludeSalesPerson) {
+          const salesArray = doc.data().sales || [];
+          salesArray.forEach((sale) => {
+            // Handle the case where saleTime comes as a time string
+            let saleTime;
 
-            const [hours, minutes, seconds] = sale.saleTime
-              .split(":")
-              .map(Number);
-            const saleDateObj = new Date(
-              year,
-              months[monthStr],
-              Number(day),
-              hours,
-              minutes,
-              seconds
-            );
+            if (sale.saleDate && sale.saleTime) {
+              const [day, monthStr, year] = sale.saleDate.split(" "); // "06 March 2025"
+              const months = {
+                January: 0,
+                February: 1,
+                March: 2,
+                April: 3,
+                May: 4,
+                June: 5,
+                July: 6,
+                August: 7,
+                September: 8,
+                October: 9,
+                November: 10,
+                December: 11,
+              };
 
-            saleTime = saleDateObj.getTime(); // Correct timestamp
-          } else if (
-            typeof sale.saleTime === "string" &&
-            sale.saleTime.match(/\d{1,2}:\d{2}:\d{2}/)
-          ) {
-            // Handle time string format like "17:20:02"
-            const [hours, minutes, seconds] = sale.saleTime
-              .split(":")
-              .map(Number);
+              const [hours, minutes, seconds] = sale.saleTime
+                .split(":")
+                .map(Number);
+              const saleDateObj = new Date(
+                year,
+                months[monthStr],
+                Number(day),
+                hours,
+                minutes,
+                seconds
+              );
 
-            // Create date with today's date and the specific time
-            const today = new Date();
-            const saleDate = new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate(),
-              hours,
-              minutes,
-              seconds
-            );
-
-            saleTime = saleDate.getTime();
-          } else {
-            // Fallback in case the time format is unexpected
-            console.warn("Unexpected sale time format:", sale.saleTime);
-            return; // Skip this sale record
-          }
-
-          if (saleTime >= start && saleTime <= end) {
-            const leadSource = sale.leadSource || "Unknown";
-
-            // Track total sales by source
-            salesBySource[leadSource] = (salesBySource[leadSource] || 0) + 1;
-
-            if (
-              selectedLeadSource.includes("All") ||
-              selectedLeadSource.includes(leadSource)
+              saleTime = saleDateObj.getTime(); // Correct timestamp
+            } else if (
+              typeof sale.saleTime === "string" &&
+              sale.saleTime.match(/\d{1,2}:\d{2}:\d{2}/)
             ) {
-              // Create a Date object with the exact timestamp
-              const exactDate = new Date(saleTime);
-              const dateStr = formatDate(exactDate, dateGrouping);
+              // Handle time string format like "17:20:02"
+              const [hours, minutes, seconds] = sale.saleTime
+                .split(":")
+                .map(Number);
 
-              // Now dateStr will contain the exact hour information
-              salesData[dateStr] = (salesData[dateStr] || 0) + 1;
-              totalSales++;
+              // Create date with today's date and the specific time
+              const today = new Date();
+              const saleDate = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate(),
+                hours,
+                minutes,
+                seconds
+              );
+
+              saleTime = saleDate.getTime();
+            } else {
+              // Fallback in case the time format is unexpected
+              console.warn("Unexpected sale time format:", sale.saleTime);
+              return; // Skip this sale record
             }
-          }
-        });
+
+            if (saleTime >= start && saleTime <= end) {
+              const leadSource = sale.leadSource || "Unknown";
+
+              // Track total sales by source
+              salesBySource[leadSource] = (salesBySource[leadSource] || 0) + 1;
+
+              if (
+                selectedLeadSource.includes("All") ||
+                selectedLeadSource.includes(leadSource)
+              ) {
+                // Create a Date object with the exact timestamp
+                const exactDate = new Date(saleTime);
+                const dateStr = formatDate(exactDate, dateGrouping);
+
+                // Now dateStr will contain the exact hour information
+                salesData[dateStr] = (salesData[dateStr] || 0) + 1;
+                totalSales++;
+              }
+            }
+          });
+        }
       });
+
+      // Update summary stats
       setSummaryStats({
         totalLeads,
         totalSales,
         conversionRate: TotalConversionRate,
         costPerSale: TotalSalePerLead,
       });
+
       // Prepare series data for full date range
       const seriesDataLeads = dateRange.map((date) => leadsData[date] || 0);
       const seriesDataSales = dateRange.map((date) => salesData[date] || 0);
@@ -784,7 +851,7 @@ const SalesAnalysisChart = () => {
 
       // Dynamic Y-axis for Total Leads
       const leadsMin = 0;
-      const leadsMax = Math.max(maxLeadsPerDay, maxLeadsBySource) * 1.2; // Add 20% padding
+      const leadsMax = Math.max(maxLeadsPerDay, maxLeadsBySource) * 1.2;
       const leadsTickAmount = Math.min(
         10,
         Math.max(5, Math.ceil(leadsMax / 5))
@@ -817,7 +884,14 @@ const SalesAnalysisChart = () => {
       const displayDates = dateRange.map((date) =>
         getDisplayFormat(date, dateGrouping)
       );
-
+      const subtitleText =
+        (selectedLeadSource.includes("All")
+          ? "All Lead Sources"
+          : `Sources: ${selectedLeadSource.join(", ")}`) +
+        " | " +
+        (selectedSalesPerson.includes("All")
+          ? "All Sales Persons"
+          : `Sales Persons: ${selectedSalesPerson.join(", ")}`);
       // Get time range text for chart title
       let timeRangeText;
       if (timeRangeFilter !== "custom") {
@@ -902,9 +976,7 @@ const SalesAnalysisChart = () => {
             },
           },
           subtitle: {
-            text: selectedLeadSource.includes("All")
-              ? "All Lead Sources"
-              : `Selected Sources: ${selectedLeadSource.join(", ")}`,
+            text: subtitleText,
             align: "center",
             margin: 5,
             offsetY: 35,
@@ -1026,7 +1098,7 @@ const SalesAnalysisChart = () => {
       }));
     };
     fetchData();
-  }, [dateFrom, dateTo, selectedLeadSource, dateGrouping]);
+  }, [dateFrom, dateTo, selectedLeadSource, dateGrouping, selectedSalesPerson]);
   useEffect(() => {
     // Check if we have chart data and categories
     if (dateRange?.length > 0) {
@@ -1115,41 +1187,6 @@ const SalesAnalysisChart = () => {
             </Menu>
           </div>
         </div>
-        {/* Custom Date Inputs (only shown when custom filter is selected) */}
-        {/* {timeRangeFilter !== "custom" ? (
-          ""
-        ) : (
-          <div
-            className={`flex gap-6 ${
-              timeRangeFilter !== "custom" ? "opacity-50" : ""
-            }`}
-          >
-            <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Date From:
-              </label>
-              <input
-                type="date"
-                value={dateFrom.toISOString().split("T")[0]}
-                onChange={(e) => handleCustomDateChange(e.target.value, true)}
-                className="border p-2 rounded text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                disabled={timeRangeFilter !== "custom"}
-              />{" "}
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Date To:
-              </label>
-              <input
-                type="date"
-                value={dateTo.toISOString().split("T")[0]}
-                onChange={(e) => handleCustomDateChange(e.target.value, false)}
-                className="border p-2 rounded text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                disabled={timeRangeFilter !== "custom"}
-              />{" "}
-            </div>
-          </div>
-        )} */}
         <CustomDateRangePicker
           timeRangeFilter={timeRangeFilter}
           dateFrom={dateFrom}
@@ -1235,6 +1272,75 @@ const SalesAnalysisChart = () => {
                         onClick={(e) => e.stopPropagation()}
                       />
                       {source}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="block text-gray-700 text-sm font-bold mb-1">
+            Sales Persons:
+          </label>
+          <div
+            className="relative inline-block text-left min-w-[200px] max-w-[300px]"
+            ref={menuRef2}
+          >
+            <button
+              className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              onClick={toggleMenu2}
+            >
+              <div className="flex-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2">
+                <div className="flex flex-nowrap gap-1 min-w-min">
+                  {selectedSalesPerson.length === 0 && "Select sources..."}
+                  {selectedSalesPerson.map((uid) => {
+                    const employee = SalesPersons.find((e) => e.uid === uid);
+                    return (
+                      <span
+                        key={uid}
+                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs whitespace-nowrap"
+                      >
+                        {employee ? employee.name : uid}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+              <IoChevronDown
+                className={`ml-2 h-4 w-4 transition-transform duration-200 ${
+                  isOpen2 ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isOpen2 && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                {SalesPersons.map((employee) => (
+                  <div key={employee.uid}>
+                    <button
+                      className="group flex w-full items-center px-4 py-2 text-sm hover:bg-blue-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSalesPerson((prev) => {
+                          if (employee.uid === "All") return ["All"];
+                          const newSelection = prev.includes(employee.uid)
+                            ? prev.filter((uid) => uid !== employee.uid)
+                            : [
+                                ...prev.filter((uid) => uid !== "All"),
+                                employee.uid,
+                              ];
+                          return newSelection.length ? newSelection : ["All"];
+                        });
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSalesPerson.includes(employee.uid)}
+                        readOnly
+                        className="mr-2 h-4 w-4 text-blue-600"
+                      />
+                      {employee.name}
                     </button>
                   </div>
                 ))}
@@ -1340,7 +1446,7 @@ const SalesAnalysisChart = () => {
           options={chartData.options}
           series={chartData.series}
           type="line"
-          height={500}
+          height={700}
           className="w-full bg-white"
         />
       </div>

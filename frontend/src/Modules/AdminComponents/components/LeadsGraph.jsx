@@ -21,6 +21,7 @@ const LeadsDashboard = () => {
     originalLeads: [],
     filteredLeads: [],
     leadSources: [],
+    SalesPerson: [],
     totalLeadCount: 0,
     monthlyLeadCounts: {},
     dailyLeadCounts: {},
@@ -30,6 +31,7 @@ const LeadsDashboard = () => {
   // Filter states - now with default current month and year
   const [filters, setFilters] = useState({
     leadSource: "All",
+    SalesPerson: "All",
     month: currentMonth,
     year: currentYear,
     timeRange: "current-month",
@@ -383,7 +385,15 @@ const LeadsDashboard = () => {
           placeholder="Select Lead Source"
           onClear={() => clearFilter("leadSource")}
         />
-
+        <CustomDropdown
+          options={leadsData.leadSources}
+          value={filters.leadSource}
+          onChange={(value) =>
+            setFilters((prev) => ({ ...prev, SalesPerson: value }))
+          }
+          placeholder="Select Sales Person"
+          onClear={() => clearFilter("SalesPerson")}
+        />
         {/* Month Filter */}
         <CustomDropdown
           options={months}
