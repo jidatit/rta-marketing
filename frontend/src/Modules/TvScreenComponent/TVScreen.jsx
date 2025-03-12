@@ -30,12 +30,15 @@ const TVScreen = () => {
   const [totalLeadsCount, setTotalLeads] = useState(0);
   const { salesData, loading, selectedMonth, setSelectedMonth } =
     useSalesData();
+
   useEffect(() => {
     setSelectedMonth(() => {
       const today = new Date();
       return today.toISOString().slice(0, 7);
     });
-  }, []);
+  }, [setSelectedMonth]);
+
+  // Fetch salesOrder from Firebase
   useEffect(() => {
     const fetchSortedSalesPerson = async () => {
       try {
@@ -50,48 +53,50 @@ const TVScreen = () => {
     };
     fetchSortedSalesPerson();
   }, []);
+
+  // Update sortedCardsPerson when SalesPersons changes if sortedCardsPerson is empty
+  useEffect(() => {
+    if (
+      SalesPersons &&
+      SalesPersons.length > 0 &&
+      (!sortedCardsPerson || sortedCardsPerson.length === 0)
+    ) {
+      // If we have SalesPersons but no sortedCardsPerson, use SalesPersons as the default order
+      setSortedCardsPerson([...SalesPersons]);
+
+      // Optionally, save this default order to Firebase
+      saveOrderToFirebase([...SalesPersons]);
+    }
+  }, [SalesPersons, sortedCardsPerson]);
+
   useEffect(() => {
     if (salesData?.length > 0) {
       // Compute total target
-      const totalTarget = salesData.reduce((total, person, index) => {
-        // console.log(`Loop ${index}: person.target =`, person.target);
+      const totalTarget = salesData.reduce((total, person) => {
         return total + (person.target || 0);
       }, 0);
-      // console.log("Final totalTarget:", totalTarget);
 
       // Compute total completed sales
-      const totalSalesCount = salesData.reduce((total, person, index) => {
-        // console.log(
-        //   `Loop ${index}: person.salesCompleted =`,
-        //   person.salesCompleted
-        // );
+      const totalSalesCount = salesData.reduce((total, person) => {
         return total + (person.salesCompleted || 0);
       }, 0);
-      // console.log("Final totalSalesCount:", totalSalesCount);
 
       // Compute mid-month sales total
-      const midMonthSalesTotal = salesData.reduce((total, person, index) => {
-        // console.log(`Loop ${index}: person.midMonth =`, person.midMonth);
+      const midMonthSalesTotal = salesData.reduce((total, person) => {
         return total + (person.midMonth || 0);
       }, 0);
-      // console.log("Final midMonthSalesTotal:", midMonthSalesTotal);
 
-      setTotalSalestarget(totalTarget); // Store total target
+      setTotalSalestarget(totalTarget);
       setTotalCompletedSales(totalSalesCount);
       setMidMonthSales(midMonthSalesTotal);
     }
   }, [salesData]);
-
-  // console.log("total completed sales", totalCompletedSales);
-  // console.log("mid month sales", midMonthSales);
-  // console.log("target", totalSales);
 
   const [leads, setLeads] = useState([]);
 
   const fetchSalesPerson = () => {
     try {
       const SalePersonsRef = collection(db, "employees");
-
       const q = query(SalePersonsRef, where("userType", "==", "Employee"));
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -109,6 +114,7 @@ const TVScreen = () => {
     } catch (error) {
       console.error("Error fetching Sale Persons: ", error);
       toast.error("Failed to fetch Sales Person: " + error.message);
+      return () => {};
     }
   };
 
@@ -154,7 +160,6 @@ const TVScreen = () => {
             }
           });
 
-          // console.log("Total leads for the current month:", totalLeadsCount);
           setTotalLeads(totalLeadsCount);
         },
         (error) => {
@@ -168,16 +173,10 @@ const TVScreen = () => {
     }
   };
 
-  // console.log(totalLeadsCount);
-
+  // This is the key fix - properly fetching sales for the current month
   const fetchSales = () => {
-    if (SalesPersons && SalesPersons?.length > 0) {
-      const tempUpdatedSalesPerson = [...updatedSalesPerson];
-
-      const currentMonth = new Date().getMonth(); // Get current month (0-indexed)
-      // console.log("month", currentMonth);
-
-      const unsubscribeList = SalesPersons.map((person, index) => {
+    if (SalesPersons && SalesPersons.length > 0) {
+      const unsubscribeList = SalesPersons.map((person) => {
         const salesRef = doc(db, "sales", person.uid);
 
         return onSnapshot(salesRef, (docSnap) => {
@@ -186,16 +185,21 @@ const TVScreen = () => {
             let leadSource = "--";
             let sales = 0;
             let filteredSales = [];
-            // console.log("person ", index, data);
 
             if (data?.sales?.length > 0) {
-              // Filter sales by current month
+              // Get current month and year
+              const today = new Date();
+              const currentMonth = today.getMonth();
+              const currentYear = today.getFullYear();
+
+              // Filter sales by current month and year
               filteredSales = data.sales.filter((sale) => {
                 if (!sale.saleDate) return false;
                 const saleDate = new Date(sale.saleDate);
-                // console.log(sale);
-                // console.log("get month", saleDate.getMonth());
-                return saleDate.getMonth() === currentMonth;
+                return (
+                  saleDate.getMonth() === currentMonth &&
+                  saleDate.getFullYear() === currentYear
+                );
               });
 
               const leadSourceTemp = filteredSales.map(
@@ -205,22 +209,54 @@ const TVScreen = () => {
               sales = filteredSales.length;
             }
 
-            tempUpdatedSalesPerson[index] = {
-              ...person,
-              leadSource: leadSource,
-              totalSales: sales,
-              sales: filteredSales || [], // Use filtered sales
-            };
-          } else {
-            tempUpdatedSalesPerson[index] = {
-              ...person,
-              leadSource: "--",
-              totalSales: 0,
-              sales: [],
-            };
-          }
+            // Update the specific user's sales data
+            setUpdatedSalesPerson((prev) => {
+              const newData = [...prev];
+              const index = newData.findIndex((p) => p.uid === person.uid);
 
-          setUpdatedSalesPerson([...tempUpdatedSalesPerson]);
+              if (index !== -1) {
+                newData[index] = {
+                  ...newData[index],
+                  leadSource: leadSource,
+                  totalSales: sales,
+                  sales: filteredSales || [],
+                };
+              } else {
+                newData.push({
+                  ...person,
+                  leadSource: leadSource,
+                  totalSales: sales,
+                  sales: filteredSales || [],
+                });
+              }
+
+              return newData;
+            });
+          } else {
+            // Handle case where sales doc doesn't exist for this user
+            setUpdatedSalesPerson((prev) => {
+              const newData = [...prev];
+              const index = newData.findIndex((p) => p.uid === person.uid);
+
+              if (index !== -1) {
+                newData[index] = {
+                  ...newData[index],
+                  leadSource: "--",
+                  totalSales: 0,
+                  sales: [],
+                };
+              } else {
+                newData.push({
+                  ...person,
+                  leadSource: "--",
+                  totalSales: 0,
+                  sales: [],
+                });
+              }
+
+              return newData;
+            });
+          }
         });
       });
 
@@ -228,13 +264,19 @@ const TVScreen = () => {
         unsubscribeList.forEach((unsubscribe) => unsubscribe());
       };
     }
+    return () => {};
   };
 
   useEffect(() => {
     const unsubscribe = fetchSales();
-    return unsubscribe;
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
   }, [SalesPersons]);
 
+  // Merge sales data with employee data and sort
   useEffect(() => {
     if (updatedSalesPerson.length > 0 && salesData.length > 0) {
       const mergedSalesPersons = updatedSalesPerson.map((person) => {
@@ -258,6 +300,7 @@ const TVScreen = () => {
       );
 
       setSortedSalesPerson(sortedSalesPersons);
+
       const totalSalesCount = mergedSalesPersons.reduce((total, person) => {
         return total + (person?.totalSales || 0);
       }, 0);
@@ -265,8 +308,6 @@ const TVScreen = () => {
       setTotalSales(totalSalesCount);
     }
   }, [updatedSalesPerson, salesData]);
-
-  // console.log("sorted", sortedSalesPerson);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -308,8 +349,6 @@ const TVScreen = () => {
     return `${day}${suffix(day)} ${month}, ${year}`;
   }
 
-  // console.log(totalSales);
-
   if (!SalesPersons) {
     return (
       <div className="flex items-center justify-center w-full h-screen">
@@ -318,8 +357,7 @@ const TVScreen = () => {
     );
   }
 
-  // Function to handle drag start
-
+  // Function to save order to Firebase
   const saveOrderToFirebase = async (order) => {
     try {
       await setDoc(doc(db, "settings", "salesOrder"), { order });
@@ -351,13 +389,48 @@ const TVScreen = () => {
     dragOverItem.current = null;
   };
 
+  // This is a key fix - find sales data for each person
+  const getPersonWithSales = (person) => {
+    // Find this person's sales data from updatedSalesPerson
+    const personWithSales = updatedSalesPerson.find(
+      (p) => p.uid === person.uid
+    );
+    const personSalesData = salesData.find((sd) => sd.userId === person.uid);
+
+    if (personWithSales) {
+      return {
+        ...person,
+        sales: personWithSales.sales || [],
+        totalSales: personWithSales.totalSales || 0,
+        target: personSalesData ? personSalesData.target : 0,
+        salesCompleted: personSalesData ? personSalesData.salesCompleted : 0,
+        midMonthSales: personSalesData ? personSalesData.midMonth : 0,
+      };
+    }
+
+    return {
+      ...person,
+      sales: [],
+      totalSales: 0,
+      target: personSalesData ? personSalesData.target : 0,
+      salesCompleted: personSalesData ? personSalesData.salesCompleted : 0,
+      midMonthSales: personSalesData ? personSalesData.midMonth : 0,
+    };
+  };
+
+  // Determine which array to render cards from and ensure each person has their sales data
+  const displayPersons =
+    sortedCardsPerson && sortedCardsPerson.length > 0
+      ? sortedCardsPerson.map((person) => getPersonWithSales(person))
+      : SalesPersons.map((person) => getPersonWithSales(person));
+
   return (
     <div>
       <div className=" min-h-screen  w-full  px-12 mx-auto">
         <header className="flex justify-between items-top pt-6 pb-2">
           <div className=" flex  gap-8  items-center justify-center">
             <Link to="/">
-              <img src={logo} className="max-w-[220px]" />
+              <img src={logo} className="max-w-[220px]" alt="RTA Logo" />
             </Link>
             <p className="text-2xl font-bold">
               People we have helped this month
@@ -386,19 +459,13 @@ const TVScreen = () => {
             value={totalLeadsCount}
             src="icon-1.png"
           />
-          {/* <InfoCard
-            title="Lead Sources"
-            value={leads.length}
-            src="icon-3.png"
-            delegate={leads}
-          /> */}
           <InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
           <InfoCard title="Conversion Rate" value="21%" src="icon-4.png" />
         </div>
 
         {/* People Grid */}
         <div className="flex flex-row gap-4 flex-wrap">
-          {sortedCardsPerson.map((person, index) => (
+          {displayPersons.map((person, index) => (
             <div
               key={person.uid}
               draggable
@@ -411,10 +478,10 @@ const TVScreen = () => {
               <PersonCard
                 name={person?.name}
                 uid={person?.uid}
-                sales={person?.sales}
-                target={person?.target}
-                salesCompleted={person?.salesCompleted}
-                midMonthSales={person?.midMonthSales}
+                sales={person?.sales || []}
+                target={person?.target || 0}
+                salesCompleted={person?.salesCompleted || 0}
+                midMonthSales={person?.midMonthSales || 0}
               />
             </div>
           ))}
@@ -433,14 +500,7 @@ const InfoCard = ({ title, value, src, delegate = null }) => {
   return (
     <div className="bg-white rounded-lg shadow-custom-drop flex items-center  py-4  px-6 justify-between  max-w-[400px]">
       <div className="text-xl font-bold ">{title}</div>
-      <div className="text-xl  font-bold">
-        {value}
-        {/* {delegate ? (
-          <span className="text-sm font-normal w-full block truncate">
-            ({leadSources})
-          </span>
-        ) : null} */}
-      </div>
+      <div className="text-xl  font-bold">{value}</div>
     </div>
   );
 };
@@ -453,80 +513,7 @@ const StatButton = ({ label, color, duration }) => (
     <span className="text-xl">{duration}</span>
   </button>
 );
-// const ClientCard = ({
-//   name,
-//   company,
-//   grossProfit,
-//   leadSource,
-//   InsuranceStatus,
-//   FundStatus,
-//   vehicleModel,
-// }) => {
-//   const [limit, setLimit] = useState(null);
-//   const [currentMonth, setCurrentMonth] = useState("");
 
-//   useEffect(() => {
-//     const monthNames = [
-//       "January", "February", "March", "April", "May", "June",
-//       "July", "August", "September", "October", "November", "December"
-//     ];
-
-//     // Get the current month
-//     const currentMonthName = monthNames[new Date().getMonth()];
-//     setCurrentMonth(currentMonthName);
-
-//     fetchLimit(currentMonthName);
-//   }, []);
-
-//   const fetchLimit = async (month) => {
-//     try {
-//       const q = query(collection(db, "SalesLimit"), where("month", "==", month));
-//       const querySnapshot = await getDocs(q);
-
-//       if (!querySnapshot.empty) {
-//         const doc = querySnapshot.docs[0];
-//         setLimit(Number(doc.data().limit));
-//       } else {
-//         setLimit(null); // No limit set for this month
-//       }
-//     } catch (error) {
-//       console.error("Error fetching sales limit: ", error);
-//       toast.error("Failed to fetch sales limit: " + error.message);
-//     }
-//   };
-
-//   let color = "";
-//   if (FundStatus && InsuranceStatus) {
-//     color = "#10C900";
-//   } else if (InsuranceStatus && !FundStatus) {
-//     color = "#0E376C";
-//   } else {
-//     color = "#6636C0";
-//   }
-
-//   return (
-//     <div
-//       className={`p-2 rounded-lg shadow-md bg-[${color}] w-full max-w-[185px] xl:max-w-none text-white flex justify-between items-center flex-col`}
-//     >
-//       <div className="flex items-center justify-between gap-4 w-full p-1">
-//         <h3 className="font-semibold">{name}</h3>
-
-//         {/* Compare with the current month's limit */}
-//         {limit !== null && grossProfit >= limit ? <FaCircleCheck /> : null}
-//       </div>
-
-//       <div className="flex flex-col gap-4 w-full p-1">
-//         <p className="text-sm">
-//           {company} {vehicleModel}
-//         </p>
-
-//         <div className="w-full">
-//           <p className="text-sm w-full text-end">{leadSource}</p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 const ClientCard = ({
   name,
   company,
@@ -537,6 +524,7 @@ const ClientCard = ({
   vehicleModel,
 }) => {
   const [limit, setLimit] = useState([]);
+
   React.useEffect(() => {
     fetchLeads();
   }, []);
@@ -555,18 +543,12 @@ const ClientCard = ({
       toast.error("Failed to fetch leads: " + error.message);
     }
   };
-  // console.log(name, grossProfit);
-  let color = "";
 
+  // Determine card color based on status
+  let color = "";
   if (FundStatus && InsuranceStatus) {
     color = "#10C900";
   } else if (InsuranceStatus && !FundStatus) {
-    // console.log(
-    //   "InsuranceStatus && !FundStatus",
-    //   name,
-    //   InsuranceStatus,
-    //   FundStatus
-    // );
     color = "#0E376C";
   } else {
     color = "#6636C0";
@@ -574,11 +556,11 @@ const ClientCard = ({
 
   return (
     <div
-      className={`p-2 rounded-lg shadow-md bg-[${color}] w-full max-w-[185px] xl:max-w-none  text-white flex justify-between items-center flex-col `}
+      className="p-2 rounded-lg shadow-md w-full max-w-[185px] xl:max-w-none text-white flex justify-between items-center flex-col"
+      style={{ backgroundColor: color }}
     >
       <div className="flex items-center justify-between gap-4 w-full p-1">
         <h3 className="font-semibold">{name}</h3>
-
         {grossProfit >= Number(limit[0]?.limit) ? <FaCircleCheck /> : null}
       </div>
 
@@ -633,7 +615,7 @@ const PersonCard = ({
             />
           ))
         ) : (
-          <div className="flex items-center justify-center w-screen h-full col-span-4 row-span-4">
+          <div className="flex items-center justify-center w-full h-full col-span-4 row-span-4">
             No sales yet
           </div>
         )}

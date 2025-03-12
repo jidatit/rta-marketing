@@ -884,14 +884,9 @@ const SalesAnalysisChart = () => {
       const displayDates = dateRange.map((date) =>
         getDisplayFormat(date, dateGrouping)
       );
-      const subtitleText =
-        (selectedLeadSource.includes("All")
-          ? "All Lead Sources"
-          : `Sources: ${selectedLeadSource.join(", ")}`) +
-        " | " +
-        (selectedSalesPerson.includes("All")
-          ? "All Sales Persons"
-          : `Sales Persons: ${selectedSalesPerson.join(", ")}`);
+      const subtitleText = selectedLeadSource.includes("All")
+        ? "All Lead Sources"
+        : `Sources: ${selectedLeadSource.join(", ")}`;
       // Get time range text for chart title
       let timeRangeText;
       if (timeRangeFilter !== "custom") {
