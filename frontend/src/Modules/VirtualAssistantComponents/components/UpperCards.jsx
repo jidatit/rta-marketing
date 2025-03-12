@@ -3,7 +3,6 @@ import VA1 from "../../../images/va1cardi.png";
 import VA2 from "../../../images/va2cardi.png";
 
 const MetricCards = ({ leadSources, SalesPerson, totalLeads }) => {
-  console.log("salesperson", SalesPerson);
   return (
     <div className="flex flex-wrap gap-8 p-4 w-full">
       {/* Total Leads Card */}

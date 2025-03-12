@@ -51,7 +51,7 @@ const UploadLeadModal = ({
       }
     }
   }, [initialData, mode]);
-  console.log("iniaitaldata", initialData);
+
   // const addNewRow = () => {
   //   setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
   // };
@@ -231,10 +231,6 @@ const UploadLeadModal = ({
             notifiedUserIds: updatedNotifiedUserIds,
             updatedAt: new Date(),
           });
-
-          console.log(
-            `Removed ${initialData.salesPersonId} from notification history as their lead count fell below 10`
-          );
         }
       }
     } catch (error) {

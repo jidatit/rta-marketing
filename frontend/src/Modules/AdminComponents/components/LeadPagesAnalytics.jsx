@@ -19,17 +19,12 @@ const LeadPagesAnalytics = () => {
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
-  console.log(selectedMonth);
-
   useEffect(() => {
     fetchLeadSources();
   }, []);
 
-  console.log(leadSources.length > 0);
-
   useEffect(() => {
     if (leadSources.length > 0) {
-      console.log("fetching...");
       fetchData();
     }
   }, [startDate, endDate, leadSources, selectedMonth]);
@@ -123,7 +118,6 @@ const LeadPagesAnalytics = () => {
       const totalLeads = leadCounts[leadSource] || 0;
       const totalSales = salesCounts[leadSource] || 0;
       const totalLeadCost = leadCosts[leadSource] || 0;
-      console.log("toaster", totalLeadCost);
       const conversionRate = totalLeads
         ? ((totalSales / totalLeads) * 100).toFixed(2)
         : "0.00";
@@ -148,7 +142,6 @@ const LeadPagesAnalytics = () => {
     });
 
     setData(tableData);
-    console.log("table data", tableData);
 
     setLoading(false);
   };

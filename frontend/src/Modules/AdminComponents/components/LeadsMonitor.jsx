@@ -35,7 +35,6 @@ const checkLeadsExceedThreshold = (leads, threshold = 10) => {
 // Function to send email notification
 const sendLeadNotification = async (employee, manager, threshold) => {
   try {
-    console.log("employee: " + JSON.stringify(employee));
     // Configure EmailJS with your service ID, template ID, and user ID
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
     const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
@@ -80,9 +79,6 @@ const sendLeadNotification = async (employee, manager, threshold) => {
       userId
     );
 
-    console.log(
-      `Notifications sent successfully for ${employee.name} for ${currentMonth} ${currentYear}`
-    );
     return true;
   } catch (error) {
     console.error("Error sending email notification:", error);
@@ -117,8 +113,6 @@ export const useLeadMonitoring = (
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
       const monthYearKey = `${currentYear}-${currentMonth + 1}`;
-
-      console.log(`Checking leads for month: ${monthYearKey}`);
 
       // IMPROVED STRUCTURE: Get the collection of monthly notification documents
       const notificationsCollectionRef = collection(
@@ -164,10 +158,6 @@ export const useLeadMonitoring = (
           employeesToNotify.push(employee);
         }
       });
-
-      console.log(
-        `Found ${employeesToNotify.length} employees exceeding threshold for ${monthYearKey}`
-      );
 
       // Send notifications for employees who exceeded threshold
       const updatedSentNotifications = [...sentNotifications];

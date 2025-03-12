@@ -39,7 +39,7 @@ const CustomDateRangePicker = ({
                       0,
                       0
                     );
-                    console.log("Selected date from:", exactDate); // For debugging
+
                     handleCustomDateChange(exactDate, true);
                   }
                 }}
@@ -76,7 +76,7 @@ const CustomDateRangePicker = ({
                       0,
                       0
                     );
-                    console.log("Selected date from:", exactDate); // For debugging
+
                     handleCustomDateChange(exactDate, true);
                   }
                 }}

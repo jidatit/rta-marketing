@@ -9,7 +9,6 @@ const LeadsPage = () => {
   const [leadSources, setLeadSources] = useState([]);
   const [SalesPerson, setSalesPerson] = useState([""]);
   const [totalLeads, setTotalLeads] = useState(0);
-  console.log("heye", leadSources, SalesPerson);
   return (
     <div className="flex flex-col gap-y-8 w-screen h-full">
       <HeaderComponent

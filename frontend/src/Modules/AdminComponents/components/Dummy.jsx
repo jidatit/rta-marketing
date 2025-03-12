@@ -598,7 +598,6 @@ const SalesAnalysisChart = () => {
       let totalLeadCost = 0;
       // Generate all dates between start and end based on grouping
       const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-      console.log("Starting daterange: " + dateRange);
       // Collect leads, lead amounts, and lead costs
       leadsSnapshot.forEach((doc) => {
         const employeeLeads = doc.data().leads || [];

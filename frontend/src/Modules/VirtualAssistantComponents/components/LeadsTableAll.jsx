@@ -290,10 +290,6 @@ const LeadsPageVA = ({
             notifiedUserIds: updatedNotifiedUserIds,
             updatedAt: new Date(),
           });
-
-          console.log(
-            `Removed ${employeeData.uid} from notification history as their lead count fell below 10`
-          );
         }
       }
     } catch (error) {
