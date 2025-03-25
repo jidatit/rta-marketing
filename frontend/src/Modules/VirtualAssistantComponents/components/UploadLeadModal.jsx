@@ -9,12 +9,44 @@ import {
   getDocs,
   getDoc,
   doc,
+  Timestamp,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { db } from "../../../config/firebaseConfig";
 import { useAuth } from "../../../AuthContext";
 import { useLeadMonitoring } from "../../AdminComponents/components/LeadsMonitor";
-
+import DatePicker from "react-datepicker";
+import { FaCalendarAlt } from "react-icons/fa";
+const normalizeDate = (date) => {
+  const d = new Date(date);
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    0, // hours
+    0, // minutes
+    0, // seconds
+    0 // milliseconds
+  );
+};
+// Custom input component with calendar icon
+const CustomDatePickerInput = React.forwardRef(
+  ({ value, onClick, placeholder }, ref) => (
+    <div className="relative">
+      <input
+        value={value}
+        onClick={onClick}
+        placeholder={placeholder}
+        ref={ref}
+        className="w-full px-3 py-2 border-1 border-gray-300 rounded-lg pr-10"
+      />
+      <FaCalendarAlt
+        onClick={onClick}
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+      />
+    </div>
+  )
+);
 const UploadLeadModal = ({
   isOpen,
   onClose,
@@ -33,25 +65,42 @@ const UploadLeadModal = ({
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const { currentUser } = useAuth();
-
+  const [receivedDate, setReceivedDate] = useState(null);
   useEffect(() => {
     if (initialData && mode !== "create") {
-      setOriginalData(initialData); // Store original data for comparison
+      setOriginalData(initialData);
       if (initialData.allLeads) {
-        setLeadRows(
-          initialData.allLeads.map((lead) => ({
-            leadSource: lead.leadSource,
-            leadAmount: lead.leadAmount,
-            leadCost: lead.leadCost,
-            VAName: lead.VAName,
-            VAUid: lead.VAUid,
-            timestamp: lead.timestamp,
-          }))
-        );
+        const processedLeads = initialData.allLeads.map((lead) => ({
+          leadSource: lead.leadSource,
+          leadAmount: lead.leadAmount,
+          leadCost: lead.leadCost,
+          VAName: lead.VAName,
+          VAUid: lead.VAUid,
+          timestamp: lead.timestamp,
+        }));
+
+        setLeadRows(processedLeads);
+
+        // Only set received date if it exists for the first lead and is a valid date
+        const firstLeadReceivedDate = initialData.allLeads[0]?.receivedDate;
+        if (firstLeadReceivedDate) {
+          // Check if receivedDate is a Firestore Timestamp
+          const dateToSet = firstLeadReceivedDate.toDate
+            ? firstLeadReceivedDate.toDate()
+            : new Date(firstLeadReceivedDate);
+
+          // Additional check to ensure it's a valid date
+          if (!isNaN(dateToSet.getTime())) {
+            setReceivedDate(dateToSet);
+          } else {
+            setReceivedDate(null);
+          }
+        } else {
+          setReceivedDate(null);
+        }
       }
     }
   }, [initialData, mode]);
-
   // const addNewRow = () => {
   //   setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
   // };
@@ -99,6 +148,7 @@ const UploadLeadModal = ({
         originalData.allLeads.map((lead) => ({
           leadSource: lead.leadSource,
           leadAmount: lead.leadAmount,
+          receivedDate: Timestamp.fromDate(receivedDate), // Convert properly
           VAName: lead.VAName,
           VAUid: lead.VAUid,
           timestamp: lead.timestamp,
@@ -177,6 +227,7 @@ const UploadLeadModal = ({
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
         leadCost: lead.leadCost,
+        receivedDate: Timestamp.fromDate(receivedDate), // Convert properly
         VAName: lead.VAName || currentUser.email,
         VAUid: lead.VAUid || currentUser.uid,
         timestamp: lead.timestamp || new Date(),
@@ -191,7 +242,7 @@ const UploadLeadModal = ({
       toast.success("Leads updated successfully!");
       setIsEditing(false);
       onClose();
-
+      setReceivedDate(null);
       // Check if the updated lead count falls below 10 for the current month
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
@@ -337,6 +388,10 @@ const UploadLeadModal = ({
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
         leadCost: lead.leadCost,
+        receivedDate: receivedDate
+          ? Timestamp.fromDate(receivedDate)
+          : Timestamp.now(), // Use current server timestamp if no date selected
+
         VAName: currentUser.email,
         VAUid: currentUser.uid,
         timestamp: new Date(),
@@ -353,9 +408,10 @@ const UploadLeadModal = ({
         leads: updatedLeads,
         lastUpdated: serverTimestamp(),
       });
-
+      setReceivedDate(null);
       toast.success("Leads uploaded successfully!");
       onClose();
+
       setLeadRows([{ leadSource: "", leadAmount: 1, leadCost: 0 }]);
       setSelectedSalesPerson("");
     } catch (error) {
@@ -365,6 +421,12 @@ const UploadLeadModal = ({
       setLoading(false);
       await triggerCheck();
     }
+  };
+  const handleDateChange = (date) => {
+    if (!isEditing && mode === "view") return;
+
+    // Use the Date object directly (it already represents a UTC timestamp internally)
+    setReceivedDate(date || null);
   };
 
   if (!isOpen) return null;
@@ -412,7 +474,20 @@ const UploadLeadModal = ({
               ))}
             </select>
           </div>
-
+          <div className="w-full ">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Received Date
+            </label>
+            <DatePicker
+              selected={receivedDate}
+              onChange={handleDateChange}
+              dateFormat="dd MMM yyyy"
+              disabled={!isEditing && mode === "view"}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              customInput={<CustomDatePickerInput />}
+              placeholderText="Select Lead Received Date"
+            />
+          </div>
           {/* Lead Source and Amount Rows */}
           {leadRows.map((row, index) => (
             <div key={index} className="flex gap-4 items-end justify-center">

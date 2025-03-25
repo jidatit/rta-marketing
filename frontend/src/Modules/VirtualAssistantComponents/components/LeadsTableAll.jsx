@@ -41,7 +41,8 @@ const LeadsPageVA = ({
   const [modalData, setModalData] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState(null);
-
+  const [receivedStartDate, setReceivedStartDate] = useState(null);
+  const [receivedEndDate, setReceivedEndDate] = useState(null);
   useEffect(() => {
     const unsubscribeEmployees = setupEmployeesListener();
     const unsubscribeLeads = setupLeadsListener();
@@ -83,13 +84,25 @@ const LeadsPageVA = ({
 
               if (relevantLeads.length > 0) {
                 const groupedSales = {}; // Object to store grouped sales
-
-                relevantLeads.forEach((lead, index) => {
+                // Sort leads by timestamp in descending order (latest first)
+                const sortedLeads = relevantLeads.sort((a, b) => {
+                  const dateA = a.timestamp?.toDate
+                    ? a.timestamp.toDate()
+                    : new Date(a.timestamp);
+                  const dateB = b.timestamp?.toDate
+                    ? b.timestamp.toDate()
+                    : new Date(b.timestamp);
+                  return dateB - dateA;
+                });
+                sortedLeads.forEach((lead, index) => {
                   const leadDateTime = lead.timestamp
                     ?.toDate()
                     .toISOString()
                     .slice(0, 16); // Format YYYY-MM-DD HH:MM
-
+                  const receivedDate = lead.receivedDate
+                    ?.toDate()
+                    .toISOString()
+                    .slice(0, 16); // Format YYYY-MM-DD HH:MM
                   const key = ` ${name}-${leadDateTime}`; // Unique key to group by salesperson & timestamp
 
                   if (!groupedSales[key]) {
@@ -97,6 +110,7 @@ const LeadsPageVA = ({
                       saleId: doc.id,
                       salesPerson: name,
                       leadSource: new Set(),
+                      receivedDate: receivedDate?.replace("T", " "),
                       amount: 0,
                       dateTime: leadDateTime.replace("T", " "), // Format properly
                       salesPersonId: uid,
@@ -122,7 +136,11 @@ const LeadsPageVA = ({
               }
             }
           });
-
+          salesData.sort((a, b) => {
+            const dateA = new Date(a.dateTime);
+            const dateB = new Date(b.dateTime);
+            return dateB - dateA;
+          });
           setSalesPerson(salesPersonData);
           setAllSales(salesData);
           setTotalLeads(totalLeadsCount);
@@ -161,7 +179,15 @@ const LeadsPageVA = ({
 
   useEffect(() => {
     handleFilter();
-  }, [selectedLeadSource, selectedSalesPerson, startDate, endDate, allSales]);
+  }, [
+    selectedLeadSource,
+    selectedSalesPerson,
+    startDate,
+    endDate,
+    allSales,
+    receivedStartDate,
+    receivedEndDate,
+  ]);
 
   const handleFilter = () => {
     let filteredSales = [...allSales];
@@ -189,20 +215,39 @@ const LeadsPageVA = ({
         return saleDate.getTime() >= start && saleDate.getTime() <= end;
       });
     }
+    if (receivedStartDate && receivedEndDate) {
+      filteredSales = filteredSales.filter((sale) => {
+        if (!sale.receivedDate) return false; // Ensure receivedDate exists
+
+        const receivedDate = new Date(sale.receivedDate); // Convert to Date object
+        const start = new Date(receivedStartDate).setHours(0, 0, 0, 0); // Reset time for accuracy
+        const end = new Date(receivedEndDate).setHours(23, 59, 59, 999); // Include the full day
+
+        return receivedDate.getTime() >= start && receivedDate.getTime() <= end;
+      });
+    }
 
     setFilteredClients(filteredSales);
     setCurrentPage(1);
   };
 
   const handleFilterChange = (filters) => {
-    const { selectedLeadSource, selectedSalesPerson, startDate, endDate } =
-      filters;
+    const {
+      selectedLeadSource,
+      selectedSalesPerson,
+      startDate,
+      endDate,
+      receivedStartDate,
+      receivedEndDate,
+    } = filters;
+
     setSelectedLeadSource(selectedLeadSource);
     setSelectedSalesPerson(selectedSalesPerson);
     setStartDate(startDate);
     setEndDate(endDate);
+    setReceivedStartDate(receivedStartDate);
+    setReceivedEndDate(receivedEndDate);
   };
-
   const handleFilterToggle = () => setShowFilters(!showFilters);
 
   const handleOpenViewModal = (row) => {
@@ -303,6 +348,7 @@ const LeadsPageVA = ({
 
   const salesColumns = [
     { key: "dateTime", label: "Date & Time" },
+    { key: "receivedDate", label: "Received Date" },
     { key: "salesPerson", label: "Sales Person" },
     { key: "leadSource", label: "Lead Source" },
     { key: "amount", label: "Lead Amount" },
@@ -377,6 +423,10 @@ const LeadsPageVA = ({
             setSelectedSalesPerson={setSelectedSalesPerson}
             startDate={startDate}
             setStartDate={setStartDate}
+            receivedStartDate={receivedStartDate}
+            receivedEndDate={receivedEndDate}
+            setReceivedEndDate={setReceivedEndDate}
+            setReceivedStartDate={setReceivedStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
           />
