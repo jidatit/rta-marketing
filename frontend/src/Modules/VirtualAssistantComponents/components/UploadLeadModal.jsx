@@ -11,6 +11,7 @@ import {
   doc,
   Timestamp,
 } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
 import { db } from "../../../config/firebaseConfig";
 import { useAuth } from "../../../AuthContext";
@@ -54,7 +55,7 @@ const UploadLeadModal = ({
   SalesPerson,
   mode = "create",
   setModalMode,
-  initialData = null,
+  initialData,
 }) => {
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
   // const [leadRows, setLeadRows] = useState([{ leadSource: "", leadAmount: 0 }]);
@@ -66,30 +67,47 @@ const UploadLeadModal = ({
   const [originalData, setOriginalData] = useState(null);
   const { currentUser } = useAuth();
   const [receivedDate, setReceivedDate] = useState(null);
+  console.log("model", mode, initialData);
   useEffect(() => {
     if (initialData && mode !== "create") {
       setOriginalData(initialData);
-      if (initialData.allLeads) {
-        const processedLeads = initialData.allLeads.map((lead) => ({
-          leadSource: lead.leadSource,
-          leadAmount: lead.leadAmount,
-          leadCost: lead.leadCost,
-          VAName: lead.VAName,
-          VAUid: lead.VAUid,
-          timestamp: lead.timestamp,
-        }));
 
+      // Handle both cases - single lead (leadData) or multiple leads (allLeads)
+      if (initialData.leadData) {
+        // Single lead case
+        const processedLead = {
+          ...initialData.leadData,
+          id: initialData.leadData.id || uuidv4(),
+        };
+        setLeadRows([processedLead]);
+
+        // Handle receivedDate
+        const leadReceivedDate = initialData.leadData.receivedDate;
+        if (leadReceivedDate) {
+          const dateToSet = leadReceivedDate.toDate
+            ? leadReceivedDate.toDate()
+            : new Date(leadReceivedDate.seconds * 1000); // Convert Firestore timestamp
+          if (!isNaN(dateToSet.getTime())) {
+            setReceivedDate(dateToSet);
+          } else {
+            setReceivedDate(null);
+          }
+        } else {
+          setReceivedDate(null);
+        }
+      } else if (initialData.allLeads) {
+        // Multiple leads case (original logic)
+        const processedLeads = initialData.allLeads.map((lead) => ({
+          ...lead,
+          id: lead.id || uuidv4(),
+        }));
         setLeadRows(processedLeads);
 
-        // Only set received date if it exists for the first lead and is a valid date
         const firstLeadReceivedDate = initialData.allLeads[0]?.receivedDate;
         if (firstLeadReceivedDate) {
-          // Check if receivedDate is a Firestore Timestamp
           const dateToSet = firstLeadReceivedDate.toDate
             ? firstLeadReceivedDate.toDate()
-            : new Date(firstLeadReceivedDate);
-
-          // Additional check to ensure it's a valid date
+            : new Date(firstLeadReceivedDate.seconds * 1000);
           if (!isNaN(dateToSet.getTime())) {
             setReceivedDate(dateToSet);
           } else {
@@ -99,13 +117,20 @@ const UploadLeadModal = ({
           setReceivedDate(null);
         }
       }
+    } else {
+      // Reset for create mode
+      setLeadRows([{ leadSource: "", leadAmount: 0, leadCost: 0 }]);
+      setReceivedDate(null);
     }
   }, [initialData, mode]);
   // const addNewRow = () => {
   //   setLeadRows([...leadRows, { leadSource: "", leadAmount: 0 }]);
   // };
   const addNewRow = () => {
-    setLeadRows([...leadRows, { leadSource: "", leadAmount: 0, leadCost: 0 }]);
+    setLeadRows([
+      ...leadRows,
+      { leadSource: "", leadAmount: 0, leadCost: 0, id: uuidv4() },
+    ]);
   };
 
   const removeRow = (index) => {
@@ -205,7 +230,6 @@ const UploadLeadModal = ({
 
   const handleUpdateLeads = async () => {
     setLoading(true);
-
     try {
       const employeesRef = collection(db, "employees");
       const q = query(
@@ -213,7 +237,6 @@ const UploadLeadModal = ({
         where("uid", "==", initialData.salesPersonId)
       );
       const querySnapshot = await getDocs(q);
-
       if (querySnapshot.empty) {
         toast.error("Sales Person not found in database!");
         setLoading(false);
@@ -224,46 +247,26 @@ const UploadLeadModal = ({
       const employeeDoc = await getDoc(employeeDocRef);
       const currentLeads = employeeDoc.data().leads || [];
 
-      // Create a map of existing leads by some unique identifier (using index if no ID exists)
-      const existingLeadsMap = new Map();
-      currentLeads.forEach((lead, index) => {
-        existingLeadsMap.set(index, lead);
+      // Create a map of existing leads for quick lookup
+      const leadsMap = new Map(currentLeads.map((lead) => [lead.id, lead]));
+
+      // Update the map with our edited leads
+      leadRows.forEach((leadRow) => {
+        leadsMap.set(leadRow.id, {
+          ...(leadsMap.get(leadRow.id) || {}), // Keep existing properties if any
+          ...leadRow, // Override with our updated values
+          receivedDate: receivedDate
+            ? Timestamp.fromDate(receivedDate)
+            : leadsMap.get(leadRow.id)?.receivedDate || Timestamp.now(),
+          VAName: currentUser.email,
+          VAUid: currentUser.uid,
+          timestamp: leadsMap.get(leadRow.id)?.timestamp || new Date(),
+        });
       });
 
-      // Update only the leads that were modified in the UI
-      const updatedLeads = [...currentLeads];
-      leadRows.forEach((modifiedLead, index) => {
-        if (index < updatedLeads.length) {
-          // Update existing lead
-          updatedLeads[index] = {
-            ...updatedLeads[index],
-            leadSource: modifiedLead.leadSource,
-            leadAmount: modifiedLead.leadAmount,
-            leadCost: modifiedLead.leadCost,
-            receivedDate: receivedDate
-              ? Timestamp.fromDate(receivedDate)
-              : updatedLeads[index].receivedDate || Timestamp.now(),
-            VAName: modifiedLead.VAName || currentUser.email,
-            VAUid: modifiedLead.VAUid || currentUser.uid,
-            timestamp: modifiedLead.timestamp || new Date(),
-          };
-        } else {
-          // Add new lead
-          updatedLeads.push({
-            leadSource: modifiedLead.leadSource,
-            leadAmount: modifiedLead.leadAmount,
-            leadCost: modifiedLead.leadCost,
-            receivedDate: receivedDate
-              ? Timestamp.fromDate(receivedDate)
-              : Timestamp.now(),
-            VAName: modifiedLead.VAName || currentUser.email,
-            VAUid: modifiedLead.VAUid || currentUser.uid,
-            timestamp: modifiedLead.timestamp || new Date(),
-          });
-        }
-      });
+      // Convert back to array
+      const updatedLeads = Array.from(leadsMap.values());
 
-      // Update the document with the merged leads array
       await updateDoc(employeeDocRef, {
         leads: updatedLeads,
         lastUpdated: serverTimestamp(),
@@ -272,46 +275,6 @@ const UploadLeadModal = ({
       toast.success("Leads updated successfully!");
       setIsEditing(false);
       onClose();
-
-      // Rest of your notification logic...
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const monthYearKey = `${currentYear}-${currentMonth + 1}`;
-
-      const currentMonthLeads = updatedLeads.filter((lead) => {
-        const leadDate = lead.timestamp?.toDate
-          ? lead.timestamp.toDate()
-          : new Date(lead.timestamp);
-        return (
-          leadDate.getMonth() === currentMonth &&
-          leadDate.getFullYear() === currentYear
-        );
-      });
-
-      if (currentMonthLeads.length < 10) {
-        const notificationDocRef = doc(
-          db,
-          "notificationHistory",
-          "leadThresholds",
-          "monthlyRecords",
-          monthYearKey
-        );
-
-        const notificationDocSnap = await getDoc(notificationDocRef);
-
-        if (notificationDocSnap.exists()) {
-          const notificationData = notificationDocSnap.data();
-          const updatedNotifiedUserIds = (
-            notificationData.notifiedUserIds || []
-          ).filter((uid) => uid !== initialData.salesPersonId);
-
-          await updateDoc(notificationDocRef, {
-            notifiedUserIds: updatedNotifiedUserIds,
-            updatedAt: new Date(),
-          });
-        }
-      }
     } catch (error) {
       console.error("Error updating leads:", error);
       toast.error("Failed to update leads.");
@@ -416,6 +379,7 @@ const UploadLeadModal = ({
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
         leadCost: lead.leadCost,
+        id: uuidv4(),
         receivedDate: receivedDate
           ? Timestamp.fromDate(receivedDate)
           : Timestamp.now(), // Use current server timestamp if no date selected
@@ -433,7 +397,7 @@ const UploadLeadModal = ({
 
       // Update the employee's leads and set lastUpdated timestamp
       await updateDoc(employeeDocRef, {
-        leads: updatedLeads,
+        leads: [...existingLeads, ...newLeads],
         lastUpdated: serverTimestamp(),
       });
       setReceivedDate(null);

@@ -83,7 +83,6 @@ const LeadsPageVA = ({
               }
 
               if (relevantLeads.length > 0) {
-                const groupedSales = {}; // Object to store grouped sales
                 // Sort leads by timestamp in descending order (latest first)
                 const sortedLeads = relevantLeads.sort((a, b) => {
                   const dateA = a.timestamp?.toDate
@@ -94,54 +93,52 @@ const LeadsPageVA = ({
                     : new Date(b.timestamp);
                   return dateB - dateA;
                 });
+
+                // Create a separate row for each lead
                 sortedLeads.forEach((lead, index) => {
                   const leadDateTime = lead.timestamp
                     ?.toDate()
                     .toISOString()
-                    .slice(0, 16); // Format YYYY-MM-DD HH:MM
-                  const receivedDate = lead.receivedDate
-                    ? new Date(lead.receivedDate.seconds * 1000)
-                        .toISOString()
-                        .slice(0, 16) // Format YYYY-MM-DD HH:MM
-                    : "";
-                  const key = ` ${name}-${leadDateTime}`; // Unique key to group by salesperson & timestamp
+                    .slice(0, 16);
 
-                  if (!groupedSales[key]) {
-                    groupedSales[key] = {
-                      saleId: doc.id,
-                      salesPerson: name,
-                      leadSource: new Set(),
-                      receivedDate: receivedDate?.replace("T", " "),
-                      amount: 0,
-                      dateTime: leadDateTime.replace("T", " "), // Format properly
-                      salesPersonId: uid,
-                      // Store indices of leads for deletion later
-                      leadIndices: [],
-                      // Store all leads for view modal
-                      allLeads: [],
-                    };
+                  // Fix for receivedDate timezone issue
+                  let receivedDateStr = "";
+                  if (lead.receivedDate) {
+                    const receivedDate = lead.receivedDate.toDate
+                      ? lead.receivedDate.toDate()
+                      : new Date(lead.receivedDate.seconds * 1000);
+
+                    // Adjust for timezone offset to get the correct local date
+                    receivedDateStr = new Date(
+                      receivedDate.getTime() +
+                        receivedDate.getTimezoneOffset() * 60000
+                    )
+                      .toISOString()
+                      .slice(0, 16);
                   }
 
-                  groupedSales[key].leadSource.add(lead.leadSource.trim());
-                  groupedSales[key].amount += lead.leadAmount;
-                  groupedSales[key].leadIndices.push(index);
-                  groupedSales[key].allLeads.push(lead);
+                  salesData.push({
+                    saleId: doc.id,
+                    salesPerson: name,
+                    leadSource: lead.leadSource.trim(),
+                    receivedDate: receivedDateStr?.replace("T", " "),
+                    amount: lead.leadAmount,
+                    dateTime: leadDateTime.replace("T", " "),
+                    salesPersonId: uid,
+                    leadIndex: index,
+                    leadData: lead,
+                  });
                 });
-
-                salesData.push(
-                  ...Object.values(groupedSales).map((sale) => ({
-                    ...sale,
-                    leadSource: Array.from(sale.leadSource).join(", "), // Convert Set to comma-separated string
-                  }))
-                );
               }
             }
           });
+
           salesData.sort((a, b) => {
             const dateA = new Date(a.dateTime);
             const dateB = new Date(b.dateTime);
             return dateB - dateA;
           });
+
           setSalesPerson(salesPersonData);
           setAllSales(salesData);
           setTotalLeads(totalLeadsCount);
@@ -251,9 +248,10 @@ const LeadsPageVA = ({
   };
   const handleFilterToggle = () => setShowFilters(!showFilters);
 
-  const handleOpenViewModal = (row) => {
+  const handleOpenViewModal = (leadData) => {
+    console.log("leadData", leadData);
     setModalMode("view");
-    setModalData(row);
+    setModalData(leadData); // Now receives single lead data
     setIsModalOpen(true);
   };
 
@@ -280,14 +278,13 @@ const LeadsPageVA = ({
       const employeeData = employeeDoc.data();
       const leads = [...employeeData.leads];
 
-      // Remove the leads at the stored indices
-      const indicesToRemove = leadToDelete.leadIndices;
-      const sortedIndices = [...indicesToRemove].sort((a, b) => b - a);
-      sortedIndices.forEach((index) => {
-        if (index >= 0 && index < leads.length) {
-          leads.splice(index, 1);
-        }
-      });
+      // Remove the lead at the stored index
+      if (
+        leadToDelete.leadIndex >= 0 &&
+        leadToDelete.leadIndex < leads.length
+      ) {
+        leads.splice(leadToDelete.leadIndex, 1);
+      }
 
       // Update the document with the modified leads array
       await updateDoc(employeeDocRef, {
@@ -295,7 +292,7 @@ const LeadsPageVA = ({
         lastUpdated: new Date(),
       });
 
-      toast.success("Lead(s) deleted successfully");
+      toast.success("Lead deleted successfully");
 
       // Check if the updated lead count falls below 10 for the current month
       const currentDate = new Date();
@@ -360,7 +357,7 @@ const LeadsPageVA = ({
         <div className="flex space-x-4">
           <button
             className="px-4 py-2 text-white bg-[#003160] rounded-lg"
-            onClick={() => handleOpenViewModal(row)}
+            onClick={() => handleOpenViewModal(row)} // Pass the single lead data
           >
             View Details
           </button>
