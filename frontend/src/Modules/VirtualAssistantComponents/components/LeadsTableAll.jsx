@@ -100,33 +100,24 @@ const LeadsPageVA = ({
                     ?.toDate()
                     .toISOString()
                     .slice(0, 16);
-
-                  // Fix for receivedDate timezone issue
-                  let receivedDateStr = "";
-                  if (lead.receivedDate) {
-                    const receivedDate = lead.receivedDate.toDate
-                      ? lead.receivedDate.toDate()
-                      : new Date(lead.receivedDate.seconds * 1000);
-
-                    // Adjust for timezone offset to get the correct local date
-                    receivedDateStr = new Date(
-                      receivedDate.getTime() +
-                        receivedDate.getTimezoneOffset() * 60000
-                    )
-                      .toISOString()
-                      .slice(0, 16);
-                  }
+                  const receivedDate = lead.receivedDate
+                    ? lead.receivedDate.toDate().toLocaleDateString("en-CA", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      })
+                    : "";
 
                   salesData.push({
                     saleId: doc.id,
                     salesPerson: name,
                     leadSource: lead.leadSource.trim(),
-                    receivedDate: receivedDateStr?.replace("T", " "),
+                    receivedDate: receivedDate?.replace("T", " "),
                     amount: lead.leadAmount,
                     dateTime: leadDateTime.replace("T", " "),
                     salesPersonId: uid,
-                    leadIndex: index,
-                    leadData: lead,
+                    leadIndex: index, // Store single index for deletion
+                    leadData: lead, // Store the full lead data
                   });
                 });
               }
