@@ -100,9 +100,10 @@ const LeadsPageVA = ({
                     .toISOString()
                     .slice(0, 16); // Format YYYY-MM-DD HH:MM
                   const receivedDate = lead.receivedDate
-                    ?.toDate()
-                    .toISOString()
-                    .slice(0, 16); // Format YYYY-MM-DD HH:MM
+                    ? new Date(lead.receivedDate.seconds * 1000)
+                        .toISOString()
+                        .slice(0, 16) // Format YYYY-MM-DD HH:MM
+                    : "";
                   const key = ` ${name}-${leadDateTime}`; // Unique key to group by salesperson & timestamp
 
                   if (!groupedSales[key]) {

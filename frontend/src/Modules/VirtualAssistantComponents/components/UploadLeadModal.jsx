@@ -221,19 +221,49 @@ const UploadLeadModal = ({
       }
 
       const employeeDocRef = querySnapshot.docs[0].ref;
+      const employeeDoc = await getDoc(employeeDocRef);
+      const currentLeads = employeeDoc.data().leads || [];
 
-      // Update leads array, without serverTimestamp inside array elements
-      const updatedLeads = leadRows.map((lead) => ({
-        leadSource: lead.leadSource,
-        leadAmount: lead.leadAmount,
-        leadCost: lead.leadCost,
-        receivedDate: Timestamp.fromDate(receivedDate), // Convert properly
-        VAName: lead.VAName || currentUser.email,
-        VAUid: lead.VAUid || currentUser.uid,
-        timestamp: lead.timestamp || new Date(),
-      }));
+      // Create a map of existing leads by some unique identifier (using index if no ID exists)
+      const existingLeadsMap = new Map();
+      currentLeads.forEach((lead, index) => {
+        existingLeadsMap.set(index, lead);
+      });
 
-      // Use serverTimestamp for the lastUpdated field
+      // Update only the leads that were modified in the UI
+      const updatedLeads = [...currentLeads];
+      leadRows.forEach((modifiedLead, index) => {
+        if (index < updatedLeads.length) {
+          // Update existing lead
+          updatedLeads[index] = {
+            ...updatedLeads[index],
+            leadSource: modifiedLead.leadSource,
+            leadAmount: modifiedLead.leadAmount,
+            leadCost: modifiedLead.leadCost,
+            receivedDate: receivedDate
+              ? Timestamp.fromDate(receivedDate)
+              : updatedLeads[index].receivedDate || Timestamp.now(),
+            VAName: modifiedLead.VAName || currentUser.email,
+            VAUid: modifiedLead.VAUid || currentUser.uid,
+            timestamp: modifiedLead.timestamp || new Date(),
+          };
+        } else {
+          // Add new lead
+          updatedLeads.push({
+            leadSource: modifiedLead.leadSource,
+            leadAmount: modifiedLead.leadAmount,
+            leadCost: modifiedLead.leadCost,
+            receivedDate: receivedDate
+              ? Timestamp.fromDate(receivedDate)
+              : Timestamp.now(),
+            VAName: modifiedLead.VAName || currentUser.email,
+            VAUid: modifiedLead.VAUid || currentUser.uid,
+            timestamp: modifiedLead.timestamp || new Date(),
+          });
+        }
+      });
+
+      // Update the document with the merged leads array
       await updateDoc(employeeDocRef, {
         leads: updatedLeads,
         lastUpdated: serverTimestamp(),
@@ -242,8 +272,8 @@ const UploadLeadModal = ({
       toast.success("Leads updated successfully!");
       setIsEditing(false);
       onClose();
-      setReceivedDate(null);
-      // Check if the updated lead count falls below 10 for the current month
+
+      // Rest of your notification logic...
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
@@ -260,7 +290,6 @@ const UploadLeadModal = ({
       });
 
       if (currentMonthLeads.length < 10) {
-        // Reference to notification history document
         const notificationDocRef = doc(
           db,
           "notificationHistory",
@@ -277,7 +306,6 @@ const UploadLeadModal = ({
             notificationData.notifiedUserIds || []
           ).filter((uid) => uid !== initialData.salesPersonId);
 
-          // Update Firestore with the modified list
           await updateDoc(notificationDocRef, {
             notifiedUserIds: updatedNotifiedUserIds,
             updatedAt: new Date(),
