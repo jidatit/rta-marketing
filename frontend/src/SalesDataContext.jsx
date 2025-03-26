@@ -58,8 +58,8 @@ export const SalesDataProvider = ({ children }) => {
 
         const salesData = salesDocSnap.data().sales || [];
         const salesThisMonth = salesData.filter((sale) => {
-          if (!sale.saleDate) return false;
-          const saleDate = new Date(Date.parse(sale.saleDate));
+          if (!sale.intermediateDate) return false;
+          const saleDate = new Date(Date.parse(sale.intermediateDate));
           return (
             saleDate.getFullYear() === selectedDate.getFullYear() &&
             saleDate.getMonth() === selectedDate.getMonth()
@@ -68,7 +68,7 @@ export const SalesDataProvider = ({ children }) => {
 
         const totalSalesCount = salesThisMonth.length || 0;
         const midMonthSalesCount = salesThisMonth.filter(
-          (sale) => new Date(Date.parse(sale.saleDate)) <= midMonth
+          (sale) => new Date(Date.parse(sale.intermediateDate)) <= midMonth
         ).length;
 
         salesDataArray.push({

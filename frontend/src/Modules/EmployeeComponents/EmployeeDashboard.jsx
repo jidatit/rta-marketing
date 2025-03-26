@@ -47,6 +47,8 @@ const EmployeeDashboard = () => {
     reserve: "",
     grossProfit: "",
     saleDate: getCurrentDate(),
+    intermediateDate: getCurrentDate(),
+    intermediateTime: getCurrentTime(),
     saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
     InsuranceStatus: false,
     FundStatus: false,
@@ -154,6 +156,8 @@ const EmployeeDashboard = () => {
         safety: "",
         reserve: "",
         grossProfit: "",
+        intermediateDate: getCurrentDate(),
+        intermediateTime: getCurrentTime(),
         saleDate: getCurrentDate(),
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
@@ -212,6 +216,8 @@ const EmployeeDashboard = () => {
         safety: "",
         reserve: "",
         grossProfit: "",
+        intermediateDate: getCurrentDate(),
+        intermediateTime: getCurrentTime(),
         saleDate: getCurrentDate(),
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,

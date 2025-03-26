@@ -83,43 +83,92 @@ const LeadsPageVA = ({
               }
 
               if (relevantLeads.length > 0) {
-                // Sort leads by timestamp in descending order (latest first)
-                const sortedLeads = relevantLeads.sort((a, b) => {
-                  const dateA = a.timestamp?.toDate
-                    ? a.timestamp.toDate()
-                    : new Date(a.timestamp);
-                  const dateB = b.timestamp?.toDate
-                    ? b.timestamp.toDate()
-                    : new Date(b.timestamp);
-                  return dateB - dateA;
-                });
+                // First group leads by their batchId
+                const leadsByBatch = relevantLeads.reduce((batches, lead) => {
+                  const batchId =
+                    lead.batchId ||
+                    lead.timestamp?.toDate?.()?.getTime() ||
+                    new Date().getTime();
+                  if (!batches[batchId]) {
+                    batches[batchId] = [];
+                  }
+                  batches[batchId].push(lead);
+                  return batches;
+                }, {});
 
-                // Create a separate row for each lead
-                sortedLeads.forEach((lead, index) => {
-                  const leadDateTime = lead.timestamp
-                    ?.toDate()
-                    .toISOString()
-                    .slice(0, 16);
-                  const receivedDate = lead.receivedDate
-                    ? lead.receivedDate.toDate().toLocaleDateString("en-CA", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      })
-                    : "";
+                // Then process each batch
+                Object.entries(leadsByBatch).forEach(
+                  ([batchId, batchLeads]) => {
+                    // Sort leads within batch by timestamp
+                    const sortedBatchLeads = batchLeads.sort((a, b) => {
+                      const dateA = a.timestamp?.toDate
+                        ? a.timestamp.toDate()
+                        : new Date(a.timestamp);
+                      const dateB = b.timestamp?.toDate
+                        ? b.timestamp.toDate()
+                        : new Date(b.timestamp);
+                      return dateB - dateA;
+                    });
 
-                  salesData.push({
-                    saleId: doc.id,
-                    salesPerson: name,
-                    leadSource: lead.leadSource.trim(),
-                    receivedDate: receivedDate?.replace("T", " "),
-                    amount: lead.leadAmount,
-                    dateTime: leadDateTime.replace("T", " "),
-                    salesPersonId: uid,
-                    leadIndex: index, // Store single index for deletion
-                    leadData: lead, // Store the full lead data
-                  });
-                });
+                    // Create a summary row for the batch
+                    const firstLead = sortedBatchLeads[0];
+                    const leadDateTime = firstLead.timestamp
+                      ?.toDate()
+                      .toISOString()
+                      .slice(0, 10);
+                    const receivedDate = firstLead.receivedDate
+                      ? firstLead.receivedDate
+                          .toDate()
+                          .toLocaleDateString("en-CA", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })
+                      : "";
+
+                    // Calculate totals for the batch
+                    const totalAmount = batchLeads.reduce(
+                      (sum, lead) => sum + (lead.leadAmount || 0),
+                      0
+                    );
+                    const leadSources = [
+                      ...new Set(
+                        batchLeads.map((lead) => lead.leadSource.trim())
+                      ),
+                    ].join(", ");
+
+                    salesData.push({
+                      saleId: doc.id,
+                      salesPerson: name,
+                      leadSource: leadSources,
+                      receivedDate: receivedDate?.replace("T", " "),
+                      amount: totalAmount,
+                      dateTime: leadDateTime.replace("T", " "),
+                      salesPersonId: uid,
+                      batchId: batchId,
+                      isBatch: true,
+                      leadCount: batchLeads.length,
+                      leadData: batchLeads, // Store all leads in this batch
+                    });
+
+                    // If you want to show individual leads as well (optional)
+                    // sortedBatchLeads.forEach((lead, index) => {
+                    //   salesData.push({
+                    //     saleId: doc.id,
+                    //     salesPerson: name,
+                    //     leadSource: lead.leadSource.trim(),
+                    //     receivedDate: receivedDate?.replace("T", " "),
+                    //     amount: lead.leadAmount,
+                    //     dateTime: leadDateTime.replace("T", " "),
+                    //     salesPersonId: uid,
+                    //     leadId: lead.id,
+                    //     batchId: batchId,
+                    //     isBatch: false,
+                    //     leadData: lead,
+                    //   });
+                    // });
+                  }
+                );
               }
             }
           });
@@ -239,13 +288,18 @@ const LeadsPageVA = ({
   };
   const handleFilterToggle = () => setShowFilters(!showFilters);
 
-  const handleOpenViewModal = (leadData) => {
-    console.log("leadData", leadData);
+  const handleOpenViewModal = (rowData) => {
     setModalMode("view");
-    setModalData(leadData); // Now receives single lead data
+    // If it's a batch, we'll pass all leads in the batch
+    // If it's a single lead, we'll pass it as an array with one item
+    const leadData = rowData.isBatch ? rowData.leadData : [rowData.leadData];
+    setModalData({
+      ...rowData,
+      allLeads: leadData,
+      salesPersonId: rowData.salesPersonId,
+    });
     setIsModalOpen(true);
   };
-
   const handleDeleteSale = (row) => {
     setLeadToDelete(row);
     setIsDeleteModalOpen(true);
@@ -267,25 +321,41 @@ const LeadsPageVA = ({
       }
 
       const employeeData = employeeDoc.data();
-      const leads = [...employeeData.leads];
+      let leads = [...employeeData.leads];
 
-      // Remove the lead at the stored index
-      if (
-        leadToDelete.leadIndex >= 0 &&
-        leadToDelete.leadIndex < leads.length
-      ) {
-        leads.splice(leadToDelete.leadIndex, 1);
+      if (leadToDelete.isBatch) {
+        // Delete entire batch
+        leads = leads.filter((lead) => {
+          const leadBatchId =
+            lead.batchId ||
+            lead.timestamp?.toDate?.()?.getTime() ||
+            new Date(lead.timestamp).getTime();
+          return leadBatchId.toString() !== leadToDelete.batchId.toString();
+        });
+      } else {
+        // Delete single lead
+        const leadIndex = leads.findIndex(
+          (lead) => lead.id === leadToDelete.leadId
+        );
+        if (leadIndex === -1) {
+          toast.error("Lead not found in employee's leads array");
+          return;
+        }
+        leads.splice(leadIndex, 1);
       }
 
-      // Update the document with the modified leads array
       await updateDoc(employeeDocRef, {
         leads: leads,
         lastUpdated: new Date(),
       });
 
-      toast.success("Lead deleted successfully");
+      toast.success(
+        leadToDelete.isBatch
+          ? "Batch deleted successfully"
+          : "Lead deleted successfully"
+      );
 
-      // Check if the updated lead count falls below 10 for the current month
+      // Rest of your notification logic...
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
@@ -302,7 +372,6 @@ const LeadsPageVA = ({
       });
 
       if (currentMonthLeads.length < 10) {
-        // Reference to notification history document
         const notificationDocRef = doc(
           db,
           "notificationHistory",
@@ -319,7 +388,6 @@ const LeadsPageVA = ({
             notificationData.notifiedUserIds || []
           ).filter((uid) => uid !== employeeData.uid);
 
-          // Update Firestore with the modified list
           await updateDoc(notificationDocRef, {
             notifiedUserIds: updatedNotifiedUserIds,
             updatedAt: new Date(),
@@ -336,11 +404,27 @@ const LeadsPageVA = ({
   };
 
   const salesColumns = [
-    { key: "dateTime", label: "Date & Time" },
+    {
+      key: "dateTime",
+      label: "Created Date",
+      render: (value, row) => <div>{value}</div>,
+    },
     { key: "receivedDate", label: "Received Date" },
     { key: "salesPerson", label: "Sales Person" },
-    { key: "leadSource", label: "Lead Source" },
-    { key: "amount", label: "Lead Amount" },
+    {
+      key: "leadSource",
+      label: "Lead Source",
+      render: (value, row) => (
+        <div className="max-w-xs truncate" title={value}>
+          {value}
+        </div>
+      ),
+    },
+    {
+      key: "amount",
+      label: "Lead Amount",
+      render: (value) => `$${value.toLocaleString()}`,
+    },
     {
       key: "actions",
       label: "Actions",
@@ -348,9 +432,9 @@ const LeadsPageVA = ({
         <div className="flex space-x-4">
           <button
             className="px-4 py-2 text-white bg-[#003160] rounded-lg"
-            onClick={() => handleOpenViewModal(row)} // Pass the single lead data
+            onClick={() => handleOpenViewModal(row)}
           >
-            View Details
+            {row.isBatch ? "View Batch" : "View Details"}
           </button>
           <button
             className="px-4 py-2 text-white bg-red-600 rounded-lg"
@@ -380,8 +464,12 @@ const LeadsPageVA = ({
           setLeadToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Lead"
-        message="Are you sure you want to delete this lead? This action cannot be undone."
+        title={leadToDelete?.isBatch ? "Delete Batch" : "Delete Lead"}
+        message={
+          leadToDelete?.isBatch
+            ? `Are you sure you want to delete this batch of ${leadToDelete.leadCount} leads? This action cannot be undone.`
+            : "Are you sure you want to delete this lead? This action cannot be undone."
+        }
       />
 
       <UploadLeadModal

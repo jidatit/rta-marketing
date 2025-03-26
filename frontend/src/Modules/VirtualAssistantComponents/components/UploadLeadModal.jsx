@@ -10,6 +10,7 @@ import {
   getDoc,
   doc,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
@@ -18,18 +19,7 @@ import { useAuth } from "../../../AuthContext";
 import { useLeadMonitoring } from "../../AdminComponents/components/LeadsMonitor";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
-const normalizeDate = (date) => {
-  const d = new Date(date);
-  return new Date(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate(),
-    0, // hours
-    0, // minutes
-    0, // seconds
-    0 // milliseconds
-  );
-};
+
 // Custom input component with calendar icon
 const CustomDatePickerInput = React.forwardRef(
   ({ value, onClick, placeholder }, ref) => (
@@ -67,13 +57,13 @@ const UploadLeadModal = ({
   const [originalData, setOriginalData] = useState(null);
   const { currentUser } = useAuth();
   const [receivedDate, setReceivedDate] = useState(null);
-  console.log("model", mode, initialData);
+
   useEffect(() => {
     if (initialData && mode !== "create") {
       setOriginalData(initialData);
 
-      // Handle both cases - single lead (leadData) or multiple leads (allLeads)
-      if (initialData.leadData) {
+      // Handle both single lead and batch leads cases
+      if (initialData.leadsData) {
         // Single lead case
         const processedLead = {
           ...initialData.leadData,
@@ -81,45 +71,39 @@ const UploadLeadModal = ({
         };
         setLeadRows([processedLead]);
 
-        // Handle receivedDate
-        const leadReceivedDate = initialData.leadData.receivedDate;
-        if (leadReceivedDate) {
-          const dateToSet = leadReceivedDate.toDate
-            ? leadReceivedDate.toDate()
-            : new Date(leadReceivedDate.seconds * 1000); // Convert Firestore timestamp
-          if (!isNaN(dateToSet.getTime())) {
-            setReceivedDate(dateToSet);
-          } else {
-            setReceivedDate(null);
-          }
+        // Handle receivedDate for single lead
+        if (initialData.leadData.receivedDate) {
+          const dateToSet = initialData.leadData.receivedDate.toDate
+            ? initialData.leadData.receivedDate.toDate()
+            : new Date(initialData.leadData.receivedDate.seconds * 1000);
+          setReceivedDate(isNaN(dateToSet.getTime()) ? null : dateToSet);
         } else {
           setReceivedDate(null);
         }
       } else if (initialData.allLeads) {
-        // Multiple leads case (original logic)
+        // Batch leads case - set all leads in the batch
         const processedLeads = initialData.allLeads.map((lead) => ({
           ...lead,
           id: lead.id || uuidv4(),
         }));
         setLeadRows(processedLeads);
 
-        const firstLeadReceivedDate = initialData.allLeads[0]?.receivedDate;
-        if (firstLeadReceivedDate) {
-          const dateToSet = firstLeadReceivedDate.toDate
-            ? firstLeadReceivedDate.toDate()
-            : new Date(firstLeadReceivedDate.seconds * 1000);
-          if (!isNaN(dateToSet.getTime())) {
-            setReceivedDate(dateToSet);
-          } else {
-            setReceivedDate(null);
-          }
+        // Handle receivedDate for batch (use first lead's date)
+        const firstLead = initialData.allLeads[0];
+        if (firstLead?.receivedDate) {
+          const dateToSet = firstLead.receivedDate.toDate
+            ? firstLead.receivedDate.toDate()
+            : new Date(firstLead.receivedDate.seconds * 1000);
+          setReceivedDate(isNaN(dateToSet.getTime()) ? null : dateToSet);
         } else {
           setReceivedDate(null);
         }
       }
     } else {
       // Reset for create mode
-      setLeadRows([{ leadSource: "", leadAmount: 0, leadCost: 0 }]);
+      setLeadRows([
+        { leadSource: "", leadAmount: 0, leadCost: 0, id: uuidv4() },
+      ]);
       setReceivedDate(null);
     }
   }, [initialData, mode]);
@@ -173,7 +157,7 @@ const UploadLeadModal = ({
         originalData.allLeads.map((lead) => ({
           leadSource: lead.leadSource,
           leadAmount: lead.leadAmount,
-          receivedDate: Timestamp.fromDate(receivedDate), // Convert properly
+          receivedDate: new Date(receivedDate), // Convert properly
           VAName: lead.VAName,
           VAUid: lead.VAUid,
           timestamp: lead.timestamp,
@@ -237,6 +221,7 @@ const UploadLeadModal = ({
         where("uid", "==", initialData.salesPersonId)
       );
       const querySnapshot = await getDocs(q);
+
       if (querySnapshot.empty) {
         toast.error("Sales Person not found in database!");
         setLoading(false);
@@ -247,24 +232,27 @@ const UploadLeadModal = ({
       const employeeDoc = await getDoc(employeeDocRef);
       const currentLeads = employeeDoc.data().leads || [];
 
-      // Create a map of existing leads for quick lookup
       const leadsMap = new Map(currentLeads.map((lead) => [lead.id, lead]));
+      const batchId = leadRows[0]?.batchId || new Date().getTime();
 
-      // Update the map with our edited leads
       leadRows.forEach((leadRow) => {
+        const existingLead = leadsMap.get(leadRow.id) || {};
+
         leadsMap.set(leadRow.id, {
-          ...(leadsMap.get(leadRow.id) || {}), // Keep existing properties if any
-          ...leadRow, // Override with our updated values
+          ...existingLead,
+          leadSource: leadRow.leadSource || existingLead.leadSource,
+          leadAmount: leadRow.leadAmount || existingLead.leadAmount,
+          leadCost: leadRow.leadCost || existingLead.leadCost,
           receivedDate: receivedDate
-            ? Timestamp.fromDate(receivedDate)
-            : leadsMap.get(leadRow.id)?.receivedDate || Timestamp.now(),
+            ? Timestamp.fromDate(new Date(receivedDate))
+            : null,
           VAName: currentUser.email,
           VAUid: currentUser.uid,
-          timestamp: leadsMap.get(leadRow.id)?.timestamp || new Date(),
+          timestamp: existingLead.timestamp || new Date(),
+          batchId: existingLead.batchId || batchId,
         });
       });
 
-      // Convert back to array
       const updatedLeads = Array.from(leadsMap.values());
 
       await updateDoc(employeeDocRef, {
@@ -352,7 +340,6 @@ const UploadLeadModal = ({
       return;
     }
 
-    // Original upload logic for new leads
     if (!selectedSalesPerson) {
       toast.error("Please select a Sales Person.");
       return;
@@ -374,51 +361,48 @@ const UploadLeadModal = ({
       const employeeDocRef = querySnapshot.docs[0].ref;
       const employeeData = querySnapshot.docs[0].data();
 
-      // New leads to add
-      const newLeads = leadRows.map((lead) => ({
+      const batch = writeBatch(db);
+      const batchTimestamp = new Date();
+
+      const batchLeads = leadRows.map((lead) => ({
+        id: uuidv4(), // Add unique ID for each lead
         leadSource: lead.leadSource,
         leadAmount: lead.leadAmount,
         leadCost: lead.leadCost,
-        id: uuidv4(),
-        receivedDate: receivedDate
-          ? Timestamp.fromDate(receivedDate)
-          : Timestamp.now(), // Use current server timestamp if no date selected
-
         VAName: currentUser.email,
         VAUid: currentUser.uid,
-        timestamp: new Date(),
+        timestamp: batchTimestamp,
+        batchId: batchTimestamp.getTime(),
+        receivedDate: Timestamp.fromDate(new Date(receivedDate)),
       }));
 
-      // Check for existing leads
-      const existingLeads = employeeData.leads || [];
+      const updatedLeads = [...(employeeData.leads || []), ...batchLeads];
 
-      // Merge existing and new leads
-      const updatedLeads = [...existingLeads, ...newLeads];
-
-      // Update the employee's leads and set lastUpdated timestamp
-      await updateDoc(employeeDocRef, {
-        leads: [...existingLeads, ...newLeads],
+      batch.update(employeeDocRef, {
+        leads: updatedLeads,
         lastUpdated: serverTimestamp(),
       });
-      setReceivedDate(null);
+
+      await batch.commit();
+
       toast.success("Leads uploaded successfully!");
       onClose();
-
       setLeadRows([{ leadSource: "", leadAmount: 1, leadCost: 0 }]);
       setSelectedSalesPerson("");
+      setReceivedDate(null);
     } catch (error) {
       console.error("Error handling leads:", error);
       toast.error("Failed to upload leads.");
     } finally {
       setLoading(false);
-      await triggerCheck();
     }
   };
   const handleDateChange = (date) => {
     if (!isEditing && mode === "view") return;
 
     // Use the Date object directly (it already represents a UTC timestamp internally)
-    setReceivedDate(date || null);
+
+    setReceivedDate(new Date(date.toISOString()));
   };
 
   if (!isOpen) return null;
@@ -466,18 +450,18 @@ const UploadLeadModal = ({
               ))}
             </select>
           </div>
-          <div className="w-full ">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Received Date
             </label>
             <DatePicker
               selected={receivedDate}
               onChange={handleDateChange}
-              dateFormat="dd MMM yyyy"
-              disabled={!isEditing && mode === "view"}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              dateFormat="yyyy-MM-dd"
+              placeholderText="Select received date"
               customInput={<CustomDatePickerInput />}
-              placeholderText="Select Lead Received Date"
+              disabled={!isEditing && mode === "view"}
+              className="w-full"
             />
           </div>
           {/* Lead Source and Amount Rows */}
