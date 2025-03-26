@@ -10,6 +10,7 @@ import {
   where,
   deleteField,
   deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 
@@ -45,36 +46,44 @@ const SalesPage = ({ setShowModal }) => {
 
   const [uId, setUid] = useState([]);
 
-  const fetchSalesData = async () => {
+  const fetchSalesData = () => {
     try {
       const salesCollection = collection(db, "sales");
-      const querySnapshot = await getDocs(salesCollection);
-      const salesData = [];
-      const uIds = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const id = doc.id;
-        uIds.push(id);
-        const dataWithId = data.sales.map((el) => ({
-          documentId: doc.id,
-          ...el,
-        }));
-        const dataObject = {
-          sales: dataWithId,
-          id: id,
-        };
+      const unsubscribe = onSnapshot(salesCollection, (querySnapshot) => {
+        const salesData = [];
+        const uIds = [];
 
-        salesData.push(dataObject);
-        setUid(uIds);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const id = doc.id;
+          uIds.push(id);
+          const dataWithId = data.sales.map((el) => ({
+            documentId: doc.id,
+            ...el,
+          }));
+          const dataObject = {
+            sales: dataWithId,
+            id: id,
+          };
+
+          salesData.push(dataObject);
+          setUid(uIds);
+        });
+
+        setSales(salesData);
+
+        const allSales = salesData.flatMap((item) => item.sales);
+        setAllSales(allSales);
+        setFilteredClients(allSales);
+
+        // Fetch sales persons whenever sales data updates
+        fetchSalesPerson();
       });
 
-      setSales(salesData);
-
-      const allSales = salesData.flatMap((item) => item.sales);
-      setAllSales(allSales);
-      setFilteredClients(allSales);
+      // Return the unsubscribe function to clean up when component unmounts
+      return unsubscribe;
     } catch (error) {
-      console.error("Error fetching sales data: ", error);
+      console.error("Error setting up sales data listener: ", error);
     }
   };
 
@@ -113,6 +122,17 @@ const SalesPage = ({ setShowModal }) => {
       toast.error("Failed to fetch Sales Person : " + error.message);
     }
   };
+
+  // Usage in your component
+  useEffect(() => {
+    const unsubscribe = fetchSalesData();
+    fetchLeads();
+
+    // Clean up the listener when component unmounts
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

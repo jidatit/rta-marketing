@@ -83,7 +83,6 @@ const SalesTable = ({
               ...updatedSales[saleIndex],
               intermediateDate: formattedDate,
               intermediateTime: formattedTime,
-              FundStatus: true,
             };
 
             // Update the document
@@ -317,10 +316,10 @@ const SalesTable = ({
                                 </span>
                                 <span className="sm:hidden">Transfer</span>
                               </button>
-                              <div className="absolute z-10 w-56 p-2 text-sm text-black bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-x-1/2 left-1/2 -top-12 -mt-1 pointer-events-none">
+                              <div className="absolute text-center z-10 w-56 p-2 text-sm text-black bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-x-1/2 left-1/2 -top-12 -mt-1 pointer-events-none">
                                 {sale.FundStatus
                                   ? "Fund Status Paid - Can't Transfer"
-                                  : `Will transfer to: 1st ${nextMonth.toLocaleDateString(
+                                  : `Will transfer to ${nextMonth.toLocaleDateString(
                                       "en-GB",
                                       { month: "long", year: "numeric" }
                                     )}`}
