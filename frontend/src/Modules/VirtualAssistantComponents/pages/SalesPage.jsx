@@ -2,32 +2,29 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
-  collection,
-  doc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  deleteField,
-  deleteDoc,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../config/firebaseConfig";
-
-import ViewDetails from "../EmployeeComponents/ViewDetails";
-import {
   FaArrowLeft,
   FaArrowRight,
   FaBan,
   FaChevronDown,
-} from "react-icons/fa6";
-import { FaCalendarAlt } from "react-icons/fa";
+  FaCalendarAlt,
+} from "react-icons/fa";
 import { toast } from "react-toastify";
-import SalesTable from "./SalesTable";
-import SalesHeader from "./SalesHeader";
-import SaleDetailsModal from "../VirtualAssistantComponents/components/AddSaleDetailsModal";
 
-const SalesPage = ({ setShowModal }) => {
+import {
+  fetchSalesData,
+  fetchLeads,
+  fetchSalesPerson,
+  applySalesFilters,
+  getPaginationData,
+} from "../../../Utils/salesUtils";
+
+import InsuranceUpload from "../../EmployeeComponents/ViewDetails";
+import SalesTable from "../../AdminComponents/SalesTable";
+import SalesHeader from "../../AdminComponents/SalesHeader";
+import SaleDetailsModal from "../components/AddSaleDetailsModal";
+
+const SalesVAPage = ({ setShowModal }) => {
+  // State management
   const [allSales, setAllSales] = useState([]);
   const [sales, setSales] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
@@ -38,125 +35,48 @@ const SalesPage = ({ setShowModal }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [leadSources, setLeadSources] = useState([]);
   const [selectedLeadSource, setSelectedLeadSource] = useState("");
-  const [SalesPerson, setSalesPerson] = useState([""]);
+  const [SalesPerson, setSalesPerson] = useState([]);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [sale, setSale] = useState(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [uId, setUid] = useState([]);
   const [selectedSaleType, setSelectedSaleType] = useState("all"); // State for selected sale type (All, Individual, Wholesale)
 
-  const [uId, setUid] = useState([]);
-
-  const fetchSalesData = () => {
-    try {
-      const salesCollection = collection(db, "sales");
-      const unsubscribe = onSnapshot(salesCollection, (querySnapshot) => {
-        const salesData = [];
-        const uIds = [];
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const id = doc.id;
-          uIds.push(id);
-          const dataWithId = data.sales.map((el) => ({
-            documentId: doc.id,
-            ...el,
-          }));
-          const dataObject = {
-            sales: dataWithId,
-            id: id,
-          };
-
-          salesData.push(dataObject);
-          setUid(uIds);
-        });
-
-        setSales(salesData);
-
-        const allSales = salesData.flatMap((item) => item.sales);
-        setAllSales(allSales);
-        setFilteredClients(allSales);
-
-        // Fetch sales persons whenever sales data updates
-        fetchSalesPerson();
-      });
-
-      // Return the unsubscribe function to clean up when component unmounts
-      return unsubscribe;
-    } catch (error) {
-      console.error("Error setting up sales data listener: ", error);
-    }
-  };
-
-  const fetchLeads = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "leads"));
-      const fetchedLeads = querySnapshot.docs.map((doc) => doc.data().leadName);
-      setLeadSources(fetchedLeads);
-    } catch (error) {
-      console.error("Error fetching leads: ", error);
-      toast.error("Failed to fetch leads: " + error.message);
-    }
-  };
-
-  const fetchSalesPerson = async () => {
-    try {
-      if (uId) {
-        const SalePersonsRef = collection(db, "employees");
-        const queryPromises = uId?.map((source) => {
-          const q = query(SalePersonsRef, where("uid", "==", source));
-          return getDocs(q);
-        });
-        const querySnapshots = await Promise.all(queryPromises);
-        const results = [];
-        querySnapshots.forEach((snapshot) => {
-          snapshot.forEach((doc) => {
-            const { name, uid } = doc.data();
-            results.push({ name, uid });
-          });
-        });
-
-        setSalesPerson(results);
-      }
-    } catch (error) {
-      console.error("Error fetching Sale Persons: ", error);
-      toast.error("Failed to fetch Sales Person : " + error.message);
-    }
-  };
-
-  // Usage in your component
+  // Fetch data on component mount
   useEffect(() => {
-    const unsubscribe = fetchSalesData();
-    fetchLeads();
+    const unsubscribe = fetchSalesData(
+      setSales,
+      setAllSales,
+      setFilteredClients,
+      setUid
+    );
+    fetchLeads(setLeadSources);
 
-    // Clean up the listener when component unmounts
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-  const handleOpenViewModal = (sale) => {
-    setSale(sale);
-    setIsViewModalOpen(true);
-  };
-  const handleCloseViewModal = () => {
-    setIsViewModalOpen(false);
-  };
-
+  // Fetch sales persons when uId changes
   useEffect(() => {
-    fetchLeads();
-    fetchSalesData();
-  }, []);
-
-  useEffect(() => {
-    fetchSalesPerson();
+    if (uId.length > 0) {
+      fetchSalesPerson(uId, setSalesPerson);
+    }
   }, [uId]);
 
-  //FILTER BY SALES ,on frontend
+  // Apply filters when filter criteria change
+  useEffect(() => {
+    applySalesFilters(
+      allSales,
+      startDate,
+      endDate,
+      selectedLeadSource,
+      selectedSalesPerson,
+      setFilteredClients
+    );
+    setCurrentPage(1);
+  }, [allSales, startDate, endDate, selectedLeadSource, selectedSalesPerson]);
   useEffect(() => {
     if (selectedSaleType === "all") {
       setFilteredClients(allSales); // Show all sales
@@ -170,103 +90,19 @@ const SalesPage = ({ setShowModal }) => {
     }
   }, [selectedSaleType, allSales]);
 
-  const handleDeleteSale = async (saleId, documentId) => {
-    try {
-      const docRef = doc(db, "sales", documentId);
-
-      const salesItem = sales.find((item) => item.id === documentId);
-
-      if (salesItem) {
-        const arrayItem = salesItem.sales;
-
-        const updatedArrayItems = arrayItem.filter(
-          (item) => item.saleId !== saleId
-        );
-
-        if (updatedArrayItems.length === 0) {
-          // Delete the document if the updated array is empty
-          await deleteDoc(docRef);
-          toast.success("Document deleted successfully");
-        } else {
-          // Otherwise, update the document with the new array
-          await updateDoc(docRef, { sales: updatedArrayItems });
-          toast.success("Sale deleted successfully");
-        }
-
-        fetchSalesData();
-      } else {
-        toast.error("Something happened: try again");
-      }
-    } catch (error) {
-      console.error("Error deleting object:", error);
-      toast.error("Error deleting object: please try again");
-    }
+  // Modal handlers
+  const handleOpenViewModal = (sale) => {
+    setSale(sale);
+    setIsViewModalOpen(true);
   };
+  const handleCloseViewModal = () => setIsViewModalOpen(false);
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(Number(event.target.value));
+  // Pagination handlers
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
-  const handleFilter = () => {
-    if (startDate && endDate) {
-      const filteredSales = allSales.filter((sale) => {
-        const saleDate = new Date(sale.saleDate);
-        return saleDate >= startDate && saleDate <= endDate;
-      });
-      setFilteredClients(filteredSales);
-      setCurrentPage(1);
-    } else {
-      setFilteredClients(allSales);
-    }
-    if (selectedLeadSource) {
-      const filteredSales = allSales.filter(
-        (sale) => sale.leadSource === selectedLeadSource
-      );
-      setFilteredClients(filteredSales);
-    }
-    if (selectedSalesPerson) {
-      const filteredSales = allSales.filter(
-        (sale) => sale.documentId === selectedSalesPerson
-      );
-      setFilteredClients(filteredSales);
-    }
-  };
-
-  useEffect(() => {
-    handleFilter();
-  }, [selectedSalesPerson, selectedLeadSource]);
-
-  // Clear filter
-  const handleClearFilter = () => {
-    setStartDate(null);
-    setEndDate(null);
-    setFilteredClients(allSales);
-    setCurrentPage(1);
-    setSelectedLeadSource("");
-    setSelectedSalesPerson("");
-    setShowDateFilter(false);
-  };
-  const handleFilterToggle = () => {
-    setShowFilters(!showFilters);
-  };
-
-  const sortedFilteredClients = filteredClients.sort((a, b) => {
-    const dateA = new Date(a.saleDate);
-    const dateB = new Date(b.saleDate);
-    return dateB - dateA;
-  });
-
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-
-  const currentClients = sortedFilteredClients.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
   const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const handleAddData = (sale) => {
@@ -277,18 +113,37 @@ const SalesPage = ({ setShowModal }) => {
     // Refresh data after update
     fetchSalesData();
   };
-  const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
-
+  // Filter handlers
   const handleSelect = (event, setValue) => {
-    if (event.target.value === "") setFilteredClients(allSales);
-
     setValue(event.target.value);
   };
+
+  const handleClearFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedLeadSource("");
+    setSelectedSalesPerson("");
+    setShowDateFilter(false);
+  };
+
+  const handleFilterToggle = () => setShowFilters(!showFilters);
+
+  // Sort and paginate data
+  const sortedFilteredClients = [...filteredClients].sort((a, b) => {
+    return new Date(b.saleDate) - new Date(a.saleDate);
+  });
+
+  const { totalPages, currentClients } = getPaginationData(
+    sortedFilteredClients,
+    rowsPerPage,
+    currentPage
+  );
+
   return (
     <>
       <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
-        <div className="flex flex-col w-full h-full   ">
-          <SalesHeader />
+        <div className="flex flex-col w-full h-full ">
+          <SalesHeader VA={true} />
           {/*tabs attached to the top of the table*/}
           <div className="relative bg-white rounded-lg shadow-md">
             {/* Sale Type Tabs - Enhanced */}
@@ -330,56 +185,51 @@ const SalesPage = ({ setShowModal }) => {
               </div>
             </div>
           </div>
-          <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
+          <div className="relative p-2  bg-white shadow-lg sm:rounded-lg">
+            {/* Filter Controls */}
             <div className="w-full text-end flex justify-end">
               <button
+                type="button"
                 onClick={handleFilterToggle}
-                className="flex items-center px-4 py-3 mb-4 text-white bg-[#003160] rounded-lg "
+                className="flex items-center px-4 py-3 mb-4 text-white bg-[#003160] rounded-lg"
               >
                 <FaCalendarAlt className="mr-2" />
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </button>
             </div>
 
+            {/* Filters Section */}
             <div
               className={`${
                 showFilters ? "max-h-screen" : "max-h-0"
-              } overflow-hidden transition-all duration-500 ease-in-out `}
+              } overflow-hidden transition-all duration-500 ease-in-out`}
             >
               <div className="flex justify-end items-center mb-4">
+                {/* Sales Person Filter */}
                 <div className="relative w-52 mx-4">
                   <select
-                    key={selectedSalesPerson}
                     name="Sales Person"
-                    id="demo-simple-select-helper-label"
                     value={selectedSalesPerson}
-                    onChange={(event) => {
-                      handleSelect(event, setSelectedSalesPerson);
-                    }}
-                    className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1  focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
+                    onChange={(e) => handleSelect(e, setSelectedSalesPerson)}
+                    className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1 focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
                   >
                     <option value="">Sales Person</option>
-                    {SalesPerson.map((salePerson) => {
-                      return (
-                        <option key={salePerson.uid} value={salePerson.uid}>
-                          {salePerson.name}
-                        </option>
-                      );
-                    })}
+                    {SalesPerson.map((salePerson) => (
+                      <option key={salePerson.uid} value={salePerson.uid}>
+                        {salePerson.name}
+                      </option>
+                    ))}
                   </select>
-
                   <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
                 </div>
 
+                {/* Lead Source Filter */}
                 <div className="relative w-52 mx-4">
                   <select
                     name="leads Sources"
-                    id=""
                     value={selectedLeadSource}
-                    onChange={(event) => {
-                      handleSelect(event, setSelectedLeadSource);
-                    }}
-                    className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1  focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
+                    onChange={(e) => handleSelect(e, setSelectedLeadSource)}
+                    className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1 focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
                   >
                     <option value="">Lead Source</option>
                     {leadSources.map((lead) => (
@@ -388,28 +238,27 @@ const SalesPage = ({ setShowModal }) => {
                       </option>
                     ))}
                   </select>
-
                   <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
                 </div>
+
+                {/* Date Filter */}
                 {!showDateFilter ? (
                   <div
-                    onClick={() => {
-                      setShowDateFilter(true);
-                    }}
-                    className="px-8 py-2 border w-52 border-gray-300  rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 bg-white text-gray-500 mx-4 cursor-pointer text-center"
+                    onClick={() => setShowDateFilter(true)}
+                    className="px-8 py-2 border w-52 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 bg-white text-gray-500 mx-4 cursor-pointer text-center"
                   >
                     Select Date
                   </div>
                 ) : (
-                  <div className=" flex items-center  ">
-                    <div className="flex items-center mr-4 ">
+                  <div className="flex items-center">
+                    <div className="flex items-center mr-4">
                       <label htmlFor="start-date" className="mr-2 font-radios">
                         From:
                       </label>
                       <DatePicker
                         id="start-date"
                         selected={startDate}
-                        onChange={(date) => setStartDate(date)}
+                        onChange={setStartDate}
                         dateFormat="dd MMMM yyyy"
                         className="px-3 py-2 border-gray-300 rounded-lg border-1"
                       />
@@ -421,20 +270,30 @@ const SalesPage = ({ setShowModal }) => {
                       <DatePicker
                         id="end-date"
                         selected={endDate}
-                        onChange={(date) => setEndDate(date)}
+                        onChange={setEndDate}
                         dateFormat="dd MMMM yyyy"
                         className="px-3 py-2 border-gray-300 rounded-lg border-1"
                       />
                     </div>
                     <button
-                      onClick={() => handleFilter(startDate, endDate)}
+                      type="button"
+                      onClick={() =>
+                        applySalesFilters(
+                          allSales,
+                          startDate,
+                          endDate,
+                          selectedLeadSource,
+                          selectedSalesPerson,
+                          setFilteredClients
+                        )
+                      }
                       className="px-3 py-2 mx-4 text-white bg-[#003160] rounded-lg"
                     >
                       Apply Filter
                     </button>
                     <button
                       onClick={handleClearFilter}
-                      className="px-3 py-2     text-white bg-red-500 rounded-lg"
+                      className="px-3 py-2 text-white bg-red-500 rounded-lg"
                     >
                       Clear Filter
                     </button>
@@ -442,12 +301,16 @@ const SalesPage = ({ setShowModal }) => {
                 )}
               </div>
             </div>
+
+            {/* Sales Table */}
+
             <SalesTable
               currentClients={currentClients}
-              handleDeleteSale={handleDeleteSale}
               handleOpenViewModal={handleOpenViewModal}
+              VA={true} // Pass whether delete is allowed based on user role
               onAddData={handleAddData}
             />
+
             {/* {isAddDetailsModalOpen && ( */}
             <SaleDetailsModal
               open={isAddDetailsModalOpen}
@@ -455,13 +318,22 @@ const SalesPage = ({ setShowModal }) => {
               onSuccess={handleDetailsUpdate}
               sale={selectedSale}
             />
+            {/* )} */}
+
+            {/* <AddSaleDetailsModal
+              sale={selectedSale}
+              open={isAddDetailsModalOpen}
+              onClose={() => setIsAddDetailsModalOpen(false)}
+              onSuccess={handleDetailsUpdate}
+            /> */}
+            {/* Pagination Controls */}
             <div className="flex items-center justify-between mt-4">
               <div>
                 <label
                   htmlFor="rows-per-page"
                   className="p-3 mr-2 text-white bg-[#003160] rounded-lg font-radios"
                 >
-                  Rows per page :
+                  Rows per page:
                 </label>
                 <select
                   id="rows-per-page"
@@ -469,18 +341,11 @@ const SalesPage = ({ setShowModal }) => {
                   onChange={handleRowsPerPageChange}
                   className="px-6 py-3 border-gray-300 rounded-md border-1"
                 >
-                  <option value={5} className="p-3">
-                    5 per page
-                  </option>
-                  <option value={7} className="p-3">
-                    7 per page
-                  </option>
-                  <option value={10} className="p-3">
-                    10 per page
-                  </option>
-                  <option value={15} className="p-3">
-                    15 per page
-                  </option>
+                  {[5, 7, 10, 15].map((option) => (
+                    <option key={option} value={option} className="p-3">
+                      {option} per page
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -532,11 +397,12 @@ const SalesPage = ({ setShowModal }) => {
         </div>
       </div>
 
-      {isViewModalOpen ? (
-        <ViewDetails onClose={handleCloseViewModal} sale={sale} />
-      ) : null}
+      {/* View Details Modal */}
+      {isViewModalOpen && (
+        <InsuranceUpload onClose={handleCloseViewModal} sale={sale} />
+      )}
     </>
   );
 };
 
-export default SalesPage;
+export default SalesVAPage;

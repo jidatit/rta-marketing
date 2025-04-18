@@ -5,6 +5,7 @@ import { db } from "../../../config/firebaseConfig";
 import { IoChevronDown } from "react-icons/io5";
 import {
   FaChartLine,
+  FaChevronDown,
   FaDollarSign,
   FaExchangeAlt,
   FaUsers,
@@ -367,6 +368,8 @@ const SalesAnalysisChart = () => {
   const [TotalSalePerLead, setTotalSalePerLead] = useState(0);
   const [dateGrouping, setDateGrouping] = useState("day"); // 'day', 'month', 'year', or 'hour'
   const [timeRangeFilter, setTimeRangeFilter] = useState("custom"); // New time range filter
+  const [selectedSaleType, setSelectedSaleType] = useState("all"); // Default to "all"
+  const [saleTypeDropdownOpen, setSaleTypeDropdownOpen] = useState(false);
 
   // Time range options
   const timeRangeOptions = [
@@ -779,6 +782,33 @@ const SalesAnalysisChart = () => {
               console.warn("Unexpected sale time format:", sale.saleTime);
               return; // Skip this sale record
             }
+            // Initialize sales data for each sale type
+            let salesDataByType = {
+              individual: 0, // for non-wholesale sales
+              wholesale: 0, // for wholesale sales
+            };
+
+            // Determine if sale matches selected type
+            const isWholesale = sale.saleType === "wholesale";
+            let shouldIncludeSale = false;
+
+            if (selectedSaleType === "all") {
+              shouldIncludeSale = true; // Include all sales
+            } else if (selectedSaleType === "wholesale") {
+              shouldIncludeSale = isWholesale; // Only wholesale
+            } else {
+              // "individual" selected
+              shouldIncludeSale = !isWholesale; // All non-wholesale
+            }
+
+            if (!shouldIncludeSale) return; // Skip if doesn't match filter
+
+            if (saleTime >= start && saleTime <= end) {
+              const leadSource = sale.leadSource || "Unknown";
+
+              // Track total sales by source
+              salesBySource[leadSource] = (salesBySource[leadSource] || 0) + 1;
+            }
 
             if (saleTime >= start && saleTime <= end) {
               const leadSource = sale.leadSource || "Unknown";
@@ -1093,7 +1123,14 @@ const SalesAnalysisChart = () => {
       }));
     };
     fetchData();
-  }, [dateFrom, dateTo, selectedLeadSource, dateGrouping, selectedSalesPerson]);
+  }, [
+    dateFrom,
+    dateTo,
+    selectedLeadSource,
+    dateGrouping,
+    selectedSalesPerson,
+    selectedSaleType,
+  ]);
   useEffect(() => {
     // Check if we have chart data and categories
     if (dateRange?.length > 0) {
@@ -1343,6 +1380,69 @@ const SalesAnalysisChart = () => {
             )}
           </div>
         </div>
+        <div className="flex flex-col gap-2">
+          <label className="block text-gray-700 text-sm font-bold mb-1">
+            Sale Type:
+          </label>
+          <div
+            className="relative inline-block text-left min-w-[200px] max-w-[300px]"
+            ref={menuRef2} // You can reuse the same ref variable for managing dropdown state
+          >
+            <button
+              className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              onClick={() => setSaleTypeDropdownOpen(!saleTypeDropdownOpen)}
+            >
+              <div className="flex-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2">
+                {/* Display selected sale types */}
+                <div className="flex flex-nowrap gap-1 min-w-min">
+                  {selectedSaleType.length === 0 && "Select Sale Type..."}
+                  {selectedSaleType && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs whitespace-nowrap">
+                      {selectedSaleType}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <IoChevronDown
+                className={`ml-2 h-4 w-4 transition-transform duration-200 ${
+                  isOpen2 ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {saleTypeDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                {["all", "individual", "wholesale"].map((type) => (
+                  <div key={type}>
+                    <button
+                      className="group flex w-full items-center px-4 py-2 text-sm hover:bg-blue-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSaleType((prev) => {
+                          const newSelection = prev === type ? "" : type;
+                          return newSelection;
+                        });
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSaleType === type}
+                        readOnly
+                        className="mr-2 h-4 w-4 text-blue-600"
+                      />
+                      {type === "all"
+                        ? "All Sales"
+                        : type === "individual"
+                        ? "Individual"
+                        : "Wholesale"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Current View Indicator */}
       </div>
       <div className="mb-6">
@@ -1362,10 +1462,20 @@ const SalesAnalysisChart = () => {
                 </div>
               </div>
               <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  {summaryStats.totalLeads.toLocaleString()}
+                <span
+                  className={`text-2xl ${
+                    selectedSaleType === "wholesale"
+                      ? "font-medium  text-gray-400"
+                      : "font-bold text-gray-800"
+                  }`}
+                >
+                  {selectedSaleType === "wholesale"
+                    ? "NA for wholesale"
+                    : summaryStats.totalLeads.toLocaleString()}
                 </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">leads</span>
+                {selectedSaleType !== "wholesale" && (
+                  <span className="text-xs text-gray-500 ml-2 mb-1">leads</span>
+                )}
               </div>
             </div>
             <div className="h-1 w-full bg-green-500"></div>
@@ -1402,12 +1512,22 @@ const SalesAnalysisChart = () => {
                 </div>
               </div>
               <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  {summaryStats.conversionRate}%
+                <span
+                  className={`text-2xl ${
+                    selectedSaleType === "wholesale"
+                      ? "font-medium text-gray-400"
+                      : "font-bold text-gray-800"
+                  }`}
+                >
+                  {selectedSaleType === "wholesale"
+                    ? "NA for wholesale"
+                    : `${summaryStats.conversionRate}%`}
                 </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">
-                  conversion
-                </span>
+                {selectedSaleType !== "wholesale" && (
+                  <span className="text-xs text-gray-500 ml-2 mb-1">
+                    conversion
+                  </span>
+                )}
               </div>
             </div>
             <div className="h-1 w-full bg-yellow-500"></div>
@@ -1424,12 +1544,24 @@ const SalesAnalysisChart = () => {
                 </div>
               </div>
               <div className="flex items-end">
-                <span className="text-2xl font-bold text-gray-800">
-                  ${parseFloat(summaryStats.costPerSale).toLocaleString()}
+                <span
+                  className={`text-2xl ${
+                    selectedSaleType === "wholesale"
+                      ? "font-medium text-gray-400"
+                      : "font-bold text-gray-800"
+                  }`}
+                >
+                  {selectedSaleType === "wholesale"
+                    ? "NA for wholesale"
+                    : `$${parseFloat(
+                        summaryStats.costPerSale
+                      ).toLocaleString()}`}
                 </span>
-                <span className="text-xs text-gray-500 ml-2 mb-1">
-                  per sale
-                </span>
+                {selectedSaleType !== "wholesale" && (
+                  <span className="text-xs text-gray-500 ml-2 mb-1">
+                    per sale
+                  </span>
+                )}
               </div>
             </div>
             <div className="h-1 w-full bg-red-500"></div>

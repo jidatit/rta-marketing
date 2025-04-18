@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "../../config/firebaseConfig";
 import { FaSearch, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { Loader } from "../../Utils/Loader";
 
 const AllUsersPage = () => {
   const [loading, setLoading] = useState(false);
@@ -197,7 +198,7 @@ const AllUsersPage = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return (

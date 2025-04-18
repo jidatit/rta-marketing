@@ -19,6 +19,7 @@ const SaleForm1 = ({
 }) => {
   const [leadSources, setLeadSources] = useState([]);
   const [selectedLeadSource, setSelectedLeadSource] = useState("");
+  const [financeProviders, setFinanceProviders] = useState([]);
   const isFormDataValid = () => {
     const requiredFields = [
       formData.customerName,
@@ -26,8 +27,16 @@ const SaleForm1 = ({
       formData.vehicleModel,
       formData.stockNumber,
       formData.VIN,
+      formData?.saleType,
       formData.leadSource,
     ];
+
+    // // Add financeProvider to requiredFields if saleType is "wholesale"
+    if (formData.saleType === "individual") {
+      requiredFields.push(formData.financeProvider);
+    }
+
+    // Check that all required fields are not empty
     return requiredFields.every((value) => value.trim() !== "");
   };
 
@@ -38,6 +47,20 @@ const SaleForm1 = ({
       setSecondForm(true);
     } else {
       toast.error("Please fill in all required fields");
+    }
+  };
+
+  const fetchFinanceProviders = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "financeProviders"));
+      const fetchedProviders = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+      }));
+      setFinanceProviders(fetchedProviders);
+    } catch (error) {
+      console.error("Error fetching finance providers: ", error);
+      toast.error("Failed to fetch finance providers: " + error.message);
     }
   };
 
@@ -55,6 +78,7 @@ const SaleForm1 = ({
 
   useEffect(() => {
     fetchLeads();
+    fetchFinanceProviders();
   }, []);
 
   const closeModal = () => {
@@ -180,6 +204,29 @@ const SaleForm1 = ({
                   </div>
                   <div className="w-[48%] mb-4">
                     <label
+                      htmlFor="saleType"
+                      className="block mb-2 text-sm font-medium text-gray-900 font-radios"
+                    >
+                      Sale Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="saleType"
+                        id="saleType"
+                        value={formData.saleType}
+                        onChange={handleInputChange}
+                        className="block w-full p-3 appearance-none text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                      >
+                        <option value="">Select Sale Type</option>
+                        <option value="individual">Individual</option>
+                        <option value="wholesale">Wholesale</option>
+                      </select>
+                      <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="w-[48%] mb-4">
+                    <label
                       htmlFor="leadSource"
                       className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                     >
@@ -205,6 +252,33 @@ const SaleForm1 = ({
                       <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
                     </div>
                   </div>
+                  {formData?.saleType === "individual" && (
+                    <div className="w-[48%] mb-4">
+                      <label
+                        htmlFor="financeProvider"
+                        className="block mb-2 text-sm font-medium text-gray-900 font-radios"
+                      >
+                        Finance Provider
+                      </label>
+                      <div className="relative">
+                        <select
+                          name="financeProvider"
+                          id="financeProvider"
+                          value={formData.financeProvider}
+                          onChange={handleInputChange}
+                          className="block w-full p-3 appearance-none text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                        >
+                          <option value="">Select Finance Provider</option>
+                          {financeProviders.map((provider) => (
+                            <option key={provider.id} value={provider.name}>
+                              {provider.name}
+                            </option>
+                          ))}
+                        </select>
+                        <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-end w-full ml-4 border-t border-solid rounded-b border-blueGray-200 ">
                   <button

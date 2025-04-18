@@ -13,8 +13,9 @@ import {
 import { db } from "../../config/firebaseConfig";
 import { toast } from "react-toastify";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import FinanceProviderManager from "../UIComponents/FinanceProvidersModal";
 
-const SalesHeader = () => {
+const SalesHeader = ({ VA }) => {
   const [showModal, setShowModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   return (
@@ -28,14 +29,17 @@ const SalesHeader = () => {
           >
             Lead sources
           </button> */}
-          <button
-            className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
-            onClick={() => setShowLimitModal(true)}
-          >
-            Set Limit
-          </button>
+          {!VA && (
+            <button
+              className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg mb-4"
+              onClick={() => setShowLimitModal(true)}
+            >
+              Set Limit
+            </button>
+          )}
         </div>
       </div>
+      <FinanceProviderManager />
       <LeadSourceModal open={showModal} onClose={() => setShowModal(false)} />
       <LimitModal
         open={showLimitModal}

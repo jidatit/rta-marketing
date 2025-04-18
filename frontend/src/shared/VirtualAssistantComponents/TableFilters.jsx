@@ -34,7 +34,6 @@ const Filters = ({
     });
   };
 
-  // Custom input component with calendar icon
   const CustomDatePickerInput = React.forwardRef(
     ({ value, onClick, placeholder }, ref) => (
       <div className="relative">

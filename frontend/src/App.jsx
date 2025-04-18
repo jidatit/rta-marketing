@@ -37,6 +37,8 @@ import { SalesDataProvider } from "./SalesDataContext.jsx";
 import LeadsPages from "./Modules/AdminComponents/LeadsPages.jsx";
 import { LeadMonitor } from "./Modules/AdminComponents/components/LeadsMonitor.jsx";
 import GraphsPage from "./Modules/AdminComponents/pages/GraphsPage.jsx";
+import SalesVAPage from "./Modules/VirtualAssistantComponents/pages/SalesPage.jsx";
+
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
     <div className="w-16 h-16 border-4 rounded-full border-t-transparent border-gray-900/50 animate-spin"></div>
@@ -124,6 +126,19 @@ function App() {
                   <Route
                     index
                     element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
+                  />
+                  <Route
+                    path="sales"
+                    element={
+                      currentUser ? <SalesVAPage /> : <Navigate to="/" />
+                    }
+                  />
+
+                  <Route
+                    path="changePassword"
+                    element={
+                      currentUser ? <ChangePassword /> : <Navigate to="/" />
+                    }
                   />
                   {/* <Route
                   index

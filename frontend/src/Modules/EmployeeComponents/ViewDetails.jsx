@@ -9,6 +9,7 @@ import { Box, Tab, Tabs } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import CommissionReportGenerator from "./CommissionReport";
 
 const InsuranceUpload = ({ onClose, sale }) => {
   // console.log(sale);
@@ -18,7 +19,6 @@ const InsuranceUpload = ({ onClose, sale }) => {
   const [fileName, setFileName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedURL, setSelectedURL] = useState("");
-
   const [value, setValue] = useState("1");
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -68,7 +68,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
   const closeDocument = () => {
     setIsModalOpen(false);
   };
-
+  console.log("sale", sale);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
       <div className="relative w-[45%] max-w-4x bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
@@ -79,6 +79,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
           &times;
         </button>
         <h2 className="mb-4 text-xl font-bold text-center">Sale Details</h2>
+
         <Box sx={{ width: "100%", typography: "body1" }}>
           <TabContext value={value}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -96,6 +97,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <Tab label="Details" value="1" />
                 <Tab label="Gross Sheet" value="2" />
                 <Tab label="Documents" value="3" />
+                <Tab label="Report" value="4" />
               </TabList>
             </Box>
 
@@ -301,6 +303,11 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     isOpen={isModalOpen}
                   />
                 ) : null}
+              </div>
+            </TabPanel>
+            <TabPanel value="4" style={{ padding: "0", margin: "0" }}>
+              <div className="py-6">
+                <CommissionReportGenerator saleData={sale} />
               </div>
             </TabPanel>
           </TabContext>

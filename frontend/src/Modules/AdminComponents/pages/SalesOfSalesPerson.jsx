@@ -13,7 +13,7 @@ const SalesOfSalesPerson = () => {
   const [leadSources, setLeadSources] = useState([]);
   const [SalesPerson, setSalesPerson] = useState([""]);
   return (
-    <div className="flex flex-col gap-y-10 w-full min-h-[90vh]">
+    <div className="flex flex-col w-full min-h-[90vh]">
       <HeaderComponent
         title={name}
         buttonText="Upload New Lead"

@@ -9,7 +9,10 @@ const Navbar = () => {
   const changePasswordPath =
     currentUser?.userType === "Employee"
       ? "/EmployeeLayout/changePassword"
+      : currentUser?.userType === "Virtual Assistant"
+      ? "/VirtualAssistantLayout/changePassword"
       : "/AdminLayout/changePassword";
+
   return (
     <div className="flex flex-row items-center justify-between px-12 py-4 bg-transparent border-b-1 border-b-gray-300">
       <div className="flex w-full">

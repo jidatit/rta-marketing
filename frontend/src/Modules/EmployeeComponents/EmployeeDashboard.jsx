@@ -44,6 +44,8 @@ const EmployeeDashboard = () => {
     admin: "",
     pac: "",
     safety: "",
+    financeProvider: "", // Add this new field
+    saleType: "", // this is the new field as well , individual or wholesale
     reserve: "",
     grossProfit: "",
     saleDate: getCurrentDate(),
@@ -57,11 +59,25 @@ const EmployeeDashboard = () => {
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [id]: type === "checkbox" ? checked : value,
-    }));
+
+    setFormData((prevData) => {
+      // Check if the saleType is being changed and if it's 'wholesale'
+      if (id === "saleType" && value === "wholesale") {
+        // Nullify financeProvider when saleType is "wholesale"
+        return {
+          ...prevData,
+          [id]: value,
+          financeProvider: "", // Nullify financeProvider when wholesale is selected
+        };
+      }
+
+      return {
+        ...prevData,
+        [id]: type === "checkbox" ? checked : value,
+      };
+    });
   };
+
   const generateSaleId = () => {
     const timestamp = Date.now(); // Get current timestamp
     const randomNum = Math.floor(Math.random() * 10000); // Generate a random number from 0 to 9999
@@ -150,6 +166,8 @@ const EmployeeDashboard = () => {
         warCost: "",
         warr: "",
         gap: "",
+        financeProvider: "", // Add this new field
+        saleType: "", // this is the new field as well , individual or wholesale
         gapCost: "",
         admin: "",
         pac: "",
@@ -212,6 +230,8 @@ const EmployeeDashboard = () => {
         gap: "",
         gapCost: "",
         admin: "",
+        financeProvider: "", // Add this new field
+        saleType: "",
         pac: "",
         safety: "",
         reserve: "",
@@ -237,8 +257,8 @@ const EmployeeDashboard = () => {
   return (
     <>
       <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full ">
-        <div className="flex flex-col w-full h-full gap-y-8">
-          <div className="flex flex-row items-center justify-between w-full">
+        <div className="flex flex-col w-full h-full ">
+          <div className="flex flex-row items-center justify-between w-full mb-4">
             <h1 className="text-2xl font-semibold">Previously Added Sales</h1>
             <div className="">
               {" "}

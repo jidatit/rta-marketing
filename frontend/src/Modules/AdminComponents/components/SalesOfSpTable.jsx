@@ -33,14 +33,17 @@ const SalesOfSPTable = ({ id }) => {
   const [saleToDelete, setSaleToDelete] = useState(null);
   const [filteredSales, setFilteredSales] = useState([]);
   const [documentId, setDocumentId] = useState(null);
-  // Single source of truth for real-time data
-  useEffect(() => {
-    const unsubscribeEmployees = setupEmployeesListener();
+  //For sale type tabs
+  const [selectedSaleType, setSelectedSaleType] = useState("all"); // State for selected sale type (All, Individual, Wholesale)
 
-    return () => {
-      unsubscribeEmployees && unsubscribeEmployees();
-    };
-  }, [currentUser?.uid]);
+  // Single source of truth for real-time data
+  // useEffect(() => {
+  //   const unsubscribeEmployees = setupEmployeesListener();
+
+  //   return () => {
+  //     unsubscribeEmployees && unsubscribeEmployees();
+  //   };
+  // }, [currentUser?.uid]);
   useEffect(() => {
     if (!id) return;
 
@@ -81,70 +84,78 @@ const SalesOfSPTable = ({ id }) => {
 
     return () => unsubscribe();
   }, [id]);
-  const setupEmployeesListener = () => {
-    try {
-      const employeesCollection = collection(db, "employees");
-      return onSnapshot(
-        employeesCollection,
-        (querySnapshot) => {
-          const salesData = [];
-          const salesPersonData = [];
+  // const setupEmployeesListener = () => {
+  //   try {
+  //     const employeesCollection = collection(db, "employees");
+  //     return onSnapshot(
+  //       employeesCollection,
+  //       (querySnapshot) => {
+  //         const salesData = [];
+  //         const salesPersonData = [];
 
-          querySnapshot.forEach((doc) => {
-            const employeeData = doc.data();
-            const { leads, name, uid } = employeeData;
+  //         querySnapshot.forEach((doc) => {
+  //           const employeeData = doc.data();
+  //           const { leads, name, uid } = employeeData;
 
-            // Store sales person data
-            salesPersonData.push({ name, uid });
+  //           // Store sales person data
+  //           salesPersonData.push({ name, uid });
 
-            if (leads && Array.isArray(leads)) {
-              const vaLeads = leads.filter(
-                (lead) => lead.VAUid === currentUser?.uid
-              );
+  //           if (leads && Array.isArray(leads)) {
+  //             const vaLeads = leads.filter(
+  //               (lead) => lead.VAUid === currentUser?.uid
+  //             );
 
-              if (vaLeads.length > 0) {
-                const leadSources = vaLeads
-                  .slice(0, 3)
-                  .map((lead) => lead.leadSource.trim())
-                  .join(", ");
-                const totalAmount = vaLeads.reduce(
-                  (sum, lead) => sum + lead.leadAmount,
-                  0
-                );
+  //             if (vaLeads.length > 0) {
+  //               const leadSources = vaLeads
+  //                 .slice(0, 3)
+  //                 .map((lead) => lead.leadSource.trim())
+  //                 .join(", ");
+  //               const totalAmount = vaLeads.reduce(
+  //                 (sum, lead) => sum + lead.leadAmount,
+  //                 0
+  //               );
 
-                salesData.push({
-                  saleId: doc.id,
-                  salesPerson: name,
-                  leadSource: leadSources,
-                  amount: `$${totalAmount}`,
-                  allLeads: vaLeads,
-                  salesPersonId: uid,
-                });
-              }
-            }
-          });
+  //               salesData.push({
+  //                 saleId: doc.id,
+  //                 salesPerson: name,
+  //                 leadSource: leadSources,
+  //                 amount: `$${totalAmount}`,
+  //                 allLeads: vaLeads,
+  //                 salesPersonId: uid,
+  //               });
+  //             }
+  //           }
+  //         });
+  //         console.log("saeles", salesData);
+  //         setAllSales(salesData);
+  //       },
+  //       (error) => {
+  //         console.error("Error in employees listener:", error);
+  //         toast.error("Error loading employee data");
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.error("Error setting up employees listener:", error);
+  //     return null;
+  //   }
+  // };
 
-          setAllSales(salesData);
-        },
-        (error) => {
-          console.error("Error in employees listener:", error);
-          toast.error("Error loading employee data");
-        }
-      );
-    } catch (error) {
-      console.error("Error setting up employees listener:", error);
-      return null;
-    }
-  };
-
-  // Filter logic
   // Filter logic
   useEffect(() => {
     handleFilter();
-  }, [startDate, endDate, allSales]);
+  }, [selectedSaleType, startDate, endDate, allSales]);
+
   const handleFilter = () => {
     let filteredSales = [...allSales];
 
+    if (selectedSaleType !== "all") {
+      filteredSales = filteredSales.filter((sale) => {
+        const saleType = sale?.saleType || "individual";
+        return saleType === selectedSaleType;
+      });
+    }
+
+    // Check if both startDate and endDate are valid (not null or undefined)
     if (startDate && endDate) {
       filteredSales = filteredSales.filter((sale) => {
         // Parse the sale date from the format "DD Month YYYY"
@@ -163,6 +174,8 @@ const SalesOfSPTable = ({ id }) => {
         return saleDate >= filterStartDate && saleDate <= filterEndDate;
       });
     }
+
+    // Update the filtered sales and clients regardless of the date check
 
     setFilteredSales(filteredSales);
     setFilteredClients(filteredSales);
@@ -283,7 +296,7 @@ const SalesOfSPTable = ({ id }) => {
   // Pagination calculations
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
-  const currentSales = filteredSales.slice(startIndex, endIndex);
+  const currentSales = filteredSales?.slice(startIndex, endIndex);
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / rowsPerPage));
 
   return (
@@ -300,7 +313,7 @@ const SalesOfSPTable = ({ id }) => {
       />
 
       <div className="px-4 flex items-start justify-start w-full h-full overflow-y-auto ">
-        <div className="flex flex-col w-full h-full gap-y-8 overflow-y-auto ">
+        <div className="flex flex-col w-full h-full  overflow-y-auto ">
           <Filters
             onFilterChange={handleFilterChange}
             showFilters={showFilters}
@@ -315,6 +328,46 @@ const SalesOfSPTable = ({ id }) => {
             endDate={endDate}
             setEndDate={setEndDate}
           />
+          <div className="relative bg-white rounded-lg shadow-md">
+            {/* Sale Type Tabs - Enhanced */}
+            <div className="">
+              <div className="flex gap-2 ">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSaleType("all")}
+                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
+                    selectedSaleType === "all"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  All Sales
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSaleType("individual")}
+                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
+                    selectedSaleType === "individual"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  Individual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSaleType("wholesale")}
+                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
+                    selectedSaleType === "wholesale"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  Wholesale
+                </button>
+              </div>
+            </div>
+          </div>
           <SalesTableVA columns={salesColumns} data={currentSales} />
           <PaginationVA
             currentPage={currentPage}

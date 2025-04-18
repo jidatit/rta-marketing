@@ -15,6 +15,7 @@ import logo from "../../images/rta-logo.png";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSalesData } from "../../SalesDataContext";
+import { Loader } from "../../Utils/Loader";
 
 const TVScreen = () => {
   const [SalesPersons, setSalesPersons] = useState(null);
@@ -352,7 +353,7 @@ const TVScreen = () => {
   if (!SalesPersons) {
     return (
       <div className="flex items-center justify-center w-full h-screen">
-        Loading...
+        <Loader />
       </div>
     );
   }

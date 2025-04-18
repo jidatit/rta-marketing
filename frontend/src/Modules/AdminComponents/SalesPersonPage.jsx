@@ -11,6 +11,7 @@ import { db } from "../../config/firebaseConfig";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
+import { Loader } from "../../Utils/Loader";
 
 const SalesPersonPage = () => {
   const [SalesPersons, setSalesPerson] = useState([]);
@@ -104,7 +105,7 @@ const SalesPersonPage = () => {
   );
 
   if (!updatedSalesPerson) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return (
