@@ -23,6 +23,7 @@ const EmployeeDashboard = () => {
   const [thirdForm, setThirdForm] = useState(false);
   const [firstForm, setFirstForm] = useState(false);
   const { currentUser } = useAuth();
+  console.log("currentUser", currentUser);
   const getCurrentTime = () => {
     const now = new Date();
     return now.toLocaleTimeString("en-US", { hour12: false }); // Format: HH:mm:ss
@@ -68,6 +69,7 @@ const EmployeeDashboard = () => {
           ...prevData,
           [id]: value,
           financeProvider: "", // Nullify financeProvider when wholesale is selected
+          leadSource: "", // Nullify leadSource when wholesale is selected
         };
       }
 
@@ -133,6 +135,9 @@ const EmployeeDashboard = () => {
         InsuranceStatus: true,
         documentUrl: documentURLsArray, // Save array of URLs
         saleId,
+        addedById: currentUser?.uid || "SalesPerson",
+        addedByName: currentUser?.name || "SalesPerson",
+        salesRep: currentUser?.name || "SalesPerson",
       };
 
       const saleRef = doc(db, "sales", currentUser.uid);
@@ -193,8 +198,11 @@ const EmployeeDashboard = () => {
       const updatedFormData = {
         ...formData,
         saleId, // Add the sale ID here
+        addedById: currentUser?.uid || "SalesPerson",
+        addedByName: currentUser?.name || "SalesPerson",
+        salesRep: currentUser?.name || "SalesPerson",
       };
-      const saleRef = doc(db, "sales", currentUser.uid);
+      const saleRef = doc(db, "sales", currentUser?.uid);
       const docSnap = await getDoc(saleRef);
 
       if (!docSnap.exists()) {

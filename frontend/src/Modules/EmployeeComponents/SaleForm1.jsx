@@ -28,12 +28,12 @@ const SaleForm1 = ({
       formData.stockNumber,
       formData.VIN,
       formData?.saleType,
-      formData.leadSource,
     ];
 
     // // Add financeProvider to requiredFields if saleType is "wholesale"
     if (formData.saleType === "individual") {
       requiredFields.push(formData.financeProvider);
+      requiredFields.push(formData.leadSource);
     }
 
     // Check that all required fields are not empty
@@ -224,34 +224,35 @@ const SaleForm1 = ({
                       <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
                     </div>
                   </div>
-
-                  <div className="w-[48%] mb-4">
-                    <label
-                      htmlFor="leadSource"
-                      className="block mb-2 text-sm font-medium text-gray-900 font-radios "
-                    >
-                      Lead Source
-                    </label>
-
-                    <div className="relative">
-                      <select
-                        name="leads Sources"
-                        id="leadSource"
-                        value={formData.leadSource}
-                        onChange={handleInputChange}
-                        className="block w-full p-3  appearance-none text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                  {formData?.saleType === "individual" && (
+                    <div className="w-[48%] mb-4">
+                      <label
+                        htmlFor="leadSource"
+                        className="block mb-2 text-sm font-medium text-gray-900 font-radios "
                       >
-                        <option value="">Lead Source</option>
-                        {leadSources.map((lead) => (
-                          <option key={lead} value={lead}>
-                            {lead}
-                          </option>
-                        ))}
-                      </select>
+                        Lead Source
+                      </label>
 
-                      <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                      <div className="relative">
+                        <select
+                          name="leads Sources"
+                          id="leadSource"
+                          value={formData.leadSource}
+                          onChange={handleInputChange}
+                          className="block w-full p-3  appearance-none text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                        >
+                          <option value="">Lead Source</option>
+                          {leadSources.map((lead) => (
+                            <option key={lead} value={lead}>
+                              {lead}
+                            </option>
+                          ))}
+                        </select>
+
+                        <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {formData?.saleType === "individual" && (
                     <div className="w-[48%] mb-4">
                       <label

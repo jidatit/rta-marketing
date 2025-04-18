@@ -19,11 +19,13 @@ const SalesTable = ({
   setShowModal,
   VA,
   onAddData,
+  admin,
 }) => {
   const [isTransferring, setIsTransferring] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const { currentUser } = useAuth();
+  const [openDropDown, setOpenDropDown] = useState(false);
   const handleTransferToNextMonth = async (sale) => {
     setIsConfirmOpen(true);
     setSelectedSale(sale);
@@ -209,8 +211,8 @@ const SalesTable = ({
         </Dialog>
       </Transition>{" "}
       <div className="overflow-x-auto">
-        <div className="min-w-[800px] md:min-w-0">
-          <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios">
+        <div className="min-w-[800px] md:min-w-0 min-h-[280px]">
+          <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios ">
             <thead className="text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white">
               <tr>
                 <th
@@ -301,71 +303,105 @@ const SalesTable = ({
                         </div>
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          {/* Move/Transfer Button */}
-                          {currentUser.userType == "Admin" && (
-                            <div className="relative group">
-                              <button
-                                className={`px-3 py-2 text-xs sm:px-3 sm:py-2 sm:text-sm text-white ${
-                                  !sale.FundStatus
-                                    ? "bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300"
-                                    : "bg-gray-400 opacity-60 cursor-not-allowed"
-                                } rounded-lg transition-colors duration-300 ease-in-out shadow-md w-full`}
-                                disabled={sale.FundStatus}
-                                onClick={() => handleTransferToNextMonth(sale)}
-                              >
-                                <span className="hidden sm:inline">Move</span>
-                                <span className="sm:hidden">Transfer</span>
-                              </button>
-                              <div className="absolute text-center z-10 w-56 p-2 text-sm text-black bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-x-1/2 left-1/2 -top-12 -mt-1 pointer-events-none">
-                                {sale.FundStatus
-                                  ? "Fund Status Paid - Can't Transfer"
-                                  : `Will transfer to ${nextMonth.toLocaleDateString(
-                                      "en-GB",
-                                      { month: "long", year: "numeric" }
-                                    )}`}
-                                <div className="absolute w-3 h-3 bg-gray-800 transform rotate-45 -bottom-1.5 left-1/2 -translate-x-1/2"></div>
+                        <div className="relative">
+                          {/* Three dots button */}
+                          <button
+                            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            onClick={() =>
+                              setOpenDropDown(
+                                openDropDown === sale.saleId
+                                  ? null
+                                  : sale.saleId
+                              )
+                            }
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-6 w-6 text-gray-600"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Dropdown menu */}
+                          {openDropDown === sale.saleId && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-[1000]">
+                              <div className="py-1">
+                                {/* Move/Transfer Option */}
+                                {currentUser.userType == "Admin" && (
+                                  <button
+                                    className={`block px-4 py-2 text-sm w-full text-left ${
+                                      sale.FundStatus
+                                        ? "text-gray-400 cursor-not-allowed"
+                                        : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    disabled={sale.FundStatus}
+                                    onClick={() =>
+                                      handleTransferToNextMonth(sale)
+                                    }
+                                    title={
+                                      sale.FundStatus
+                                        ? "Fund Status Paid - Can't Transfer"
+                                        : `Will transfer to ${nextMonth.toLocaleDateString(
+                                            "en-GB",
+                                            {
+                                              month: "long",
+                                              year: "numeric",
+                                            }
+                                          )}`
+                                    }
+                                  >
+                                    Move to Next Month
+                                  </button>
+                                )}
+
+                                {/* View Details Option */}
+                                <button
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  onClick={() => handleOpenViewModal(sale)}
+                                >
+                                  View Details
+                                </button>
+
+                                {/* Update Option */}
+                                <button
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  onClick={() => onAddData(sale)}
+                                >
+                                  Update
+                                </button>
+
+                                {/* Delete Sale Option */}
+                                {!VA && (
+                                  <button
+                                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          "Are you sure you want to delete this sale? This action cannot be undone."
+                                        )
+                                      ) {
+                                        handleDeleteSale(
+                                          sale.saleId,
+                                          sale.documentId
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    Delete Sale
+                                  </button>
+                                )}
                               </div>
                             </div>
                           )}
-
-                          {/* View Details Button */}
-                          <button
-                            className="px-3 py-2 text-xs sm:px-3 sm:py-2 sm:text-sm text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 rounded-lg shadow-md w-full"
-                            onClick={() => handleOpenViewModal(sale)}
-                          >
-                            View
-                          </button>
-
-                          {/* Delete Sale Button */}
-                          {!VA && (
-                            <button
-                              className="px-3 py-2 text-xs sm:px-3 sm:py-2 sm:text-sm text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 rounded-lg shadow-md w-full"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    "Are you sure you want to delete this sale? This action cannot be undone."
-                                  )
-                                ) {
-                                  handleDeleteSale(
-                                    sale.saleId,
-                                    sale.documentId
-                                  );
-                                }
-                              }}
-                            >
-                              Delete Sale
-                            </button>
-                          )}
-
-                          {/* Add Data Button */}
-                          <button
-                            type="button"
-                            onClick={() => onAddData(sale)}
-                            className="px-3 py-2 text-xs sm:px-3 sm:py-2 sm:text-sm text-white bg-indigo-900 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 rounded-lg shadow-md w-full"
-                          >
-                            Update
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -375,7 +411,7 @@ const SalesTable = ({
                 <tr>
                   <td colSpan="6" className="w-full p-4 text-center">
                     No sales data available{" "}
-                    {!VA && (
+                    {!VA && !admin && (
                       <button
                         className="text-blue-600 font-radios font-semibold"
                         onClick={() => setShowModal(true)}

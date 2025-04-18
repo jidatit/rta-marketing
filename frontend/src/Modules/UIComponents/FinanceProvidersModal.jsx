@@ -252,7 +252,7 @@ const FinanceProviderManager = () => {
       <div className="flex justify-end ">
         <Button
           variant="contained"
-          color="primary"
+          sx={{ color: "white", backgroundColor: "#011c64", mb: 2 }}
           startIcon={<CirclePlus />}
           onClick={handleOpen}
         >

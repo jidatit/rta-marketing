@@ -20,6 +20,7 @@ import { useAuth } from "../../AuthContext";
 import { FaArrowLeft, FaArrowRight, FaBan } from "react-icons/fa6";
 import { FaCalendarAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import SaleTabs from "../../Utils/SaleTypeTabs";
 const SaleRecordTable = ({ setShowModal }) => {
   const [clients, setClients] = useState([]); // Initialize as an empty array
   const [filteredClients, setFilteredClients] = useState([]); // Initialize as an empty array
@@ -194,43 +195,10 @@ const SaleRecordTable = ({ setShowModal }) => {
     <>
       <div className="relative bg-white rounded-lg shadow-md">
         {/* Sale Type Tabs - Enhanced */}
-        <div className="">
-          <div className="flex gap-2 ">
-            <button
-              type="button"
-              onClick={() => setSelectedSaleType("all")}
-              className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                selectedSaleType === "all"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-              }`}
-            >
-              All Sales
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedSaleType("individual")}
-              className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                selectedSaleType === "individual"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-              }`}
-            >
-              Individual
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedSaleType("wholesale")}
-              className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                selectedSaleType === "wholesale"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-              }`}
-            >
-              Wholesale
-            </button>
-          </div>
-        </div>
+        <SaleTabs
+          selectedSaleType={selectedSaleType}
+          onSaleTypeChange={setSelectedSaleType}
+        />
       </div>
       <div className="relative p-4  overflow-x-auto bg-white shadow-lg sm:rounded-lg ">
         <div className="w-full text-end flex justify-end">

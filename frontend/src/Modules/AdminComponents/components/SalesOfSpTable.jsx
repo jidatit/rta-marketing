@@ -15,6 +15,7 @@ import Filters from "../../../shared/VirtualAssistantComponents/TableFilters";
 import SalesTableVA from "../../../shared/VirtualAssistantComponents/TableComponent";
 import PaginationVA from "../../../shared/VirtualAssistantComponents/Pagination";
 import ViewDetails from "../../EmployeeComponents/ViewDetails";
+import SaleTabs from "../../../Utils/SaleTypeTabs";
 const SalesOfSPTable = ({ id }) => {
   const [allSales, setAllSales] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
@@ -328,46 +329,10 @@ const SalesOfSPTable = ({ id }) => {
             endDate={endDate}
             setEndDate={setEndDate}
           />
-          <div className="relative bg-white rounded-lg shadow-md">
-            {/* Sale Type Tabs - Enhanced */}
-            <div className="">
-              <div className="flex gap-2 ">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("all")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "all"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  All Sales
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("individual")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "individual"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  Individual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("wholesale")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "wholesale"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  Wholesale
-                </button>
-              </div>
-            </div>
-          </div>
+          <SaleTabs
+            selectedSaleType={selectedSaleType}
+            onSaleTypeChange={setSelectedSaleType}
+          />
           <SalesTableVA columns={salesColumns} data={currentSales} />
           <PaginationVA
             currentPage={currentPage}

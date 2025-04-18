@@ -203,8 +203,6 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
   const onSubmit = async () => {
     setIsSubmitting(true);
-    console.log("data", formData);
-    console.log("sale", sale);
 
     // Format date fields before submitting
     const formattedFormData = {
@@ -432,18 +430,19 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 onChange={handleChange}
               />
             </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Lead Source"
-                fullWidth
-                size="small"
-                variant="outlined"
-                name="leadSource"
-                value={formData.leadSource}
-                onChange={handleChange}
-              />
-            </Grid>
+            {formData.saleType !== "wholesale" && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Lead Source"
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  name="leadSource"
+                  value={formData.leadSource}
+                  onChange={handleChange}
+                />
+              </Grid>
+            )}
 
             {/* Date Picker Row */}
             <Grid item xs={12} md={4}>

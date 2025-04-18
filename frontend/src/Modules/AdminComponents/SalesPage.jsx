@@ -26,7 +26,7 @@ import { toast } from "react-toastify";
 import SalesTable from "./SalesTable";
 import SalesHeader from "./SalesHeader";
 import SaleDetailsModal from "../VirtualAssistantComponents/components/AddSaleDetailsModal";
-
+import SaleTabs from "../../Utils/SaleTypeTabs";
 const SalesPage = ({ setShowModal }) => {
   const [allSales, setAllSales] = useState([]);
   const [sales, setSales] = useState([]);
@@ -290,46 +290,11 @@ const SalesPage = ({ setShowModal }) => {
         <div className="flex flex-col w-full h-full   ">
           <SalesHeader />
           {/*tabs attached to the top of the table*/}
-          <div className="relative bg-white rounded-lg shadow-md">
-            {/* Sale Type Tabs - Enhanced */}
-            <div className="">
-              <div className="flex gap-2 ">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("all")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "all"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  All Sales
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("individual")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "individual"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  Individual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSaleType("wholesale")}
-                  className={`px-4 py-2 text-lg font-medium rounded-t-lg transition-all duration-200 ${
-                    selectedSaleType === "wholesale"
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                  }`}
-                >
-                  Wholesale
-                </button>
-              </div>
-            </div>
-          </div>
+
+          <SaleTabs
+            selectedSaleType={selectedSaleType}
+            onSaleTypeChange={setSelectedSaleType}
+          />
           <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
             <div className="w-full text-end flex justify-end">
               <button
@@ -447,6 +412,7 @@ const SalesPage = ({ setShowModal }) => {
               handleDeleteSale={handleDeleteSale}
               handleOpenViewModal={handleOpenViewModal}
               onAddData={handleAddData}
+              admin={true}
             />
             {/* {isAddDetailsModalOpen && ( */}
             <SaleDetailsModal
