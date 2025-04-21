@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { db } from "../../config/firebaseConfig";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../AuthContext";
 const SalesTable = ({
   currentClients,
@@ -26,6 +26,21 @@ const SalesTable = ({
   const [selectedSale, setSelectedSale] = useState(null);
   const { currentUser } = useAuth();
   const [openDropDown, setOpenDropDown] = useState(false);
+
+  //close of the dropdown
+  const dropdownRef = useRef(null); // ADD THIS
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropDown(null); // close dropdown if clicked outside
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const handleTransferToNextMonth = async (sale) => {
     setIsConfirmOpen(true);
     setSelectedSale(sale);
@@ -344,9 +359,10 @@ const SalesTable = ({
                                         : "text-gray-700 hover:bg-gray-100"
                                     }`}
                                     disabled={sale.FundStatus}
-                                    onClick={() =>
-                                      handleTransferToNextMonth(sale)
-                                    }
+                                    onClick={() => {
+                                      handleTransferToNextMonth(sale);
+                                      setOpenDropDown(null); // close dropdown after click
+                                    }}
                                     title={
                                       sale.FundStatus
                                         ? "Fund Status Paid - Can't Transfer"
@@ -366,7 +382,10 @@ const SalesTable = ({
                                 {/* View Details Option */}
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                                  onClick={() => handleOpenViewModal(sale)}
+                                  onClick={() => {
+                                    handleOpenViewModal(sale);
+                                    setOpenDropDown(null); // close dropdown after click
+                                  }}
                                 >
                                   View Details
                                 </button>
@@ -374,7 +393,10 @@ const SalesTable = ({
                                 {/* Update Option */}
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                                  onClick={() => onAddData(sale)}
+                                  onClick={() => {
+                                    onAddData(sale);
+                                    setOpenDropDown(null); // close dropdown after click
+                                  }}
                                 >
                                   Update
                                 </button>
@@ -393,6 +415,7 @@ const SalesTable = ({
                                           sale.saleId,
                                           sale.documentId
                                         );
+                                        setOpenDropDown(null); // close dropdown after click (even if cancel delete)
                                       }
                                     }}
                                   >

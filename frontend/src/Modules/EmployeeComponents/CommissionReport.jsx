@@ -17,12 +17,19 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import { Download, View, X } from "lucide-react";
+import updateReport from "../../Utils/updateReport";
+import { useAuth } from "../../AuthContext";
+import { db } from "../../config/firebaseConfig";
 
 const CommissionReportGenerator = ({ saleData }) => {
   const [openDialog, setOpenDialog] = useState(false);
-  console.log("sale", saleData);
+  const { currentUser } = useAuth();
+  const isVirtualAssistant = currentUser?.userType === "Virtual Assistant";
+
   // Calculate additional values
   const calculateReportData = () => {
     //Vehicle Costs
@@ -152,10 +159,35 @@ const CommissionReportGenerator = ({ saleData }) => {
         lien: lien,
         trade: trade,
       },
+      comments: saleData?.comments || "",
     };
   };
 
   const reportData = calculateReportData();
+  //Submit a report
+  const [editableReportData, setEditableReportData] = useState(
+    calculateReportData()
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const onSuccess = () => {
+    setOpenDialog(false);
+  };
+  const onClose = () => {
+    setOpenDialog(false);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const { isSubmitting: updatedIsSubmitting } = await updateReport(
+      db,
+      saleData,
+      editableReportData,
+      currentUser,
+      onSuccess,
+      onClose
+    );
+    setIsSubmitting(updatedIsSubmitting);
+  };
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -400,141 +432,112 @@ const CommissionReportGenerator = ({ saleData }) => {
                 >
                   VEHICLE COSTS
                 </Typography>
-                <TableContainer className=" border-2 border-gray-950">
+                <TableContainer className="border-2 border-gray-950">
                   <Table size="small">
                     <TableBody>
-                      <TableRow>
-                        <TableCell>WBOS-Vehicle (incl. Buyer Fee)</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.wbosVehicle}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Safety Inspection & Certificate</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.safetyInspection}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Car Proof</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.carProof}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Clean up</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.cleanUp}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Parts</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.parts}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Repairs (DIMA)</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.repairs}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Tires</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.tires}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Referral</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.referral}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Gas</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.gas}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Uber</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.uber}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Drivers/Tow</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.driversTow}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Pictures</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.pictures}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Invoice Copy</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.invoiceCopy}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Tints</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.tints}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Purolator</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.purolator}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>AFC Floor Plan</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.afcFloorPlan}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>MTO - License</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.mtoLicense}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Warranty Cost</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.warrantyCost}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>GAP Protection Cost</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.gapProtectionCost}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>DownPayment</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.downpayment}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>ACV</TableCell>
-                        <TableCell align="right">
-                          ${reportData.vehicleCosts.acv}
-                        </TableCell>
-                      </TableRow>
+                      {[
+                        {
+                          label: "WBOS-Vehicle (incl. Buyer Fee)",
+                          key: "wbosVehicle",
+                        },
+                        {
+                          label: "Safety Inspection & Certificate",
+                          key: "safetyInspection",
+                        },
+                        { label: "Car Proof", key: "carProof" },
+                        { label: "Clean up", key: "cleanUp" },
+                        { label: "Parts", key: "parts" },
+                        { label: "Repairs (DIMA)", key: "repairs" },
+                        { label: "Tires", key: "tires" },
+                        { label: "Referral", key: "referral" },
+                        { label: "Gas", key: "gas" },
+                        { label: "Uber", key: "uber" },
+                        { label: "Drivers/Tow", key: "driversTow" },
+                        { label: "Pictures", key: "pictures" },
+                        { label: "Invoice Copy", key: "invoiceCopy" },
+                        { label: "Tints", key: "tints" },
+                        { label: "Purolator", key: "purolator" },
+                        { label: "AFC Floor Plan", key: "afcFloorPlan" },
+                        { label: "MTO - License", key: "mtoLicense" },
+                        { label: "Warranty Cost", key: "warrantyCost" },
+                        {
+                          label: "GAP Protection Cost",
+                          key: "gapProtectionCost",
+                        },
+                        { label: "DownPayment", key: "downpayment" },
+                        { label: "ACV", key: "acv" },
+                      ].map(({ label, key }) => (
+                        <TableRow key={key}>
+                          <TableCell>{label}</TableCell>
+                          <TableCell align="right">
+                            <TextField
+                              type="text"
+                              value={editableReportData.vehicleCosts[key] ?? ""}
+                              onChange={
+                                isVirtualAssistant
+                                  ? (e) => {
+                                      const inputValue = e.target.value;
+                                      if (/^\d*$/.test(inputValue)) {
+                                        setEditableReportData((prev) => ({
+                                          ...prev,
+                                          vehicleCosts: {
+                                            ...prev.vehicleCosts,
+                                            [key]: inputValue,
+                                          },
+                                        }));
+                                      }
+                                    }
+                                  : undefined
+                              }
+                              readOnly={!isVirtualAssistant}
+                              size="small"
+                              variant="standard"
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    $
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
                       <TableRow>
                         <TableCell component="th" scope="row">
                           Total Costs
                         </TableCell>
                         <TableCell align="right" fontWeight="bold">
-                          ${reportData.vehicleCosts.total}
+                          <TextField
+                            type="text"
+                            value={editableReportData.vehicleCosts.total ?? ""}
+                            readOnly={!isVirtualAssistant}
+                            onChange={
+                              isVirtualAssistant
+                                ? (e) => {
+                                    const inputValue = e.target.value;
+                                    if (/^\d*$/.test(inputValue)) {
+                                      setEditableReportData((prev) => ({
+                                        ...prev,
+                                        vehicleCosts: {
+                                          ...prev.vehicleCosts,
+                                          total: inputValue,
+                                        },
+                                      }));
+                                    }
+                                  }
+                                : undefined
+                            }
+                            size="small"
+                            variant="standard"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  $
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
                         </TableCell>
                       </TableRow>
                     </TableBody>
@@ -549,68 +552,102 @@ const CommissionReportGenerator = ({ saleData }) => {
                     variant="h6"
                     fontWeight="bold"
                     align="center"
-                    className="bg-gray-100 p-2 mb-2  border-2 border-gray-950"
+                    className="bg-gray-100 p-2 mb-2 border-2 border-gray-950"
                   >
                     CUSTOMER COSTS
                   </Typography>
-                  <TableContainer className=" border-2 border-gray-950">
+                  <TableContainer className="border-2 border-gray-950">
                     <Table size="small">
                       <TableBody>
-                        <TableRow>
-                          <TableCell>BOS-Vehicle</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.bosVehicle}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Admin Fee</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.adminFee}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Gasoline</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.gasoline}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Licensing Charge </TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.licensingCharge}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Warranty Sold</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.warrantySold}
-                          </TableCell>
-                        </TableRow>
+                        {[
+                          { label: "BOS-Vehicle", key: "bosVehicle" },
+                          { label: "Admin Fee", key: "adminFee" },
+                          { label: "Gasoline", key: "gasoline" },
+                          { label: "Licensing Charge", key: "licensingCharge" },
+                          { label: "Warranty Sold", key: "warrantySold" },
+                          {
+                            label: "GAP Protection Sold",
+                            key: "gapProtection",
+                          },
+                          { label: "Lender Reserve", key: "lenderReserve" },
+                          { label: "Lender Bonus", key: "lenderBonus" },
+                        ].map(({ label, key }) => (
+                          <TableRow key={key}>
+                            <TableCell>{label}</TableCell>
+                            <TableCell align="right">
+                              <TextField
+                                type="text"
+                                value={
+                                  editableReportData.customerCosts[key] ?? ""
+                                }
+                                readOnly={!isVirtualAssistant}
+                                onChange={
+                                  isVirtualAssistant
+                                    ? (e) => {
+                                        const inputValue = e.target.value;
+                                        if (/^\d*$/.test(inputValue)) {
+                                          setEditableReportData((prev) => ({
+                                            ...prev,
+                                            customerCosts: {
+                                              ...prev.customerCosts,
+                                              [key]: inputValue,
+                                            },
+                                          }));
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      $
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
 
-                        <TableRow>
-                          <TableCell>GAP Protection Sold</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.gapProtection}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Lender Reserve</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.lenderReserve}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Lender Bonus</TableCell>
-                          <TableCell align="right">
-                            ${reportData.customerCosts.lenderBonus}
-                          </TableCell>
-                        </TableRow>
                         <TableRow>
                           <TableCell component="th" scope="row">
                             Total Deal Income
                           </TableCell>
                           <TableCell align="right" fontWeight="bold">
-                            ${reportData.customerCosts.total}
+                            <TextField
+                              type="text"
+                              value={
+                                editableReportData.customerCosts.total ?? ""
+                              }
+                              readOnly={!isVirtualAssistant}
+                              onChange={
+                                isVirtualAssistant
+                                  ? (e) => {
+                                      const inputValue = e.target.value;
+                                      if (/^\d*$/.test(inputValue)) {
+                                        setEditableReportData((prev) => ({
+                                          ...prev,
+                                          customerCosts: {
+                                            ...prev.customerCosts,
+                                            total: inputValue,
+                                          },
+                                        }));
+                                      }
+                                    }
+                                  : undefined
+                              }
+                              size="small"
+                              variant="standard"
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    $
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -624,78 +661,160 @@ const CommissionReportGenerator = ({ saleData }) => {
                     variant="h6"
                     fontWeight="bold"
                     align="center"
-                    className="bg-gray-100 p-2 mb-2  border-2 border-gray-950"
+                    className="bg-gray-100 p-2 mb-2 border-2 border-gray-950"
                   >
                     DEAL SUMMARY
                   </Typography>
-                  <TableContainer className=" border-2 border-gray-950">
+                  <TableContainer className="border-2 border-gray-950">
                     <Table size="small">
                       <TableBody>
-                        <TableRow>
-                          <TableCell>Total Deal Expenses</TableCell>
-                          <TableCell align="right">
-                            ${reportData.dealSummary.totalExpenses}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Total Deal Income</TableCell>
-                          <TableCell align="right">
-                            ${reportData.dealSummary.totalIncome}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th" scope="row">
-                            Total Gross
-                          </TableCell>
-                          <TableCell align="right" fontWeight="bold">
-                            ${reportData.dealSummary.totalGross}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>PAC</TableCell>
-                          <TableCell align="right">
-                            ${reportData.dealSummary.pac}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell component="th" scope="row">
-                            Sales Gross
-                          </TableCell>
-                          <TableCell align="right" fontWeight="bold">
-                            ${reportData.dealSummary.salesGross}
-                          </TableCell>
-                        </TableRow>
+                        {[
+                          {
+                            label: "Total Deal Expenses",
+                            key: "totalExpenses",
+                          },
+                          { label: "Total Deal Income", key: "totalIncome" },
+                          { label: "Total Gross", key: "totalGross" },
+                          { label: "PAC", key: "pac" },
+                          { label: "Sales Gross", key: "salesGross" },
+                        ].map(({ label, key }) => (
+                          <TableRow key={key}>
+                            <TableCell>{label}</TableCell>
+                            <TableCell
+                              align="right"
+                              fontWeight={
+                                ["totalGross", "salesGross"].includes(key)
+                                  ? "bold"
+                                  : "normal"
+                              }
+                            >
+                              <TextField
+                                type="text"
+                                value={
+                                  editableReportData.dealSummary[key] ?? ""
+                                }
+                                readOnly={!isVirtualAssistant}
+                                onChange={
+                                  isVirtualAssistant
+                                    ? (e) => {
+                                        const inputValue = e.target.value;
+                                        if (/^\d*$/.test(inputValue)) {
+                                          setEditableReportData((prev) => ({
+                                            ...prev,
+                                            dealSummary: {
+                                              ...prev.dealSummary,
+                                              [key]: inputValue,
+                                            },
+                                          }));
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      $
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Grid>
 
-                {/* Commission  */}
+                {/* Commission */}
                 <Grid item xs={12}>
                   <Box className="mb-4">
                     <Typography
                       variant="h6"
                       fontWeight="bold"
                       align="center"
-                      className="bg-gray-100 p-2 mb-2  border-2 border-gray-950"
+                      className="bg-gray-100 p-2 mb-2 border-2 border-gray-950"
                     >
                       COMMISSION
                     </Typography>
-                    <TableContainer className=" border-2 border-gray-950">
+                    <TableContainer className="border-2 border-gray-950">
                       <Table size="small">
                         <TableBody>
                           <TableRow>
                             <TableCell>Commission Rate</TableCell>
                             <TableCell align="right">
-                              {reportData.commission.rate}%
+                              <TextField
+                                type="text"
+                                value={editableReportData.commission.rate ?? ""}
+                                readOnly={!isVirtualAssistant}
+                                onChange={
+                                  isVirtualAssistant
+                                    ? (e) => {
+                                        const inputValue = e.target.value;
+                                        if (/^\d*$/.test(inputValue)) {
+                                          setEditableReportData((prev) => ({
+                                            ...prev,
+                                            commission: {
+                                              ...prev.commission,
+                                              rate: inputValue,
+                                            },
+                                          }));
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                                InputProps={{
+                                  endAdornment: (
+                                    <InputAdornment position="end">
+                                      %
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
                             </TableCell>
                           </TableRow>
+
                           <TableRow>
                             <TableCell component="th" scope="row">
                               Commission
                             </TableCell>
                             <TableCell align="right" fontWeight="bold">
-                              ${reportData.commission.amount}
+                              <TextField
+                                type="text"
+                                value={
+                                  editableReportData.commission.amount ?? ""
+                                }
+                                readOnly={!isVirtualAssistant}
+                                onChange={
+                                  isVirtualAssistant
+                                    ? (e) => {
+                                        const inputValue = e.target.value;
+                                        if (/^\d*$/.test(inputValue)) {
+                                          setEditableReportData((prev) => ({
+                                            ...prev,
+                                            commission: {
+                                              ...prev.commission,
+                                              amount: inputValue,
+                                            },
+                                          }));
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      $
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
                             </TableCell>
                           </TableRow>
                         </TableBody>
@@ -713,61 +832,131 @@ const CommissionReportGenerator = ({ saleData }) => {
                 variant="h6"
                 fontWeight="bold"
                 align="center"
-                className="bg-gray-100 p-2 mb-2  border-2 border-gray-950 "
+                className="bg-gray-100 p-2 mb-2 border-2 border-gray-950"
               >
                 FINANCING
               </Typography>
-              <TableContainer className=" border-2 border-gray-950">
+              <TableContainer className="border-2 border-gray-950">
                 <Table size="small">
                   <TableBody>
-                    <TableRow>
-                      <TableCell>Amount Funded</TableCell>
-                      <TableCell align="right">
-                        ${reportData.financing.amountFunded}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Finance Provider</TableCell>
-                      <TableCell align="right">
-                        {reportData.financing.provider}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Trade</TableCell>
-                      <TableCell align="right">
-                        {reportData.financing.trade}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Lien</TableCell>
-                      <TableCell align="right">
-                        {reportData.financing.lien}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Interest Rate</TableCell>
-                      <TableCell align="right">
-                        {reportData.financing.interestRate}%
-                      </TableCell>
-                    </TableRow>
+                    {[
+                      {
+                        label: "Amount Funded",
+                        key: "amountFunded",
+                        type: "text",
+                        adornment: "$",
+                        adornmentPosition: "start",
+                      },
+                      {
+                        label: "Finance Provider",
+                        key: "financeProvider",
+                        type: "text",
+                        hide: saleData?.saleType === "wholesale",
+                      },
+                      { label: "Trade", key: "trade", type: "text" },
+                      { label: "Lien", key: "lien", type: "text" },
+                      {
+                        label: "Interest Rate",
+                        key: "interestRate",
+                        type: "text",
+                        adornment: "%",
+                        adornmentPosition: "end",
+                      },
+                    ]
+                      .filter(({ hide }) => !hide)
+                      .map(
+                        ({
+                          label,
+                          key,
+                          type,
+                          adornment,
+                          adornmentPosition,
+                        }) => (
+                          <TableRow key={key}>
+                            <TableCell>{label}</TableCell>
+                            <TableCell align="right">
+                              <TextField
+                                type={type}
+                                value={editableReportData.financing[key]}
+                                readOnly={!isVirtualAssistant}
+                                onChange={
+                                  isVirtualAssistant
+                                    ? (e) => {
+                                        const value = e.target.value;
+                                        setEditableReportData((prev) => ({
+                                          ...prev,
+                                          financing: {
+                                            ...prev.financing,
+                                            [key]: [
+                                              "amountFunded",
+                                              "interestRate",
+                                            ].includes(key)
+                                              ? value.replace(/[^0-9.]/g, "")
+                                              : value,
+                                          },
+                                        }));
+                                      }
+                                    : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                                InputProps={
+                                  adornment
+                                    ? {
+                                        [adornmentPosition === "start"
+                                          ? "startAdornment"
+                                          : "endAdornment"]: (
+                                          <InputAdornment
+                                            position={adornmentPosition}
+                                          >
+                                            {adornment}
+                                          </InputAdornment>
+                                        ),
+                                      }
+                                    : {}
+                                }
+                              />
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
                   </TableBody>
                 </Table>
               </TableContainer>
             </Box>
+
             <Box className="my-4">
               <Typography
                 variant="h6"
                 fontWeight="bold"
                 align="center"
-                className="bg-gray-100 p-2 mb-2  border-2 border-gray-950 "
+                className="bg-gray-100 p-2 mb-2 border-2 border-gray-950"
               >
-                Comments
+                COMMENTS
               </Typography>
-              <TableContainer className=" border-2 border-gray-950">
+              <TableContainer className="border-2 border-gray-950">
                 <Table size="small">
                   <TableBody>
                     <TableRow>
-                      <TableCell>{reportData?.comments}</TableCell>
+                      <TableCell>
+                        <TextField
+                          type="text"
+                          value={editableReportData.comments}
+                          onChange={
+                            isVirtualAssistant
+                              ? (e) =>
+                                  setEditableReportData((prev) => ({
+                                    ...prev,
+                                    comments: e.target.value,
+                                  }))
+                              : undefined
+                          }
+                          readOnly={!isVirtualAssistant}
+                          size="small"
+                          variant="standard"
+                          fullWidth
+                        />
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -785,6 +974,17 @@ const CommissionReportGenerator = ({ saleData }) => {
           >
             Download Report
           </Button>
+          {isVirtualAssistant && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Report"}
+            </Button>
+          )}
+
           <Button variant="contained" onClick={handleCloseDialog}>
             Close
           </Button>

@@ -68,7 +68,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
   const closeDocument = () => {
     setIsModalOpen(false);
   };
-  console.log("sale", sale);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
       <div className="relative w-[45%] max-w-4x bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
