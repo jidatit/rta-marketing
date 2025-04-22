@@ -10,10 +10,15 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import CommissionReportGenerator from "./CommissionReport";
+import { useAuth } from "../../AuthContext";
 
 const InsuranceUpload = ({ onClose, sale }) => {
   // console.log(sale);
   const { currentUser } = getAuth();
+  const { currentUser: user } = useAuth();
+  const isEmployee = user?.userType === "Employee";
+  const isReportGenerated = sale?.reportHistory?.length > 0;
+
   const [fileURL, setFileURL] = useState("");
   const [fileType, setFileType] = useState("");
   const [fileName, setFileName] = useState("");
@@ -307,7 +312,13 @@ const InsuranceUpload = ({ onClose, sale }) => {
             </TabPanel>
             <TabPanel value="4" style={{ padding: "0", margin: "0" }}>
               <div className="py-6">
-                <CommissionReportGenerator saleData={sale} />
+                {!isEmployee || isReportGenerated ? (
+                  <CommissionReportGenerator saleData={sale} />
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Commission report not yet generated.
+                  </div>
+                )}
               </div>
             </TabPanel>
           </TabContext>

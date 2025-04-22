@@ -36,6 +36,57 @@ const steps = [
   "Cost Details",
   "Financial Calculations",
 ];
+const numericFields = [
+  "wbosVehicle",
+  "safetyInspection",
+  "carProof",
+  "cleanUp",
+  "parts",
+  "repairs",
+  "tires",
+  "referral",
+  "gas",
+  "uber",
+  "driversTow",
+  "pictures",
+  "invoiceCopy",
+  "tints",
+  "purolator",
+  "afc",
+  "mtoLicense",
+  "downpayment",
+  "acv",
+  "referralCost",
+  "otherCosts1Amount",
+  "otherCosts2Amount",
+  "otherCosts3Amount",
+  "warrantyCost",
+  "gapProtectionCost",
+  "pac",
+  "gross",
+  "commissionRate",
+  "afcFloorPlan",
+  "totalIncome",
+  "totalCOGS",
+  "salesGross",
+  "commission",
+  "trueGross",
+  "daysToDelivery",
+  "daysToFunding",
+  "bosVehicle",
+  "adminFee",
+  "gasoline",
+  "licensingCharge",
+  "otherIncome1Amount",
+  "otherIncome2Amount",
+  "lenderReserve",
+  "lenderBonus",
+  "warrantySold",
+  "gapProtection",
+  "amountFunded",
+  "lienAmount",
+  "interestRate",
+];
 
 const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
   const { currentUser } = useAuth();
@@ -172,7 +223,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         otherCosts2Description: sale.otherCosts2Description || "",
         otherCosts3Amount: sale.otherCosts3Amount || "",
         otherCosts3Description: sale.otherCosts3Description || "",
-        commissionRate: sale.commissionRate || "",
+        commissionRate: sale?.saleType === "wholesale" ? "0" : "25" || "0",
         afcFloorPlan: sale.afcFloorPlan || "",
         totalIncome: sale.totalIncome || "",
         totalCOGS: sale.totalCOGS || "",
@@ -187,10 +238,34 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+
+    // Check if the field should be numeric-only
+    if (numericFields.includes(name)) {
+      // Allow numbers, decimal point, or empty string
+      if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+        }));
+      }
+    } else {
+      // For text fields (descriptions), allow any input
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
+  };
+
+  const calculateDaysBetween = (startDate, endDate) => {
+    if (!startDate || !endDate) return "";
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = end - start;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays >= 0 ? diffDays.toString() : "";
   };
 
   const handleNext = () => {
@@ -270,17 +345,17 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     const lenderReserve = Number.parseFloat(formData.lenderReserve || "0");
     const lenderBonus = Number.parseFloat(formData.lenderBonus || "0");
 
-    const totalIncome =
-      bosVehicle +
-      adminFee +
-      gasoline +
-      licensingCharge +
-      warrantySold +
-      gapProtection +
-      otherIncome1 +
-      otherIncome2 +
-      lenderReserve +
-      lenderBonus;
+    // const totalIncome =
+    //   bosVehicle +
+    //   adminFee +
+    //   gasoline +
+    //   licensingCharge +
+    //   warrantySold +
+    //   gapProtection +
+    //   otherIncome1 +
+    //   otherIncome2 +
+    //   lenderReserve +
+    //   lenderBonus;
 
     // Calculate totalCOGS
     const wbosVehicle = Number.parseFloat(formData.wbosVehicle || "0");
@@ -308,7 +383,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     );
     const otherCosts1 = Number.parseFloat(formData.otherCosts1Amount || "0");
     const otherCosts2 = Number.parseFloat(formData.otherCosts2Amount || "0");
-    const otherCosts3 = Number.parseFloat(formData.otherCosts3Amount || "0");
+    // const otherCosts3 = Number.parseFloat(formData.otherCosts3Amount || "0");
 
     const totalCOGS =
       wbosVehicle +
@@ -331,32 +406,39 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       warrantyCost +
       gapProtectionCost +
       otherCosts1 +
-      otherCosts2 +
-      otherCosts3;
+      otherCosts2;
 
-    // Calculate gross
-    const gross = totalIncome - totalCOGS;
+    //afc floor plan
+    const afcInput = Number.parseFloat(afc) || 0; // Get value (default 0 if empty)
+    const afcFloorPlan = afcInput === 0 ? 0 : Math.min(300, afcInput); // Cap at 300
 
     // Calculate salesGross
     const pac = Number.parseFloat(formData.pac || "0");
+    const gross = Number.parseFloat(formData?.gross || "0");
     const salesGross = gross - pac;
 
     // Calculate commission
-    const commissionRate =
-      Number.parseFloat(formData.commissionRate || "0") / 100;
-    const commission = salesGross * commissionRate;
+    // Auto-set commission rate (0% for wholesale, 25% otherwise)
+    const commissionRate = formData.saleType === "wholesale" ? 0 : 25;
+    const commission = salesGross * (commissionRate / 100);
 
     // Calculate trueGross
     const trueGross = salesGross - commission;
-
+    const dateLeadReceived = sale?.dateLeadReceived
+      ? new Date(sale?.dateLeadReceived)
+      : null;
+    const saleDate = sale?.saleDate ? new Date(sale?.saleDate) : null;
+    const fundedDate = sale?.fundedDate ? new Date(sale?.fundedDate) : null;
     // Update formData with calculated values
     setFormData((prev) => ({
       ...prev,
-      totalIncome: totalIncome.toFixed(2),
+      // totalIncome: totalIncome.toFixed(2),
       totalCOGS: totalCOGS.toFixed(2),
       gross: gross.toFixed(2),
       salesGross: salesGross.toFixed(2),
+      commissionRate: commissionRate.toString(), // Force update rate (0 or 25)
       commission: commission.toFixed(2),
+      afcFloorPlan: afcFloorPlan.toString(), // Ensure it stays capped
       trueGross: trueGross.toFixed(2),
     }));
   }, [
@@ -1099,7 +1181,14 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                   variant="outlined"
                   name="afc"
                   value={formData.afc}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only numbers or empty string
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      handleChange(e);
+                    }
+                  }}
+                  inputProps={{ max: 300 }} // HTML validation (optional)
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">$</InputAdornment>
@@ -1328,6 +1417,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                   size="small"
                   variant="outlined"
                   name="commissionRate"
+                  disabled
                   value={formData.commissionRate}
                   onChange={handleChange}
                   InputProps={{
@@ -1347,6 +1437,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                   variant="outlined"
                   name="afcFloorPlan"
                   value={formData.afcFloorPlan}
+                  disabled
                   onChange={handleChange}
                   InputProps={{
                     startAdornment: (
@@ -1371,7 +1462,6 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                       <InputAdornment position="start">$</InputAdornment>
                     ),
                   }}
-                  disabled
                 />
               </Box>
             </Grid>

@@ -28,7 +28,18 @@ import { db } from "../../config/firebaseConfig";
 const CommissionReportGenerator = ({ saleData }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const { currentUser } = useAuth();
-  const isVirtualAssistant = currentUser?.userType === "Virtual Assistant";
+  const isVirtualAssistant =
+    currentUser?.userType === "Virtual Assistant" ||
+    currentUser?.userType === "Admin"; // Also true for Admins
+  // Get the first generated date from reportHistory
+  const firstGeneratedDate = saleData?.reportHistory?.[0]?.generatedAt;
+  const formattedDate = firstGeneratedDate
+    ? new Date(firstGeneratedDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   // Calculate additional values
   const calculateReportData = () => {
@@ -78,7 +89,7 @@ const CommissionReportGenerator = ({ saleData }) => {
       lenderBonus;
 
     const totalGross = totalDealExpenses - totalVehicleCosts;
-    const pac = Number.parseFloat(saleData.pac) || 0;
+    const pac = Number.parseFloat(saleData?.pac) || 0;
     const salesGross = totalGross - pac;
 
     //Deal summary
@@ -270,7 +281,8 @@ const CommissionReportGenerator = ({ saleData }) => {
     csvContent += `Finance Provider,${reportData.financing.provider}\r\n`;
     csvContent += `Interest Rate,${reportData.financing.interestRate}%\r\n`;
     csvContent += `Lien Amount,${reportData.financing.lien}\r\n`;
-    csvContent += `Trade Amount,${reportData.financing.trade}\r\n\r\n`;
+
+    csvContent += `Commments ,${reportData?.comments}\r\n\r\n`;
 
     // Create the download link
     const encodedUri = encodeURI(csvContent);
@@ -287,13 +299,13 @@ const CommissionReportGenerator = ({ saleData }) => {
       <Box className="text-center">
         <Button
           variant="contained"
-          color="primary"
+          sx={{ color: "white", backgroundColor: "#011c64", mb: 2 }}
           size="large"
           startIcon={<View />}
           onClick={handleOpenDialog}
           className="mb-4"
         >
-          Generate Commission Report
+          Generate Report
         </Button>
         <Typography variant="body2" color="textSecondary">
           Click to generate a detailed commission report for this sale
@@ -308,9 +320,16 @@ const CommissionReportGenerator = ({ saleData }) => {
         fullWidth
       >
         <DialogTitle className="flex justify-between items-center">
-          <Typography variant="h5" component="h2" fontWeight="bold">
-            DEAL / COMMISSION BREAKDOWN
-          </Typography>
+          <div>
+            <Typography variant="h5" component="h2" fontWeight="bold">
+              DEAL / COMMISSION BREAKDOWN
+            </Typography>
+            {formattedDate && (
+              <Typography variant="body2" color="text.secondary">
+                First Generated: {formattedDate}
+              </Typography>
+            )}
+          </div>
           <IconButton onClick={handleCloseDialog} size="small">
             <X />
           </IconButton>
@@ -390,14 +409,16 @@ const CommissionReportGenerator = ({ saleData }) => {
                 <TableContainer className="border-2 border-gray-950">
                   <Table size="small">
                     <TableBody>
-                      <TableRow>
-                        <TableCell component="th" scope="row">
-                          Lead Source:
-                        </TableCell>
-                        <TableCell align="right">
-                          {saleData?.leadSource}
-                        </TableCell>
-                      </TableRow>
+                      {saleData?.saleType !== "wholesale" && (
+                        <TableRow>
+                          <TableCell component="th" scope="row">
+                            Lead Source:
+                          </TableCell>
+                          <TableCell align="right">
+                            {saleData?.leadSource}
+                          </TableCell>
+                        </TableRow>
+                      )}
                       <TableRow>
                         <TableCell component="th" scope="row">
                           STOCK #:
