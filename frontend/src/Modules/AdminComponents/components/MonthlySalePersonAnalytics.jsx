@@ -2,18 +2,18 @@ import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../../config/firebaseConfig";
 
-const MonthlyLeadSourceAnalytics = ({
+const SalePersonMonthlyAnalytics = ({
   selectedMonth,
   selectedYear,
   startDate,
   endDate,
 }) => {
-  const [leadSourceData, setLeadSourceData] = useState([]);
+  const [salespersonData, setSalespersonData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [allSalesData, setAllSalesData] = useState([]);
-  const [leadSources, setLeadSources] = useState([]);
-  const [selectedLeadSource, setSelectedLeadSource] = useState("all");
+
+  // Filter state
 
   // Format dates for display
   const formatDisplayDate = (date) => {
@@ -25,16 +25,29 @@ const MonthlyLeadSourceAnalytics = ({
   };
 
   useEffect(() => {
-    const fetchSalesData = async () => {
+    const fetchSalespersonData = async () => {
       try {
         setIsLoading(true);
 
         // Fetch all sales documents
         const salesSnapshot = await getDocs(collection(db, "sales"));
 
+        // Fetch all employees once
+        const employeesSnapshot = await getDocs(collection(db, "employees"));
+        const uidToNameMap = new Map();
+        const leadsCountMap = new Map();
+
+        employeesSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.uid && data.name) {
+            uidToNameMap.set(data.uid, data.name);
+            const leads = Array.isArray(data.leads) ? data.leads : [];
+            leadsCountMap.set(data.uid, leads.length);
+          }
+        });
+
         // Store all sales data with dates
         const allSales = [];
-        const uniqueLeadSources = new Set();
 
         // Process all sales records
         salesSnapshot.forEach((salesDoc) => {
@@ -70,52 +83,53 @@ const MonthlyLeadSourceAnalytics = ({
                 }
               }
 
-              // Get lead source
-              let leadSource = sale.leadSource || "Unknown";
-              if (leadSource !== "Unknown") {
-                leadSource = leadSource.trim().toLowerCase(); // normalize
-                uniqueLeadSources.add(leadSource);
-              }
+              // Check if this sale has a valid salesperson
+              const hasSalesperson = uidToNameMap.has(salesDocId);
 
-              // Add all sales with date information - including those without lead sources
+              // Add this sale with its date and salesperson info
               allSales.push({
                 sale,
                 saleDate,
                 salespersonId: salesDocId,
-                leadSource,
+                salespersonName: hasSalesperson
+                  ? uidToNameMap.get(salesDocId)
+                  : null,
+                leadsReceived: hasSalesperson
+                  ? leadsCountMap.get(salesDocId)
+                  : 0,
+                hasSalesperson: hasSalesperson,
               });
             });
           }
         });
 
         setAllSalesData(allSales);
-        setLeadSources(Array.from(uniqueLeadSources).sort());
 
         // Initial processing with default filters
-        processSalesData(allSales, selectedLeadSource);
+        processSalesData(allSales);
       } catch (err) {
-        console.error("Error fetching sales data:", err);
-        setError("Failed to load sales data");
+        console.error("Error fetching salesperson data:", err);
+        setError("Failed to load salesperson data");
         setIsLoading(false);
       }
     };
 
-    fetchSalesData();
+    fetchSalespersonData();
   }, []);
 
   // Process data when filters change
   useEffect(() => {
     if (allSalesData.length > 0) {
-      processSalesData(allSalesData, selectedLeadSource);
+      processSalesData(allSalesData);
     }
-  }, [selectedMonth, selectedYear, selectedLeadSource, allSalesData]);
+  }, [selectedMonth, selectedYear, allSalesData]);
 
-  const processSalesData = (salesData, leadSourceFilter) => {
+  const processSalesData = (salesData) => {
     try {
       setIsLoading(true);
 
       // Filter sales data by selected month and year
-      let filteredSales = salesData.filter((item) => {
+      const filteredSales = salesData.filter((item) => {
         if (!item.saleDate) return false;
 
         return (
@@ -124,81 +138,13 @@ const MonthlyLeadSourceAnalytics = ({
         );
       });
 
-      // Apply lead source filter if not "all", but track unknown sources separately
-      let unknownSourceSales = [];
-      let selectedSourceSales = [];
+      const salespersonMap = new Map();
 
-      if (leadSourceFilter !== "all") {
-        // If specific source is selected, get only those sales
-        selectedSourceSales = filteredSales.filter(
-          (item) => item.leadSource === leadSourceFilter
-        );
-        // Always keep track of unknown source sales
-        unknownSourceSales = filteredSales.filter(
-          (item) => item.leadSource === "Unknown"
-        );
-        // Use selected source sales for main processing
-        filteredSales = selectedSourceSales;
-      } else {
-        // When "all" is selected, separate the unknown sales
-        unknownSourceSales = filteredSales.filter(
-          (item) => item.leadSource === "Unknown"
-        );
-        selectedSourceSales = filteredSales.filter(
-          (item) => item.leadSource !== "Unknown"
-        );
-        // Process known sources for the main table
-        filteredSales = selectedSourceSales;
-      }
-
-      const leadSourceMap = new Map();
-
-      // Process filtered sales
-      filteredSales.forEach(({ sale, leadSource }) => {
-        if (!leadSourceMap.has(leadSource)) {
-          leadSourceMap.set(leadSource, {
-            name: leadSource,
-            leadsReceived: 0,
-            leadCost: 0,
-            dealsBooked: 0,
-            daysToDelivery: [],
-            daysToFunding: [],
-            amountFunded: 0,
-            gross: 0,
-            salesGross: 0,
-            commission: 0,
-            trueGross: 0,
-          });
-        }
-
-        const source = leadSourceMap.get(leadSource);
-
-        source.dealsBooked += 1;
-        source.leadsReceived += 1; // Increment for each sale with this lead source
-        if (sale.referralCost) {
-          source.leadCost += parseFloat(sale.referralCost) || 0;
-        }
-
-        if (sale.daysToDelivery) {
-          source.daysToDelivery.push(parseInt(sale.daysToDelivery) || 0);
-        }
-
-        if (sale.daysToFunding) {
-          source.daysToFunding.push(parseInt(sale.daysToFunding) || 0);
-        }
-
-        source.amountFunded += parseFloat(sale.amountFunded || 0);
-        source.gross += parseFloat(sale.gross || 0);
-        source.salesGross += parseFloat(sale.salesGross || 0);
-        source.commission += parseFloat(sale.commission || 0);
-        source.trueGross += parseFloat(sale.trueGross || 0);
-      });
-
-      // Create a data structure for unknown lead source sales
-      const unknownSourceData = {
-        name: "No LeadSource",
+      // Add a collector for sales without salesperson
+      const noSalespersonData = {
+        name: "Unassigned",
+        leadsReceived: 0,
         leadCost: 0,
-        leadsReceived: 0, // Add this line
         dealsBooked: 0,
         daysToDelivery: [],
         daysToFunding: [],
@@ -209,145 +155,193 @@ const MonthlyLeadSourceAnalytics = ({
         trueGross: 0,
       };
 
-      // Process the unknown lead source sales
-      unknownSourceSales.forEach(({ sale }) => {
-        unknownSourceData.dealsBooked += 1;
-        unknownSourceData.leadsReceived += 1;
-        if (sale.referralCost) {
-          unknownSourceData.leadCost += parseFloat(sale.referralCost) || 0;
+      // Process filtered sales
+      filteredSales.forEach(
+        ({ sale, salespersonName, leadsReceived, hasSalesperson }) => {
+          // Handle sales without a salesperson
+          if (!hasSalesperson) {
+            noSalespersonData.dealsBooked += 1;
+
+            if (sale.referralCost) {
+              noSalespersonData.leadCost += parseFloat(sale.referralCost) || 0;
+            }
+
+            if (sale.daysToDelivery) {
+              noSalespersonData.daysToDelivery.push(
+                parseInt(sale.daysToDelivery) || 0
+              );
+            }
+
+            if (sale.daysToFunding) {
+              noSalespersonData.daysToFunding.push(
+                parseInt(sale.daysToFunding) || 0
+              );
+            }
+
+            noSalespersonData.amountFunded += parseFloat(
+              sale.amountFunded || 0
+            );
+            noSalespersonData.gross += parseFloat(sale.gross || 0);
+            noSalespersonData.salesGross += parseFloat(sale.salesGross || 0);
+            noSalespersonData.commission += parseFloat(sale.commission || 0);
+            noSalespersonData.trueGross += parseFloat(sale.trueGross || 0);
+
+            return;
+          }
+
+          if (!salespersonMap.has(salespersonName)) {
+            salespersonMap.set(salespersonName, {
+              name: salespersonName,
+              leadsReceived,
+              leadCost: 0,
+              dealsBooked: 0,
+              daysToDelivery: [],
+              daysToFunding: [],
+              amountFunded: 0,
+              gross: 0,
+              salesGross: 0,
+              commission: 0,
+              trueGross: 0,
+            });
+          }
+
+          const salesperson = salespersonMap.get(salespersonName);
+
+          salesperson.dealsBooked += 1;
+
+          if (sale.referralCost) {
+            salesperson.leadCost += parseFloat(sale.referralCost) || 0;
+          }
+
+          if (sale.daysToDelivery) {
+            salesperson.daysToDelivery.push(parseInt(sale.daysToDelivery) || 0);
+          }
+
+          if (sale.daysToFunding) {
+            salesperson.daysToFunding.push(parseInt(sale.daysToFunding) || 0);
+          }
+
+          salesperson.amountFunded += parseFloat(sale.amountFunded || 0);
+          salesperson.gross += parseFloat(sale.gross || 0);
+          salesperson.salesGross += parseFloat(sale.salesGross || 0);
+          salesperson.commission += parseFloat(sale.commission || 0);
+          salesperson.trueGross += parseFloat(sale.trueGross || 0);
         }
+      );
 
-        if (sale.daysToDelivery) {
-          unknownSourceData.daysToDelivery.push(
-            parseInt(sale.daysToDelivery) || 0
-          );
-        }
-
-        if (sale.daysToFunding) {
-          unknownSourceData.daysToFunding.push(
-            parseInt(sale.daysToFunding) || 0
-          );
-        }
-
-        unknownSourceData.amountFunded += parseFloat(sale.amountFunded || 0);
-        unknownSourceData.gross += parseFloat(sale.gross || 0);
-        unknownSourceData.salesGross += parseFloat(sale.salesGross || 0);
-        unknownSourceData.commission += parseFloat(sale.commission || 0);
-        unknownSourceData.trueGross += parseFloat(sale.trueGross || 0);
-      });
-
-      const leadSourceArray = Array.from(leadSourceMap.values()).map(
-        (source) => {
+      const salespersonArray = Array.from(salespersonMap.values()).map(
+        (person) => {
           const avgDaysToDelivery =
-            source.daysToDelivery.length > 0
-              ? source.daysToDelivery.reduce((a, b) => a + b, 0) /
-                source.daysToDelivery.length
+            person.daysToDelivery.length > 0
+              ? person.daysToDelivery.reduce((a, b) => a + b, 0) /
+                person.daysToDelivery.length
               : 0;
 
           const avgDaysToFunding =
-            source.daysToFunding.length > 0
-              ? source.daysToFunding.reduce((a, b) => a + b, 0) /
-                source.daysToFunding.length
+            person.daysToFunding.length > 0
+              ? person.daysToFunding.reduce((a, b) => a + b, 0) /
+                person.daysToFunding.length
               : 0;
 
           const avgAmountFunded =
-            source.dealsBooked > 0
-              ? source.amountFunded / source.dealsBooked
+            person.dealsBooked > 0
+              ? person.amountFunded / person.dealsBooked
               : 0;
 
           const avgGross =
-            source.dealsBooked > 0 ? source.gross / source.dealsBooked : 0;
+            person.dealsBooked > 0 ? person.gross / person.dealsBooked : 0;
 
           const avgSalesGross =
-            source.dealsBooked > 0 ? source.salesGross / source.dealsBooked : 0;
+            person.dealsBooked > 0 ? person.salesGross / person.dealsBooked : 0;
 
           const avgCommission =
-            source.dealsBooked > 0 ? source.commission / source.dealsBooked : 0;
+            person.dealsBooked > 0 ? person.commission / person.dealsBooked : 0;
 
           const avgTrueGross =
-            source.dealsBooked > 0 ? source.trueGross / source.dealsBooked : 0;
+            person.dealsBooked > 0 ? person.trueGross / person.dealsBooked : 0;
 
           return {
-            name: source.name,
-            leadsReceived: source.leadsReceived, // Add this line
-            leadCost: source.leadCost,
-            dealsBooked: source.dealsBooked,
+            name: person.name,
+            leadsReceived: person.leadsReceived,
+            leadCost: person.leadCost,
+            dealsBooked: person.dealsBooked,
             avgDaysToDelivery: parseFloat(avgDaysToDelivery.toFixed(2)),
             avgDaysToFunding: parseFloat(avgDaysToFunding.toFixed(2)),
-            totalAmountFunded: source.amountFunded,
+            totalAmountFunded: person.amountFunded,
             avgAmountFunded: parseFloat(avgAmountFunded.toFixed(2)),
-            totalGross: source.gross,
+            totalGross: person.gross,
             avgGross: parseFloat(avgGross.toFixed(2)),
-            totalSalesGross: source.salesGross,
+            totalSalesGross: person.salesGross,
             avgSalesGross: parseFloat(avgSalesGross.toFixed(2)),
-            totalCommission: source.commission,
+            totalCommission: person.commission,
             avgCommission: parseFloat(avgCommission.toFixed(2)),
-            totalTrueGross: source.trueGross,
+            totalTrueGross: person.trueGross,
             avgTrueGross: parseFloat(avgTrueGross.toFixed(2)),
           };
         }
       );
 
-      // Process the unknown source data and add it as a final row if there are any sales without lead sources
-      if (unknownSourceData.dealsBooked > 0) {
+      // Only add the unassigned row if there are any unassigned sales
+      if (noSalespersonData.dealsBooked > 0) {
         const avgDaysToDelivery =
-          unknownSourceData.daysToDelivery.length > 0
-            ? unknownSourceData.daysToDelivery.reduce((a, b) => a + b, 0) /
-              unknownSourceData.daysToDelivery.length
+          noSalespersonData.daysToDelivery.length > 0
+            ? noSalespersonData.daysToDelivery.reduce((a, b) => a + b, 0) /
+              noSalespersonData.daysToDelivery.length
             : 0;
 
         const avgDaysToFunding =
-          unknownSourceData.daysToFunding.length > 0
-            ? unknownSourceData.daysToFunding.reduce((a, b) => a + b, 0) /
-              unknownSourceData.daysToFunding.length
+          noSalespersonData.daysToFunding.length > 0
+            ? noSalespersonData.daysToFunding.reduce((a, b) => a + b, 0) /
+              noSalespersonData.daysToFunding.length
             : 0;
 
         const avgAmountFunded =
-          unknownSourceData.dealsBooked > 0
-            ? unknownSourceData.amountFunded / unknownSourceData.dealsBooked
+          noSalespersonData.dealsBooked > 0
+            ? noSalespersonData.amountFunded / noSalespersonData.dealsBooked
             : 0;
 
         const avgGross =
-          unknownSourceData.dealsBooked > 0
-            ? unknownSourceData.gross / unknownSourceData.dealsBooked
+          noSalespersonData.dealsBooked > 0
+            ? noSalespersonData.gross / noSalespersonData.dealsBooked
             : 0;
 
         const avgSalesGross =
-          unknownSourceData.dealsBooked > 0
-            ? unknownSourceData.salesGross / unknownSourceData.dealsBooked
+          noSalespersonData.dealsBooked > 0
+            ? noSalespersonData.salesGross / noSalespersonData.dealsBooked
             : 0;
 
         const avgCommission =
-          unknownSourceData.dealsBooked > 0
-            ? unknownSourceData.commission / unknownSourceData.dealsBooked
+          noSalespersonData.dealsBooked > 0
+            ? noSalespersonData.commission / noSalespersonData.dealsBooked
             : 0;
 
         const avgTrueGross =
-          unknownSourceData.dealsBooked > 0
-            ? unknownSourceData.trueGross / unknownSourceData.dealsBooked
+          noSalespersonData.dealsBooked > 0
+            ? noSalespersonData.trueGross / noSalespersonData.dealsBooked
             : 0;
 
-        leadSourceArray.push({
-          name: unknownSourceData.name,
-          leadsReceived: unknownSourceData.leadsReceived, // Add this line
-          leadCost: unknownSourceData.leadCost,
-          dealsBooked: unknownSourceData.dealsBooked,
+        // Add the unassigned sales row
+        salespersonArray.push({
+          name: "No SalesPerson",
+          leadsReceived: noSalespersonData.leadsReceived,
+          leadCost: noSalespersonData.leadCost,
+          dealsBooked: noSalespersonData.dealsBooked,
           avgDaysToDelivery: parseFloat(avgDaysToDelivery.toFixed(2)),
           avgDaysToFunding: parseFloat(avgDaysToFunding.toFixed(2)),
-          totalAmountFunded: unknownSourceData.amountFunded,
+          totalAmountFunded: noSalespersonData.amountFunded,
           avgAmountFunded: parseFloat(avgAmountFunded.toFixed(2)),
-          totalGross: unknownSourceData.gross,
+          totalGross: noSalespersonData.gross,
           avgGross: parseFloat(avgGross.toFixed(2)),
-          totalSalesGross: unknownSourceData.salesGross,
+          totalSalesGross: noSalespersonData.salesGross,
           avgSalesGross: parseFloat(avgSalesGross.toFixed(2)),
-          totalCommission: unknownSourceData.commission,
+          totalCommission: noSalespersonData.commission,
           avgCommission: parseFloat(avgCommission.toFixed(2)),
-          totalTrueGross: unknownSourceData.trueGross,
+          totalTrueGross: noSalespersonData.trueGross,
           avgTrueGross: parseFloat(avgTrueGross.toFixed(2)),
         });
       }
 
-      setLeadSourceData(leadSourceArray);
+      setSalespersonData(salespersonArray);
     } catch (err) {
       console.error("Error processing sales data:", err);
       setError("Failed to process sales data");
@@ -355,6 +349,8 @@ const MonthlyLeadSourceAnalytics = ({
       setIsLoading(false);
     }
   };
+
+  // Handle month change
 
   // Format currency
   const formatCurrency = (value) => {
@@ -365,7 +361,9 @@ const MonthlyLeadSourceAnalytics = ({
     }).format(value);
   };
 
-  if (isLoading && leadSourceData.length === 0) {
+  // Get array of years (from 1900 to current year + 5 years into future)
+
+  if (isLoading && salespersonData.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#003160]"></div>
@@ -380,18 +378,17 @@ const MonthlyLeadSourceAnalytics = ({
       </div>
     );
   }
+
   return (
-    <div className="">
-      {/* Date and Lead Source filters */}
+    <div>
       <div className="flex justify-between mb-4">
-        <h1 className="text-2xl font-bold ">Lead Sources Summary</h1>
+        <h1 className="text-2xl font-bold ">Sales Person Summary</h1>
       </div>
       {isLoading && (
         <div className="flex justify-center items-center min-h-[100px] mb-4">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#003160]"></div>
         </div>
       )}
-
       <div className="overflow-x-auto">
         <div className="min-w-[1200px] md:min-w-0 min-h-[280px]">
           <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios">
@@ -401,7 +398,7 @@ const MonthlyLeadSourceAnalytics = ({
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 rounded-tl-md"
                 >
-                  Lead Source
+                  Sales Person
                 </th>
                 <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
                   Leads Received
@@ -413,10 +410,10 @@ const MonthlyLeadSourceAnalytics = ({
                   Deals Booked
                 </th>
                 <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
-                  Average Days to Delivery
+                  Avg Delivery Days
                 </th>
-                <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
-                  Average Days to Funding
+                <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4 ">
+                  Avg Funding Days
                 </th>
                 <th
                   scope="col"
@@ -524,83 +521,83 @@ const MonthlyLeadSourceAnalytics = ({
               </tr>
             </thead>
             <tbody className="border-t-0 border-gray-300 border-1">
-              {leadSourceData.length > 0 ? (
-                leadSourceData.map((source, index) => (
+              {salespersonData.length > 0 ? (
+                salespersonData.map((person, index) => (
                   <tr
                     key={index}
-                    className="bg-white border-b dark:bg-white dark:border-gray-300"
+                    className={`bg-white border-b dark:bg-white dark:border-gray-300 ${
+                      person.name === "Unassigned" ? "bg-gray-100" : ""
+                    }`}
                   >
                     <td
                       className="px-2 py-3 sm:px-3 sm:py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black"
-                      title={source.name}
+                      title={person.name}
                     >
-                      {source.name.length > 10
-                        ? `${source.name.substring(0, 10)}...`
-                        : source.name}
+                      {person.name.length > 10
+                        ? `${person.name.substring(0, 10)}...`
+                        : person.name}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4">
-                      {source.leadsReceived}
+                      {person.leadsReceived}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4">
-                      {formatCurrency(source.leadCost)}
+                      {formatCurrency(person.leadCost)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4">
-                      {source.dealsBooked}
+                      {person.dealsBooked}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4">
-                      {source.avgDaysToDelivery}
+                      {person.avgDaysToDelivery}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4">
-                      {source.avgDaysToFunding}
+                      {person.avgDaysToFunding}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 border-l text-center border-r border-gray-300">
-                      {formatCurrency(source.totalAmountFunded)}
+                      {formatCurrency(person.totalAmountFunded)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.avgAmountFunded)}
+                      {formatCurrency(person.avgAmountFunded)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.totalGross)}
+                      {formatCurrency(person.totalGross)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.avgGross)}
+                      {formatCurrency(person.avgGross)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.totalSalesGross)}
+                      {formatCurrency(person.totalSalesGross)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.avgSalesGross)}
+                      {formatCurrency(person.avgSalesGross)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.totalCommission)}
+                      {formatCurrency(person.totalCommission)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.avgCommission)}
+                      {formatCurrency(person.avgCommission)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.totalTrueGross)}
+                      {formatCurrency(person.totalTrueGross)}
                     </td>
                     <td className="px-2 py-3 sm:px-4 sm:py-4 text-center border-r border-gray-300">
-                      {formatCurrency(source.avgTrueGross)}
+                      {formatCurrency(person.avgTrueGross)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="15" className="w-full p-4 text-center">
+                  <td colSpan="16" className="w-full p-4 text-center">
                     No sales data available for {formatDisplayDate(startDate)} -{" "}
                     {formatDisplayDate(endDate)}
-                    {selectedLeadSource !== "all" &&
-                      ` for lead source: ${selectedLeadSource}`}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </div>{" "}
     </div>
   );
 };
 
-export default MonthlyLeadSourceAnalytics;
+export default SalePersonMonthlyAnalytics;
