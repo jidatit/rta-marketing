@@ -365,7 +365,7 @@ const SalePersonMonthlyAnalytics = ({
 
   if (isLoading && salespersonData.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
+      <div className="flex justify-center items-center min-h-[300px] w-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#003160]"></div>
       </div>
     );
@@ -385,7 +385,7 @@ const SalePersonMonthlyAnalytics = ({
         <h1 className="text-2xl font-bold ">Sales Person Summary</h1>
       </div>
       {isLoading && (
-        <div className="flex justify-center items-center min-h-[100px] mb-4">
+        <div className="flex justify-center items-center min-h-[100px] mb-4 ">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#003160]"></div>
         </div>
       )}

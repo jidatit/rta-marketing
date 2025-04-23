@@ -367,7 +367,7 @@ const MonthlyLeadSourceAnalytics = ({
 
   if (isLoading && leadSourceData.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
+      <div className="flex justify-center items-center min-h-[300px] w-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#003160]"></div>
       </div>
     );
