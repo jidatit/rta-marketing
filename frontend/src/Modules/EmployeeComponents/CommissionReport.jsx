@@ -66,7 +66,28 @@ const CommissionReportGenerator = ({ saleData }) => {
       Number.parseFloat(saleData.gapProtectionCost) || 0;
     const downpayment = Number.parseFloat(saleData.downpayment) || 0;
     const acv = Number.parseFloat(saleData.acv) || 0;
-    const totalVehicleCosts = wbosVehicle;
+    const totalVehicleCosts =
+      wbosVehicle +
+      safety +
+      carProof +
+      cleanUp +
+      parts +
+      repairs +
+      tires +
+      referral +
+      gas +
+      uber +
+      driversTow +
+      pictures +
+      invoiceCopy +
+      tints +
+      purolator +
+      afcFloorPlan +
+      mtoLicense +
+      warrantyCost +
+      gapProtectionCost +
+      downpayment +
+      acv;
 
     //Customer costs
     const bosVehicle = Number.parseFloat(saleData.bosVehicle) || 0;
@@ -110,8 +131,8 @@ const CommissionReportGenerator = ({ saleData }) => {
     const lien = Number.parseFloat(saleData.lienAmount) || 0;
     const trade = Number.parseFloat(saleData.trade) || 0;
 
-    const commissionRate = 25; // Default 25%
-    const commission = (salesGross * commissionRate) / 100;
+    const commissionRate = Number.parseFloat(saleData?.commissionRate) || 0;
+    const commission = Number.parseFloat(saleData?.commission) || 0;
 
     return {
       vehicleCosts: {

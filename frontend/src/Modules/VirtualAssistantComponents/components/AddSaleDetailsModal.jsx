@@ -223,7 +223,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         otherCosts2Description: sale.otherCosts2Description || "",
         otherCosts3Amount: sale.otherCosts3Amount || "",
         otherCosts3Description: sale.otherCosts3Description || "",
-        commissionRate: sale?.saleType === "wholesale" ? "0" : "25" || "0",
+        commissionRate: sale?.commissionRate || "0",
         afcFloorPlan: sale.afcFloorPlan || "",
         totalIncome: sale.totalIncome || "",
         totalCOGS: sale.totalCOGS || "",
@@ -419,11 +419,12 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
     // Calculate commission
     // Auto-set commission rate (0% for wholesale, 25% otherwise)
-    const commissionRate = formData.saleType === "wholesale" ? 0 : 25;
-    const commission = salesGross * (commissionRate / 100);
+    const commissionRate = formData.commissionRate;
+    const commission = formData?.commission;
 
     // Calculate trueGross
     const trueGross = salesGross - commission;
+
     const dateLeadReceived = sale?.dateLeadReceived
       ? new Date(sale?.dateLeadReceived)
       : null;
@@ -436,8 +437,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       totalCOGS: totalCOGS.toFixed(2),
       gross: gross.toFixed(2),
       salesGross: salesGross.toFixed(2),
-      commissionRate: commissionRate.toString(), // Force update rate (0 or 25)
-      commission: commission.toFixed(2),
+
       afcFloorPlan: afcFloorPlan.toString(), // Ensure it stays capped
       trueGross: trueGross.toFixed(2),
     }));
@@ -476,6 +476,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     formData.otherCosts3Amount,
     formData.pac,
     formData.commissionRate,
+    formData.commission,
   ]);
 
   const handleDateChange = (name, date) => {
@@ -1417,7 +1418,6 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                   size="small"
                   variant="outlined"
                   name="commissionRate"
-                  disabled
                   value={formData.commissionRate}
                   onChange={handleChange}
                   InputProps={{
@@ -1554,7 +1554,6 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                       <InputAdornment position="start">$</InputAdornment>
                     ),
                   }}
-                  disabled
                 />
               </Box>
             </Grid>
