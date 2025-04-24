@@ -395,7 +395,7 @@ const MonthlyLeadSourceAnalytics = ({
       <div className="overflow-x-auto">
         <div className="min-w-[1200px] md:min-w-0 min-h-[280px]">
           <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios">
-            <thead className="text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white">
               <tr>
                 <th
                   scope="col"
@@ -413,10 +413,10 @@ const MonthlyLeadSourceAnalytics = ({
                   Deals Booked
                 </th>
                 <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
-                  Average Days to Delivery
+                  Avg. Days to Delivery
                 </th>
                 <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
-                  Average Days to Funding
+                  Avg. Days to Funding
                 </th>
                 <th
                   scope="col"
@@ -469,7 +469,7 @@ const MonthlyLeadSourceAnalytics = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
+                  className="px-2 py-1 sm:px-0 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
                 >
                   Average
                 </th>
@@ -481,7 +481,7 @@ const MonthlyLeadSourceAnalytics = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
+                  className="px-2 py-1 sm:px-0 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
                 >
                   Average
                 </th>
@@ -493,7 +493,7 @@ const MonthlyLeadSourceAnalytics = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
+                  className="px-2 py-1 sm:px-0 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
                 >
                   Average
                 </th>
@@ -505,7 +505,7 @@ const MonthlyLeadSourceAnalytics = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
+                  className="px-2 py-1 sm:px-0 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
                 >
                   Average
                 </th>
@@ -517,7 +517,7 @@ const MonthlyLeadSourceAnalytics = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
+                  className="px-2 py-1 sm:px-0 sm:py-2 text-center bg-blue-[#003160] border-r border-gray-300"
                 >
                   Average
                 </th>
