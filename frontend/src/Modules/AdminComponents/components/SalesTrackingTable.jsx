@@ -6,9 +6,6 @@ export default function SalesTrackingTable({ sales = [] }) {
   const displaySales = sales.length > 0 ? sales : [];
 
   // Calculate True Gross (this would be replaced with actual calculation if needed)
-  const calculateTrueGross = (sale) => {
-    return sale.gap || "";
-  };
 
   return (
     <div className="overflow-x-auto w-full">
@@ -75,49 +72,49 @@ export default function SalesTrackingTable({ sales = [] }) {
           {displaySales.map((sale, index) => (
             <tr key={index}>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.customerName || ""}
+                {sale.customerName || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.leadSource || ""}
+                {sale.leadSource || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.intermediateDate || ""} */}
+                {sale.dateLeadReceived || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.saleDate || ""}
+                {sale.saleDate || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.admin || ""} */}
+                {sale.salesRep || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.grossProfit || ""}
+                {sale.grossProfit || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.salePrice || ""}
+                {sale.salesGross || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.reserve || ""} */}
+                {sale.commission || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {calculateTrueGross(sale)} */}
+                {sale.trueGross || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.documentId || ""} */}
+                {sale.financeProvider || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.gapCost || ""} */}
+                {sale.interestRate || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.stockNumber || ""}
+                {sale.stockNumber || "N/A"}
               </td>
               <td className="border border-gray-300 p-2 text-sm">{`${
-                sale.vehicleMake || ""
-              } ${sale.vehicleModel || ""}`}</td>
+                sale.vehicle || "N/A"
+              } ${sale.vehicleModel || "N/A"}`}</td>
               <td className="border border-gray-300 p-2 text-sm">
-                {/* {sale.VIN || ""} */}
+                {(sale.tradeDescription || "N/A").slice(0, 15)}
               </td>
               <td className="border border-gray-300 p-2 text-sm">
-                {sale.warr || ""}
+                {sale.lienAmount || "N/A"}
               </td>
             </tr>
           ))}

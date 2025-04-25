@@ -15,7 +15,7 @@ import SalesTrackingTable from "../components/SalesTrackingTable";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
 
-const MonthlyAnalytics = () => {
+const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   const months = [
     "January",
     "February",
@@ -33,14 +33,36 @@ const MonthlyAnalytics = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedSalesperson, setSelectedSalesperson] = useState("All");
-  const [allSales, setAllSales] = useState([]);
+  const [salespeople, setSalespeople] = useState([]);
   const [filteredSales, setFilteredSales] = useState([]);
   const [monthlyTargets, setMonthlyTargets] = useState(0);
   const [salesStats, setSalesStats] = useState({
     totalSales: 0,
     totalSalesPrice: 0,
   });
+  useEffect(() => {
+    const fetchSalespeople = async () => {
+      try {
+        const employeesSnapshot = await getDocs(collection(db, "employees"));
+        const salespeoplelist = [];
 
+        employeesSnapshot.forEach((doc) => {
+          const employeeData = doc.data();
+          salespeoplelist.push({
+            id: employeeData.uid,
+            name: employeeData.name || `Employee ${doc.id}`,
+          });
+        });
+
+        setSalespeople(salespeoplelist);
+      } catch (error) {
+        console.error("Error fetching salespeople:", error);
+      }
+    };
+
+    fetchSalespeople();
+  }, []);
+  console.log("salesperople", salespeople);
   const formatDisplayDate = (date) => {
     return date.toLocaleDateString("en-US", {
       day: "numeric",
@@ -77,25 +99,6 @@ const MonthlyAnalytics = () => {
   };
 
   useEffect(() => {
-    const fetchAllSales = async () => {
-      const snapshot = await getDocs(collection(db, "sales"));
-      const all = [];
-
-      snapshot.forEach((doc) => {
-        const userId = doc.id;
-        const salesArray = doc.data().sales || [];
-        salesArray.forEach((sale) => {
-          all.push({ ...sale, userId }); // Keep userId if needed for reference
-        });
-      });
-
-      setAllSales(all);
-    };
-
-    fetchAllSales();
-  }, []);
-
-  useEffect(() => {
     const filterSalesByDate = (sales, month, year) => {
       return sales.filter((sale) => {
         const date = new Date(sale.saleDate);
@@ -103,32 +106,42 @@ const MonthlyAnalytics = () => {
       });
     };
 
-    const filterSalesBySalesperson = (sales, person) => {
-      if (person === "All") return sales;
-      return sales.filter((sale) => sale.salesperson === person);
+    const filterSalesBySalesperson = (sales, selectedValue) => {
+      if (selectedValue === "All") return sales;
+
+      // Filter sales where the document ID matches the selected salesperson ID
+      return sales.filter((sale) => {
+        // Compare the sale's associated ID with the selected salesperson ID
+        return sale.userId === selectedValue;
+      });
     };
 
     const calculateSalesStats = (sales) => {
       const totalSales = sales.length;
       const totalSalesPrice = sales.reduce(
-        (acc, curr) => acc + parseFloat(curr.salePrice || 0),
+        (acc, curr) => acc + parseFloat(curr.salesGross || 0),
         0
       );
       return { totalSales, totalSalesPrice };
     };
 
     const applyFilters = () => {
+      // First filter by date
       const dateFiltered = filterSalesByDate(
         allSales,
         selectedMonth,
         selectedYear
       );
+
+      // Then filter by salesperson
       const finalFiltered = filterSalesBySalesperson(
         dateFiltered,
         selectedSalesperson
       );
+
       setFilteredSales(finalFiltered);
 
+      // Calculate statistics for the filtered sales
       const stats = calculateSalesStats(finalFiltered);
       setSalesStats(stats);
     };
@@ -249,9 +262,11 @@ const MonthlyAnalytics = () => {
                   className="bg-white"
                 >
                   <MenuItem value="All">All</MenuItem>
-                  <MenuItem value="John Doe">John Doe</MenuItem>
-                  <MenuItem value="Jane Smith">Jane Smith</MenuItem>
-                  <MenuItem value="Mike Johnson">Mike Johnson</MenuItem>
+                  {salespeople.map((person) => (
+                    <MenuItem key={person.id} value={person.id}>
+                      {person.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>
@@ -326,7 +341,7 @@ const MonthlyAnalytics = () => {
           <div className="w-36 md:w-48 lg:w-64 bg-green-100 text-center p-1 border border-gray-300 font-bold">
             {salesStats.totalSales > monthlyTargets
               ? "Target Met"
-              : salesStats?.totalSales - monthlyTargets || "N/A"}
+              : monthlyTargets - salesStats?.totalSales || "N/A"}
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-red-50 text-center p-1 border border-gray-300 font-bold">
             #N/A
@@ -353,4 +368,4 @@ const MonthlyAnalytics = () => {
   );
 };
 
-export default MonthlyAnalytics;
+export default MonthlyWholeSaleAnalytics;
