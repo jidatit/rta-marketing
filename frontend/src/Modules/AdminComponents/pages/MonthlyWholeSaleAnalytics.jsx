@@ -2,19 +2,28 @@ import {
   Box,
   Chip,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
+  Tooltip,
 } from "@mui/material";
 // import MonthlyFinanceProviderAnalytics from "../components/FinanceProviderAnalytics";
 // import MonthlyLeadSourceAnalytics from "../components/MonthlyLeadSourceAnalytics";
 // import SalePersonMonthlyAnalytics from "../components/MonthlySalePersonAnalytics";
-import { FaCalendar } from "react-icons/fa6";
+import { FaCalendar, FaPencil, FaSatellite } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import SalesTrackingTable from "../components/SalesTrackingTable";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
-
+import { FaSave } from "react-icons/fa";
 const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   const months = [
     "January",
@@ -36,10 +45,19 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   const [salespeople, setSalespeople] = useState([]);
   const [filteredSales, setFilteredSales] = useState([]);
   const [monthlyTargets, setMonthlyTargets] = useState(0);
+  const [editingField, setEditingField] = useState(null);
+  const [tempUnits, setTempUnits] = useState("");
+  const [tempGross, setTempGross] = useState("");
+  const [targetAchieved, setTargetAchieved] = useState(0);
+  const [grossAchieved, setGrossAchieved] = useState(0);
+  const [monthlyUnitsTarget, setMonthlyUnitsTarget] = useState(0);
+  const [monthlyGrossTarget, setMonthlyGrossTarget] = useState(0);
   const [salesStats, setSalesStats] = useState({
     totalSales: 0,
     totalSalesPrice: 0,
   });
+  const [isOutOfSync, setIsOutOfSync] = useState(false);
+  const [needsUpdate, setNeedsUpdate] = useState(false);
   useEffect(() => {
     const fetchSalespeople = async () => {
       try {
@@ -62,7 +80,6 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
 
     fetchSalespeople();
   }, []);
-  console.log("salesperople", salespeople);
   const formatDisplayDate = (date) => {
     return date.toLocaleDateString("en-US", {
       day: "numeric",
@@ -76,12 +93,45 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   const handleMonthChange = (e) => {
     setSelectedMonth(parseInt(e.target.value));
   };
-
+  useEffect(() => {
+    if (selectedSalesperson === "All") {
+      const currentAchieved = salesStats.totalSales;
+      const savedAchieved = targetAchieved ?? currentAchieved;
+      setIsOutOfSync(currentAchieved !== savedAchieved);
+    } else {
+      setIsOutOfSync(false); // Only sync for "All" salesperson view
+    }
+  }, [salesStats.totalSales, targetAchieved, selectedSalesperson]);
   // Handle year change
   const handleYearChange = (e) => {
     setSelectedYear(parseInt(e.target.value));
   };
+  const updateAchievedTargets = async () => {
+    const monthId = `${selectedYear}-${String(selectedMonth + 1).padStart(
+      2,
+      "0"
+    )}`;
+    const docRef = doc(db, "monthlyTargetAnalytics", monthId);
 
+    try {
+      await setDoc(
+        docRef,
+        {
+          wholesale: {
+            MonthlyTargetAchieved: salesStats.totalSales,
+            MonthlyGrossAchieved: salesStats.totalSalesPrice,
+          },
+        },
+        { merge: true }
+      );
+
+      setTargetAchieved(salesStats.totalSales);
+      setGrossAchieved(salesStats.totalSalesPrice);
+      setIsOutOfSync(false);
+    } catch (error) {
+      console.error("Error updating achieved targets:", error);
+    }
+  };
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
     const startYear = 1900;
@@ -150,50 +200,118 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   }, [allSales, selectedMonth, selectedYear, selectedSalesperson]);
 
   const getMonthlyTargets = async (year, month, selectedUserId = null) => {
-    const monthId = `${year}-${String(month + 1).padStart(2, "0")}`; // e.g. "2025-02"
-    const docRef = doc(db, "monthlyTargets", monthId);
+    const monthId = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const docRef = doc(db, "monthlyTargetAnalytics", monthId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.warn(`No data found for ${monthId}`);
       return {
         totalTarget: 0,
+        totalGrossTarget: 0,
+        achievedTarget: undefined,
+        achievedGross: undefined,
         userTarget: 0,
+        userGrossTarget: 0,
       };
     }
 
     const data = docSnap.data();
+    const allData = data.wholesale || {};
 
-    // Sum all user targets
-    const totalTarget = Object.values(data).reduce((sum, entry) => {
-      return sum + (entry.target || 0);
-    }, 0);
+    // Use undefined if the fields are not present
+    const totalTarget = allData.MonthlyTarget ?? 0;
+    const totalGrossTarget = allData.MonthlyGrossTarget ?? 0;
+    const achievedTarget = allData.MonthlyTargetAchieved;
+    const achievedGross = allData.MonthlyGrossAchieved;
 
-    // Get selected user’s target if needed
-    const userTarget =
-      selectedUserId && data[selectedUserId]?.target
-        ? data[selectedUserId].target
-        : 0;
+    const userData = data[selectedUserId] || {};
+    const userTarget = userData.target ?? 0;
+    const userGrossTarget = userData.grossTarget ?? 0;
 
     return {
       totalTarget,
+      totalGrossTarget,
+      achievedTarget,
+      achievedGross,
       userTarget,
+      userGrossTarget,
     };
   };
 
   useEffect(() => {
     const loadTargets = async () => {
-      const { totalTarget, userTarget } = await getMonthlyTargets(
-        selectedYear,
-        selectedMonth
-      );
-      console.log("Total:", totalTarget);
-      console.log("User Target:", userTarget);
-      setMonthlyTargets(totalTarget);
+      const userId = selectedSalesperson === "All" ? null : selectedSalesperson;
+      const {
+        totalTarget,
+        totalGrossTarget,
+        achievedTarget,
+        achievedGross,
+        userTarget,
+        userGrossTarget,
+      } = await getMonthlyTargets(selectedYear, selectedMonth, userId);
+
+      if (userId) {
+        setMonthlyUnitsTarget(userTarget);
+        setMonthlyGrossTarget(userGrossTarget);
+        // Use salesStats for wholesale salespersons
+        setTargetAchieved(salesStats.totalSales);
+        setGrossAchieved(salesStats.totalSalesPrice);
+      } else {
+        setMonthlyUnitsTarget(totalTarget);
+        setMonthlyGrossTarget(totalGrossTarget);
+        // Use database values if available, else salesStats for "All"
+        setTargetAchieved(achievedTarget ?? salesStats.totalSales);
+        setGrossAchieved(achievedGross ?? salesStats.totalSalesPrice);
+      }
     };
 
     loadTargets();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedSalesperson, salesStats]); // Add salesStats here
+  console.log("sale stats", salesStats);
+  const handleSave = async () => {
+    const monthId = `${selectedYear}-${String(selectedMonth + 1).padStart(
+      2,
+      "0"
+    )}`;
+    const docRef = doc(db, "monthlyTargetAnalytics", monthId);
+
+    const baseUpdate = {
+      wholesale: {
+        MonthlyTarget: monthlyUnitsTarget,
+        MonthlyGrossTarget: monthlyGrossTarget,
+      },
+    };
+
+    // Only update achieved values if "All" is selected
+    if (selectedSalesperson === "All") {
+      baseUpdate.wholesale.MonthlyTargetAchieved = salesStats.totalSales;
+      baseUpdate.wholesale.MonthlyGrossAchieved = salesStats.totalSalesPrice;
+    }
+
+    if (editingField === "units") {
+      baseUpdate.wholesale.MonthlyTarget = Number(tempUnits);
+    } else if (editingField === "gross") {
+      baseUpdate.wholesale.MonthlyGrossTarget = Number(tempGross);
+    }
+
+    try {
+      await setDoc(docRef, baseUpdate, { merge: true });
+
+      setMonthlyUnitsTarget(baseUpdate.wholesale.MonthlyTarget);
+      setMonthlyGrossTarget(baseUpdate.wholesale.MonthlyGrossTarget);
+
+      // Update achieved state if "All"
+      if (selectedSalesperson === "All") {
+        setTargetAchieved(salesStats.totalSales);
+        setGrossAchieved(salesStats.totalSalesPrice);
+      }
+
+      setEditingField(null);
+    } catch (error) {
+      console.error("Error saving monthly target:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center h-full w-full bg-white px-5">
       {/* Header Section */}
@@ -279,13 +397,13 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
                   <span className="text-[#011c64] font-semibold">
                     Start Date
                   </span>
-                  <span className="text-blue-900 font-bold">
+                  <span className="text-white-900 font-bold">
                     {formatDisplayDate(startDate)}
                   </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[#011c64] font-semibold">End Date</span>
-                  <span className="text-blue-900 font-bold">
+                  <span className="text-white-900 font-bold">
                     {formatDisplayDate(endDate)}
                   </span>
                 </div>
@@ -313,23 +431,90 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
             Target
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1 border border-gray-300">
-            {monthlyTargets}
+            {editingField === "units" ? (
+              <input
+                type="number"
+                value={tempUnits}
+                onChange={(e) => setTempUnits(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                className="border-2 border-blue-500 px-2 w-full"
+                autoFocus
+              />
+            ) : (
+              <div className="flex items-center justify-center">
+                {selectedSalesperson && (
+                  <FaPencil
+                    className="cursor-pointer mr-1"
+                    onClick={() => {
+                      setEditingField("units");
+                      setTempUnits(monthlyUnitsTarget);
+                    }}
+                  />
+                )}
+
+                {monthlyUnitsTarget}
+              </div>
+            )}
           </div>
-          <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1 border border-gray-300 ">
-            $0.00
+          <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1 border border-gray-300">
+            {editingField === "gross" ? (
+              <input
+                type="number"
+                value={tempGross}
+                onChange={(e) => setTempGross(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                className="border-2 border-blue-500 px-2 w-full"
+                autoFocus
+              />
+            ) : (
+              <div className="flex items-center justify-center">
+                {selectedSalesperson && (
+                  <FaPencil
+                    className="cursor-pointer mr-1"
+                    onClick={() => {
+                      setEditingField("gross");
+                      setTempGross(monthlyGrossTarget);
+                    }}
+                  />
+                )}
+                ${monthlyGrossTarget.toFixed(2)}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Month To Date Row */}
+        {/* Month To Date Row */}
         <div className="flex w-full min-w-full items-center my-1">
-          <div className="flex-1 min-w-32 text-left font-bold text-[#011c64]">
+          <div className="flex-1 min-w-32 text-left font-bold text-[#011c64] flex items-center">
             Month To Date
+            {isOutOfSync && (
+              <Tooltip title="Values out of sync with current sales data">
+                <IconButton
+                  onClick={updateAchievedTargets}
+                  size="small"
+                  color="warning"
+                  className="ml-2"
+                >
+                  <FaSave className="text-[#011c64]" />
+                </IconButton>
+              </Tooltip>
+            )}
           </div>
-          <div className="w-36 md:w-48 lg:w-64  text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
-            {salesStats.totalSales || "N/A"}
+          <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
+            {selectedSalesperson === "All"
+              ? salesStats.totalSales
+              : salesStats.totalSales}
+            {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
           </div>
-          <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64]  text-center p-1 border border-gray-300">
-            ${salesStats.totalSalesPrice.toFixed(2) || "N/A"}
+          <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
+            $
+            {selectedSalesperson === "All"
+              ? salesStats.totalSalesPrice
+              : salesStats.totalSalesPrice}
+            {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
           </div>
         </div>
 
@@ -339,12 +524,21 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
             Gap to Target
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-green-100 text-center p-1 border border-gray-300 font-bold">
-            {salesStats.totalSales > monthlyTargets
+            {(selectedSalesperson === "All"
+              ? salesStats.totalSales
+              : salesStats.totalSales) > monthlyUnitsTarget
               ? "Target Met"
-              : monthlyTargets - salesStats?.totalSales || "N/A"}
+              : monthlyUnitsTarget -
+                  (selectedSalesperson === "All"
+                    ? salesStats.totalSales
+                    : salesStats.totalSales) || "N/A"}
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-red-50 text-center p-1 border border-gray-300 font-bold">
-            #N/A
+            {monthlyGrossTarget -
+              (selectedSalesperson === "All"
+                ? salesStats.totalSalesPrice
+                : salesStats.totalSalesPrice
+              ).toFixed(2)}
           </div>
         </div>
 
@@ -354,8 +548,15 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
             Average
           </div>
           <div className="w-36 md:w-48 lg:w-64"></div>
-          <div className="w-36 md:w-48 lg:w-64 bg-yellow-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
-            #N/A
+          <div className="w-36 md:w-48 lg:w-64 bg-white-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
+            {(
+              (selectedSalesperson === "All"
+                ? salesStats.totalSales
+                : salesStats.totalSales) /
+              (selectedSalesperson === "All"
+                ? salesStats.totalSalesPrice
+                : salesStats.totalSalesPrice)
+            ).toFixed(4)}
           </div>
         </div>
       </div>
