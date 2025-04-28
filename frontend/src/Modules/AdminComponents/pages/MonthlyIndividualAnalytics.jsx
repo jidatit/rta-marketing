@@ -557,14 +557,22 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
           </div>
           <div className="w-36 md:w-48 lg:w-64"></div>
           <div className="w-36 md:w-48 lg:w-64 bg-white-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
-            {(
-              (selectedSalesperson === "All"
-                ? salesStats.totalSales
-                : salesStats.totalSales) /
-              (selectedSalesperson === "All"
-                ? salesStats.totalSalesPrice
-                : salesStats.totalSalesPrice)
-            ).toFixed(4)}
+            {(() => {
+              const numerator =
+                selectedSalesperson === "All"
+                  ? salesStats.totalSales
+                  : salesStats.totalSales;
+              const denominator =
+                selectedSalesperson === "All"
+                  ? salesStats.totalSalesPrice
+                  : salesStats.totalSalesPrice;
+
+              if (!denominator || denominator === 0) {
+                return "0.0000";
+              }
+
+              return (numerator / denominator).toFixed(4);
+            })()}
           </div>
         </div>
       </div>

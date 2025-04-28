@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
 import { FaSave } from "react-icons/fa";
+import { toast } from "react-toastify";
 const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
   const months = [
     "January",
@@ -127,6 +128,9 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
 
       setTargetAchieved(salesStats.totalSales);
       setGrossAchieved(salesStats.totalSalesPrice);
+      toast.success(
+        "updated the achieved Targets to make it synced with saved data...."
+      );
       setIsOutOfSync(false);
     } catch (error) {
       console.error("Error updating achieved targets:", error);
@@ -496,9 +500,13 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
                   onClick={updateAchievedTargets}
                   size="small"
                   color="warning"
-                  className="ml-2"
+                  sx={{ marginLeft: 2 }}
+                  className="ml-4 flex gap-2 items-center"
                 >
-                  <FaSave className="text-[#011c64]" />
+                  <FaSave className="text-[#011c64]" />{" "}
+                  <p className="text-black text-xs">
+                    (Values out of sync with current sales data)
+                  </p>
                 </IconButton>
               </Tooltip>
             )}
@@ -548,7 +556,7 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
             Average
           </div>
           <div className="w-36 md:w-48 lg:w-64"></div>
-          <div className="w-36 md:w-48 lg:w-64 bg-white-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
+          {/* <div className="w-36 md:w-48 lg:w-64 bg-white-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
             {(
               (selectedSalesperson === "All"
                 ? salesStats.totalSales
@@ -557,6 +565,24 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
                 ? salesStats.totalSalesPrice
                 : salesStats.totalSalesPrice)
             ).toFixed(4)}
+          </div> */}
+          <div className="w-36 md:w-48 lg:w-64 bg-white-100 text-center p-1 border border-gray-300 text-[#011c64] font-bold">
+            {(() => {
+              const numerator =
+                selectedSalesperson === "All"
+                  ? salesStats.totalSales
+                  : salesStats.totalSales;
+              const denominator =
+                selectedSalesperson === "All"
+                  ? salesStats.totalSalesPrice
+                  : salesStats.totalSalesPrice;
+
+              if (!denominator || denominator === 0) {
+                return "0.0000";
+              }
+
+              return (numerator / denominator).toFixed(4);
+            })()}
           </div>
         </div>
       </div>
