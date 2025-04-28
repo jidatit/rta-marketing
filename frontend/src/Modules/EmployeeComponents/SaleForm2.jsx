@@ -73,12 +73,14 @@ const SaleForm2 = ({
     });
   };
   const handleSecondNext = () => {
-    if (isSecondFormDataValid()) {
+    if (isSecondFormDataValid() && formData.grossProfit) {
       setShowModal(false);
       setSecondForm(false);
       setThirdForm(true);
     } else {
-      toast.error("Please fill in all required fields");
+      toast.error(
+        "Please fill in all required fields and calculate gross profit."
+      );
     }
   };
 
@@ -335,7 +337,7 @@ const SaleForm2 = ({
                         />
                       </div>
                     </div>
-                    <button
+                    {/* <button
                       className={`flex flex-row items-center justify-center px-6 py-3 mb-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
                         isSecondFormDataValid()
                           ? "bg-[#003160] hover:shadow-lg active:bg-[#003160]"
@@ -346,6 +348,18 @@ const SaleForm2 = ({
                       disabled={!isSecondFormDataValid()}
                     >
                       Next <GrLinkNext size={23} className="mb-0.5" />
+                    </button> */}
+                    <button
+                      onClick={handleSecondNext}
+                      disabled={!formData.grossProfit}
+                      className={`flex items-center justify-center gap-2 px-6 py-3 mt-4 text-white transition bg-[#123352] rounded-lg ${
+                        !formData.grossProfit
+                          ? "opacity-50 cursor-not-allowed bg-gray-600"
+                          : "hover:bg-[#002548]"
+                      }`}
+                    >
+                      Next
+                      <GrLinkNext />
                     </button>
                   </div>
                 </form>
