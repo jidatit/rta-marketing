@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../config/firebaseConfig";
 import { FaSave } from "react-icons/fa";
+import { toast } from "react-toastify";
 const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
   const months = [
     "January",
@@ -127,6 +128,9 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
 
       setTargetAchieved(salesStats.totalSales);
       setGrossAchieved(salesStats.totalSalesPrice);
+      toast.success(
+        "updated the achieved Targets to make it synced with saved data...."
+      );
       setIsOutOfSync(false);
     } catch (error) {
       console.error("Error updating achieved targets:", error);
@@ -496,9 +500,13 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
                   onClick={updateAchievedTargets}
                   size="small"
                   color="warning"
-                  className="ml-2"
+                  sx={{ marginLeft: 2 }}
+                  className="ml-4 flex gap-2 items-center"
                 >
-                  <FaSave className="text-[#011c64]" />
+                  <FaSave className="text-[#011c64]" />{" "}
+                  <p className="text-black text-xs">
+                    (Values out of sync with current sales data)
+                  </p>
                 </IconButton>
               </Tooltip>
             )}

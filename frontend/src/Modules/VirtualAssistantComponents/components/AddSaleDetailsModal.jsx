@@ -97,7 +97,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     customerName: sale?.customerName || "",
     leadSource: sale?.leadSource || "",
     stockNumber: sale?.stockNumber || "",
-    vehicle: `${sale?.vehicleMake || ""} ${sale?.vehicleModel || ""}`.trim(),
+    vehicle: `${sale?.vehicleMake || ""}`,
     warrantySold: sale?.warr || "",
     gapProtection: sale?.gap || "",
     warrantyCost: sale?.warCost || "",
@@ -167,7 +167,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         customerName: sale.customerName || "",
         leadSource: sale.leadSource || "",
         stockNumber: sale.stockNumber || "",
-        vehicle: `${sale.vehicleMake || ""} ${sale.vehicleModel || ""}`.trim(),
+        vehicle: `${sale.vehicleMake || ""} `,
         warrantySold: sale.warr || "",
         gapProtection: sale.gap || "",
         warrantyCost: sale.warCost || "",
@@ -241,11 +241,12 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
     // Check if the field should be numeric-only
     if (numericFields.includes(name)) {
+      console.log("enter for this field", name);
       // Allow numbers, decimal point, or empty string
       if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
         setFormData((prevData) => ({
           ...prevData,
-          [name]: value,
+          [name]: value === "" ? "" : value, // Keep as string for input, but can convert to number when needed
         }));
       }
     } else {
@@ -305,9 +306,17 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
           return {
             ...saleItem,
             ...formattedFormData, // Apply all fields from formattedFormData to the matching saleItem
+            warCost: formData.warrantyCost || sale.warCost,
+            warr: formData.warrantySold || sale.warr,
+            gap: formData.gapProtection || sale.gap,
+            gapCost: formData.gapProtectionCost || sale.gapCost,
+            grossProfit: formData.gross || sale.grossProfit,
+            reserve: formData.lenderReserve || sale.lenderReserve,
+            safety: formData.safetyInspection || sale.safety,
             updatedAt: new Date().toISOString(),
             updatedBy: currentUser?.userType, // Or use actual user ID
             updatedById: currentUser?.id, // Or use actual user ID
+            vehicleMake: formData.vehicle || `${sale.vehicleMake || ""} `,
           };
         }
         return saleItem;
