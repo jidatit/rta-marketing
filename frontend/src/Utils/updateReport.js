@@ -47,6 +47,9 @@ const updateReport = async (
           safetyInspection:
             editableReportData.vehicleCosts?.safetyInspection ??
             saleItem.safetyInspection,
+          safety:
+            editableReportData.vehicleCosts?.safetyInspection ??
+            saleItem.safetyInspection,
           carProof:
             editableReportData.vehicleCosts?.carProof ?? saleItem.carProof,
           cleanUp: editableReportData.vehicleCosts?.cleanUp ?? saleItem.cleanUp,
@@ -75,13 +78,22 @@ const updateReport = async (
           warrantyCost:
             editableReportData.vehicleCosts?.warrantyCost ??
             saleItem.warrantyCost,
+          warCost:
+            editableReportData.vehicleCosts?.warrantyCost ??
+            saleItem.warrantyCost,
           gapProtectionCost:
             editableReportData.vehicleCosts?.gapProtectionCost ??
             saleItem.gapProtectionCost,
-          downpayment:
-            editableReportData.vehicleCosts?.downpayment ??
-            saleItem.downpayment,
+          gapCost:
+            editableReportData.vehicleCosts?.gapProtectionCost ??
+            saleItem.gapProtectionCost,
+
           acv: editableReportData.vehicleCosts?.acv ?? saleItem.acv,
+          otherCostItems:
+            editableReportData.vehicleCosts?.otherCostItems ??
+            saleItem.otherCostItems ??
+            [],
+
           totalVehicleCosts:
             editableReportData.vehicleCosts?.total ??
             saleItem.totalVehicleCosts,
@@ -97,18 +109,30 @@ const updateReport = async (
           warrantySold:
             editableReportData.customerCosts?.warrantySold ??
             saleItem.warrantySold,
+          warr:
+            editableReportData.customerCosts?.warrantySold ??
+            saleItem.warrantySold,
           gapProtection:
+            editableReportData.customerCosts?.gapProtection ??
+            saleItem.gapProtection,
+          gap:
             editableReportData.customerCosts?.gapProtection ??
             saleItem.gapProtection,
           lenderReserve:
             editableReportData.customerCosts?.lenderReserve ??
             saleItem.lenderReserve,
+          reserve:
+            editableReportData.customerCosts?.lenderReserve ??
+            saleItem.lenderReserve,
           lenderBonus:
             editableReportData.customerCosts?.lenderBonus ??
             saleItem.lenderBonus,
-          totalIncome:
+          totalDealIncome:
             editableReportData.customerCosts?.total ?? saleItem.totalIncome,
           totalExpenses:
+            editableReportData.dealSummary?.totalExpenses ??
+            saleItem.totalExpenses,
+          totalCOGS:
             editableReportData.dealSummary?.totalExpenses ??
             saleItem.totalExpenses,
           totalGross:
@@ -131,6 +155,8 @@ const updateReport = async (
           lienAmount: editableReportData.financing?.lien ?? saleItem.lienAmount,
           interestRate:
             editableReportData.financing?.interestRate ?? saleItem.interestRate,
+          downpayment:
+            editableReportData.financing?.downpayment ?? saleItem.downpayment,
           comments: editableReportData.comments ?? saleItem.comments,
 
           updatedAt: new Date().toISOString(),
@@ -143,7 +169,6 @@ const updateReport = async (
       }
       return saleItem;
     });
-    console.log("updatesales", updatedSales);
 
     // Update Firestore document
     await updateDoc(saleRef, {

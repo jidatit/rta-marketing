@@ -22,6 +22,7 @@ import {
   Divider,
   Paper,
   CircularProgress,
+  IconButton,
 } from "@mui/material";
 
 import { db } from "../../../config/firebaseConfig";
@@ -29,6 +30,8 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { useAuth } from "../../../AuthContext";
 import { formatDate } from "../../../Utils/format";
+import { IoAddCircleOutline, IoRemoveCircleOutline } from "react-icons/io5";
+
 const steps = [
   "Customer Information",
   "Finance Details",
@@ -111,7 +114,8 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     saleType: sale?.saleType || "individual", // Default to 'individual' if no value is provided
     financeProvider:
       sale?.saleType === "wholesale" ? "" : sale?.financeProvider || "", // show when sale tyep is not wholesale , this is to handle the previous sales
-
+    otherIncomeItems: sale?.otherIncomeItems || [],
+    otherCostItems: sale?.otherCostItems || [],
     interestRate: "",
     amountFunded: "",
     tradeDescription: "",
@@ -119,10 +123,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     bosVehicle: "",
     gasoline: "",
     licensingCharge: "",
-    otherIncome1Amount: "",
-    otherIncome1Description: "",
-    otherIncome2Amount: "",
-    otherIncome2Description: "",
+
     lenderReserve: sale?.reserve || "",
     lenderBonus: "",
     wbosVehicle: "",
@@ -145,12 +146,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     downpayment: "",
     acv: "",
     referralCost: "",
-    otherCosts1Amount: "",
-    otherCosts1Description: "",
-    otherCosts2Amount: "",
-    otherCosts2Description: "",
-    otherCosts3Amount: "",
-    otherCosts3Description: "",
+
     commissionRate: "",
     afcFloorPlan: "",
     totalIncome: "",
@@ -191,10 +187,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         adminFee: sale.adminFee || "",
         gasoline: sale.gasoline || "",
         licensingCharge: sale.licensingCharge || "",
-        otherIncome1Amount: sale.otherIncome1Amount || "",
-        otherIncome1Description: sale.otherIncome1Description || "",
-        otherIncome2Amount: sale.otherIncome2Amount || "",
-        otherIncome2Description: sale.otherIncome2Description || "",
+
         lenderReserve: sale.reserve || "",
         lenderBonus: sale.lenderBonus || "",
         wbosVehicle: sale.wbosVehicle || "",
@@ -217,13 +210,8 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         downpayment: sale.downpayment || "",
         acv: sale.acv || "",
         referralCost: sale.referralCost || "",
-        otherCosts1Amount: sale.otherCosts1Amount || "",
-        otherCosts1Description: sale.otherCosts1Description || "",
-        otherCosts2Amount: sale.otherCosts2Amount || "",
-        otherCosts2Description: sale.otherCosts2Description || "",
-        otherCosts3Amount: sale.otherCosts3Amount || "",
-        otherCosts3Description: sale.otherCosts3Description || "",
-        commissionRate: sale?.commissionRate || "0",
+
+        commissionRate: sale?.saleType === "wholesale" ? "0" : "25",
         afcFloorPlan: sale.afcFloorPlan || "",
         totalIncome: sale.totalIncome || "",
         totalCOGS: sale.totalCOGS || "",
@@ -232,6 +220,52 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         trueGross: sale.trueGross || "",
         daysToDelivery: sale.daysToDelivery || "",
         daysToFunding: sale.daysToFunding || "",
+
+        otherIncomeItems: sale.otherIncomeItems || [
+          ...(sale.otherIncome1Amount
+            ? [
+                {
+                  amount: sale.otherIncome1Amount,
+                  description: sale.otherIncome1Description || "",
+                },
+              ]
+            : []),
+          ...(sale.otherIncome2Amount
+            ? [
+                {
+                  amount: sale.otherIncome2Amount,
+                  description: sale.otherIncome2Description || "",
+                },
+              ]
+            : []),
+        ],
+
+        otherCostItems: sale.otherCostItems || [
+          ...(sale.otherCosts1Amount
+            ? [
+                {
+                  amount: sale.otherCosts1Amount,
+                  description: sale.otherCosts1Description || "",
+                },
+              ]
+            : []),
+          ...(sale.otherCosts2Amount
+            ? [
+                {
+                  amount: sale.otherCosts2Amount,
+                  description: sale.otherCosts2Description || "",
+                },
+              ]
+            : []),
+          ...(sale.otherCosts3Amount
+            ? [
+                {
+                  amount: sale.otherCosts3Amount,
+                  description: sale.otherCosts3Description || "",
+                },
+              ]
+            : []),
+        ],
       });
     }
   }, [sale]);
@@ -340,6 +374,60 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     }
   };
 
+  // Add handlers for dynamic fields
+  const handleAddOtherIncome = () => {
+    setFormData((prev) => ({
+      ...prev,
+      otherIncomeItems: [
+        ...prev.otherIncomeItems,
+        { amount: "", description: "" },
+      ],
+    }));
+  };
+
+  const handleRemoveOtherIncome = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherIncomeItems: prev.otherIncomeItems.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleOtherIncomeChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updatedItems = [...prev.otherIncomeItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [field]: value,
+      };
+      return { ...prev, otherIncomeItems: updatedItems };
+    });
+  };
+
+  const handleAddOtherCost = () => {
+    setFormData((prev) => ({
+      ...prev,
+      otherCostItems: [...prev.otherCostItems, { amount: "", description: "" }],
+    }));
+  };
+
+  const handleRemoveOtherCost = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherCostItems: prev.otherCostItems.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleOtherCostChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updatedItems = [...prev.otherCostItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [field]: value,
+      };
+      return { ...prev, otherCostItems: updatedItems };
+    });
+  };
+
   // Calculate fields automatically when dependencies change
   useEffect(() => {
     // Calculate totalIncome
@@ -353,6 +441,10 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     const otherIncome2 = Number.parseFloat(formData.otherIncome2Amount || "0");
     const lenderReserve = Number.parseFloat(formData.lenderReserve || "0");
     const lenderBonus = Number.parseFloat(formData.lenderBonus || "0");
+    const otherIncomeTotal = formData.otherIncomeItems.reduce(
+      (sum, item) => sum + (Number.parseFloat(item.amount) || 0),
+      0
+    );
 
     // const totalIncome =
     //   bosVehicle +
@@ -394,6 +486,12 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     const otherCosts2 = Number.parseFloat(formData.otherCosts2Amount || "0");
     // const otherCosts3 = Number.parseFloat(formData.otherCosts3Amount || "0");
 
+    // Calculate totalCOGS including dynamic other cost items
+    const otherCostsTotal = formData.otherCostItems.reduce(
+      (sum, item) => sum + (Number.parseFloat(item.amount) || 0),
+      0
+    );
+
     const totalCOGS =
       wbosVehicle +
       safetyInspection +
@@ -407,15 +505,13 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       uber +
       driversTow +
       pictures +
-      invoiceCopy +
       tints +
       purolator +
       afc +
       mtoLicense +
       warrantyCost +
       gapProtectionCost +
-      otherCosts1 +
-      otherCosts2;
+      otherCostsTotal;
 
     //afc floor plan
     const afcInput = Number.parseFloat(afc) || 0; // Get value (default 0 if empty)
@@ -428,8 +524,14 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
     // Calculate commission
     // Auto-set commission rate (0% for wholesale, 25% otherwise)
-    const commissionRate = formData.commissionRate;
-    const commission = formData?.commission;
+    const commissionRate =
+      sale?.saleType === "wholesale"
+        ? 0
+        : parseFloat(formData.commissionRate || "0");
+
+    // Calculate commission using the dynamic commission rate
+    const commission =
+      Math.round(salesGross * (commissionRate / 100) * 100) / 100;
 
     // Calculate trueGross
     const trueGross = salesGross - commission;
@@ -446,7 +548,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       totalCOGS: totalCOGS.toFixed(2),
       gross: gross.toFixed(2),
       salesGross: salesGross.toFixed(2),
-
+      commission: commission.toFixed(2),
       afcFloorPlan: afcFloorPlan.toString(), // Ensure it stays capped
       trueGross: trueGross.toFixed(2),
     }));
@@ -486,6 +588,8 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     formData.pac,
     formData.commissionRate,
     formData.commission,
+    formData.otherIncomeItems,
+    formData.otherCostItems,
   ]);
 
   const handleDateChange = (name, date) => {
@@ -839,7 +943,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <Box sx={{ mt: 1 }}>
                 <TextField
                   label="Other Income 1 Amount"
@@ -900,6 +1004,97 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                   onChange={handleChange}
                 />
               </Box>
+            </Grid> */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Other Income Items
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+
+            {formData.otherIncomeItems.map((item, index) => (
+              <React.Fragment key={index}>
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    label={`Other Income ${index + 1} Amount`}
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    value={item.amount}
+                    onChange={(e) => {
+                      // Only allow numbers and decimal point
+                      const value = e.target.value;
+                      if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                        handleOtherIncomeChange(index, "amount", value);
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    // Prevent paste of non-numeric values
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData("text");
+                      if (!/^[0-9]*\.?[0-9]*$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    // Prevent non-numeric key presses (except control keys)
+                    onKeyDown={(e) => {
+                      if (
+                        !/[0-9.]/.test(e.key) &&
+                        e.key !== "Backspace" &&
+                        e.key !== "Delete" &&
+                        e.key !== "ArrowLeft" &&
+                        e.key !== "ArrowRight" &&
+                        e.key !== "Tab"
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label={`Other Income ${index + 1} Description`}
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    value={item.description}
+                    onChange={(e) =>
+                      handleOtherIncomeChange(
+                        index,
+                        "description",
+                        e.target.value
+                      )
+                    }
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  md={1}
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
+                  <IconButton
+                    onClick={() => handleRemoveOtherIncome(index)}
+                    color="error"
+                  >
+                    <IoRemoveCircleOutline />
+                  </IconButton>
+                </Grid>
+              </React.Fragment>
+            ))}
+
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                startIcon={<IoAddCircleOutline />}
+                onClick={handleAddOtherIncome}
+              >
+                Add Other Income
+              </Button>
             </Grid>
           </Grid>
         );
@@ -1315,98 +1510,84 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 1 Amount"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts1Amount"
-                  value={formData.otherCosts1Amount}
-                  onChange={handleChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">$</InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Other Cost Items
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 1 Description"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts1Description"
-                  value={formData.otherCosts1Description}
-                  onChange={handleChange}
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 2 Amount"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts2Amount"
-                  value={formData.otherCosts2Amount}
-                  onChange={handleChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">$</InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 2 Description"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts2Description"
-                  value={formData.otherCosts2Description}
-                  onChange={handleChange}
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 3 Amount"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts3Amount"
-                  value={formData.otherCosts3Amount}
-                  onChange={handleChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">$</InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Other Costs 3 Description"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="otherCosts3Description"
-                  value={formData.otherCosts3Description}
-                  onChange={handleChange}
-                />
-              </Box>
+
+            {formData.otherCostItems.map((item, index) => (
+              <React.Fragment key={index}>
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    label={`Other Cost ${index + 1} Amount`}
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    value={item.amount}
+                    onChange={(e) => {
+                      // Only allow numbers and decimal point
+                      const value = e.target.value;
+                      if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                        handleOtherCostChange(index, "amount", value);
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    // This prevents pasting non-numeric values
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData("text");
+                      if (!/^[0-9]*\.?[0-9]*$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label={`Other Cost ${index + 1} Description`}
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    value={item.description}
+                    onChange={(e) =>
+                      handleOtherCostChange(
+                        index,
+                        "description",
+                        e.target.value
+                      )
+                    }
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  md={1}
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
+                  <IconButton
+                    onClick={() => handleRemoveOtherCost(index)}
+                    color="error"
+                  >
+                    <IoRemoveCircleOutline />
+                  </IconButton>
+                </Grid>
+              </React.Fragment>
+            ))}
+
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                startIcon={<IoAddCircleOutline />}
+                onClick={handleAddOtherCost}
+              >
+                Add Other Cost
+              </Button>
             </Grid>
           </Grid>
         );
@@ -1419,24 +1600,27 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Commission Rate"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="commissionRate"
-                  value={formData.commissionRate}
-                  onChange={handleChange}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">%</InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-            </Grid>
+            {sale?.saleType !== "wholesale" && (
+              <Grid item xs={12} md={6}>
+                <Box sx={{ mt: 1 }}>
+                  <TextField
+                    label="Commission Rate"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="commissionRate"
+                    value={formData.commissionRate}
+                    onChange={handleChange}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">%</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Grid>
+            )}
+
             <Grid item xs={12} md={6}>
               <Box sx={{ mt: 1 }}>
                 <TextField
@@ -1548,24 +1732,26 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="Commission"
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  name="commission"
-                  value={formData.commission}
-                  onChange={handleChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">$</InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-            </Grid>
+            {sale?.saleType !== "wholesale" && (
+              <Grid item xs={12} md={6}>
+                <Box sx={{ mt: 1 }}>
+                  <TextField
+                    label="Commission"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="commission"
+                    value={formData.commission}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Grid>
+            )}
             <Grid item xs={12} md={6}>
               <Box sx={{ mt: 1 }}>
                 <TextField
