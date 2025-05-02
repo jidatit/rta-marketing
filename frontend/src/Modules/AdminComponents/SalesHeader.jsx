@@ -227,7 +227,8 @@ const LimitModal = ({ open, onClose }) => {
     }
 
     try {
-      const limitRef = doc(db, "SalesLimit", docId || "salesLimitDoc"); // Use existing doc or create a default one
+      // const limitRef = doc(db, "SalesLimit", docId || "salesLimitDoc"); // Use existing doc or create a default one
+      const limitRef = doc(db, "SalesLimit", docId); // Use existing doc or create a default one
       await setDoc(limitRef, { limit, createdAt: new Date() }); // setDoc replaces existing data
 
       toast.success("Limit updated successfully!");
