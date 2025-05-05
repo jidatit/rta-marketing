@@ -73,6 +73,9 @@ const updateReport = async (
           afcFloorPlan:
             editableReportData.vehicleCosts?.afcFloorPlan ??
             saleItem.afcFloorPlan,
+          afc:
+            editableReportData.vehicleCosts?.afcFloorPlan ??
+            saleItem.afcFloorPlan,
           mtoLicense:
             editableReportData.vehicleCosts?.mtoLicense ?? saleItem.mtoLicense,
           warrantyCost:
@@ -127,6 +130,10 @@ const updateReport = async (
           lenderBonus:
             editableReportData.customerCosts?.lenderBonus ??
             saleItem.lenderBonus,
+          otherIncomeItems:
+            editableReportData.customerCosts?.otherIncomeItems ??
+            saleItem.otherIncomeItems ??
+            [],
           totalDealIncome:
             editableReportData.customerCosts?.total ?? saleItem.totalIncome,
           totalExpenses:

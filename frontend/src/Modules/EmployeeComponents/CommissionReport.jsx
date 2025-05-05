@@ -108,6 +108,13 @@ const CommissionReportGenerator = ({ saleData }) => {
     const lenderReserve =
       Number.parseFloat(data.customerCosts.lenderReserve) || 0;
     const lenderBonus = Number.parseFloat(data.customerCosts.lenderBonus) || 0;
+
+    const otherIncomeItems =
+      data.customerCosts.otherIncomeItems?.reduce(
+        (sum, item) => sum + (Number.parseFloat(item.amount) || 0),
+        0
+      ) || 0;
+
     const totalDealIncome =
       bosVehicle +
       gasoline +
@@ -115,7 +122,8 @@ const CommissionReportGenerator = ({ saleData }) => {
       warrantySold +
       gapProtection +
       lenderReserve +
-      lenderBonus;
+      lenderBonus +
+      otherIncomeItems;
 
     const totalGross = totalDealIncome - totalVehicleCosts;
     const pacInput = data.dealSummary?.pac;
@@ -191,6 +199,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         warranty: warr,
         lenderReserve,
         lenderBonus,
+        otherIncomeItems: data.customerCosts.otherIncomeItems || [],
         total: totalDealIncome,
       },
       dealSummary: {
@@ -206,7 +215,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         amount: commission.toFixed(2),
       },
       financing: {
-        amountFunded: totalDealIncome,
+        amountFunded: amountFunded,
         provider: data.financing.provider || "Not Specified",
         interestRate,
         lien,
@@ -253,6 +262,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         warranty: saleData.warr,
         lenderReserve: saleData.lenderReserve,
         lenderBonus: saleData.lenderBonus,
+        otherIncomeItems: saleData?.otherIncomeItems || [],
       },
       dealSummary: {
         pac: saleData.pac,
@@ -328,6 +338,8 @@ const CommissionReportGenerator = ({ saleData }) => {
     editableReportData.customerCosts.gapProtection,
     editableReportData.customerCosts.lenderReserve,
     editableReportData.customerCosts.lenderBonus,
+    editableReportData.customerCosts.otherIncomeItems,
+
     editableReportData.dealSummary.pac,
     editableReportData.commission.amount,
     editableReportData.commission.rate,
@@ -632,66 +644,82 @@ const CommissionReportGenerator = ({ saleData }) => {
                         </TableRow>
                       ))}
                       {editableReportData.vehicleCosts.otherCostItems?.length >
-                        0 && (
+                      0 ? (
+                        <>
+                          <TableRow>
+                            <TableCell
+                              colSpan={2}
+                              className="font-bold text-md text-black bg-gray-200 pl-2"
+                            >
+                              Other Costs
+                            </TableCell>
+                          </TableRow>
+                          {editableReportData.vehicleCosts.otherCostItems.map(
+                            (item, index) => (
+                              <TableRow key={`other-cost-${index}`}>
+                                <TableCell className="pl-2">{`Other Cost ${
+                                  index + 1
+                                }`}</TableCell>
+                                <TableCell align="right" className="pr-2">
+                                  <TextField
+                                    type="text"
+                                    value={item.amount}
+                                    onChange={
+                                      isVirtualAssistant
+                                        ? (e) => {
+                                            const inputValue = e.target.value;
+                                            if (
+                                              /^\d*\.?\d*$/.test(inputValue)
+                                            ) {
+                                              setEditableReportData((prev) => {
+                                                const updatedItems = [
+                                                  ...prev.vehicleCosts
+                                                    .otherCostItems,
+                                                ];
+                                                updatedItems[index] = {
+                                                  ...updatedItems[index],
+                                                  amount: inputValue,
+                                                };
+                                                return {
+                                                  ...prev,
+                                                  vehicleCosts: {
+                                                    ...prev.vehicleCosts,
+                                                    otherCostItems:
+                                                      updatedItems,
+                                                  },
+                                                };
+                                              });
+                                            }
+                                          }
+                                        : undefined
+                                    }
+                                    readOnly={!isVirtualAssistant}
+                                    size="small"
+                                    variant="standard"
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          $
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            )
+                          )}
+                        </>
+                      ) : (
                         <TableRow>
+                          <TableCell className="pl-2">Other Costs</TableCell>
                           <TableCell
-                            colSpan={2}
-                            className="font-bold text-md text-black bg-gray-200 pl-2"
+                            align="right"
+                            className="text-gray-500 italic"
                           >
-                            Other Costs
+                            None
                           </TableCell>
                         </TableRow>
                       )}
-                      {editableReportData.vehicleCosts.otherCostItems?.map(
-                        (item, index) => (
-                          <TableRow key={`other-cost-${index}`}>
-                            <TableCell>{`Other Cost ${index + 1}`}</TableCell>
-                            <TableCell align="right">
-                              <TextField
-                                type="text"
-                                value={item.amount}
-                                onChange={
-                                  isVirtualAssistant
-                                    ? (e) => {
-                                        const inputValue = e.target.value;
-                                        if (/^\d*\.?\d*$/.test(inputValue)) {
-                                          setEditableReportData((prev) => {
-                                            const updatedItems = [
-                                              ...prev.vehicleCosts
-                                                .otherCostItems,
-                                            ];
-                                            updatedItems[index] = {
-                                              ...updatedItems[index],
-                                              amount: inputValue,
-                                            };
-                                            return {
-                                              ...prev,
-                                              vehicleCosts: {
-                                                ...prev.vehicleCosts,
-                                                otherCostItems: updatedItems,
-                                              },
-                                            };
-                                          });
-                                        }
-                                      }
-                                    : undefined
-                                }
-                                readOnly={!isVirtualAssistant}
-                                size="small"
-                                variant="standard"
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      $
-                                    </InputAdornment>
-                                  ),
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        )
-                      )}
-
                       <TableRow>
                         <TableCell component="th" scope="row">
                           Total Costs
@@ -782,6 +810,85 @@ const CommissionReportGenerator = ({ saleData }) => {
                             </TableCell>
                           </TableRow>
                         ))}
+                        {editableReportData.customerCosts.otherIncomeItems
+                          ?.length > 0 ? (
+                          <>
+                            <TableRow>
+                              <TableCell
+                                colSpan={2}
+                                className="font-bold text-md text-black bg-gray-200 pl-2"
+                              >
+                                Other Income
+                              </TableCell>
+                            </TableRow>
+                            {editableReportData.customerCosts.otherIncomeItems.map(
+                              (item, index) => (
+                                <TableRow key={`other-cost-${index}`}>
+                                  <TableCell className="pl-2">{`Other Income ${
+                                    index + 1
+                                  }`}</TableCell>
+                                  <TableCell align="right" className="pr-2">
+                                    <TextField
+                                      type="text"
+                                      value={item.amount}
+                                      onChange={
+                                        isVirtualAssistant
+                                          ? (e) => {
+                                              const inputValue = e.target.value;
+                                              if (
+                                                /^\d*\.?\d*$/.test(inputValue)
+                                              ) {
+                                                setEditableReportData(
+                                                  (prev) => {
+                                                    const updatedItems = [
+                                                      ...prev.customerCosts
+                                                        .otherIncomeItems,
+                                                    ];
+                                                    updatedItems[index] = {
+                                                      ...updatedItems[index],
+                                                      amount: inputValue,
+                                                    };
+                                                    return {
+                                                      ...prev,
+                                                      customerCosts: {
+                                                        ...prev.customerCosts,
+                                                        otherIncomeItems:
+                                                          updatedItems,
+                                                      },
+                                                    };
+                                                  }
+                                                );
+                                              }
+                                            }
+                                          : undefined
+                                      }
+                                      readOnly={!isVirtualAssistant}
+                                      size="small"
+                                      variant="standard"
+                                      InputProps={{
+                                        startAdornment: (
+                                          <InputAdornment position="start">
+                                            $
+                                          </InputAdornment>
+                                        ),
+                                      }}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )}
+                          </>
+                        ) : (
+                          <TableRow>
+                            <TableCell className="pl-2">Other Income</TableCell>
+                            <TableCell
+                              align="right"
+                              className="text-gray-500 italic"
+                            >
+                              None
+                            </TableCell>
+                          </TableRow>
+                        )}
                         <TableRow>
                           <TableCell component="th" scope="row">
                             Total Deal Income
