@@ -28,7 +28,6 @@ const LeadsPages = () => {
   const [showModal, setShowModal] = useState(false);
   const { currentUser } = useAuth();
 
-  console.log("hey", leadSources, SalesPerson);
   return (
     <div className="flex flex-col gap-y-8 w-full h-full">
       <HeaderComponent

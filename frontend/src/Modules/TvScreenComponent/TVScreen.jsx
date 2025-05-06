@@ -55,18 +55,25 @@ const TVScreen = () => {
     fetchSortedSalesPerson();
   }, []);
 
-  // Update sortedCardsPerson when SalesPersons changes if sortedCardsPerson is empty
   useEffect(() => {
-    if (
-      SalesPersons &&
-      SalesPersons.length > 0 &&
-      (!sortedCardsPerson || sortedCardsPerson.length === 0)
-    ) {
-      // If we have SalesPersons but no sortedCardsPerson, use SalesPersons as the default order
-      setSortedCardsPerson([...SalesPersons]);
+    if (SalesPersons && SalesPersons.length > 0) {
+      if (sortedCardsPerson && sortedCardsPerson.length > 0) {
+        // Merge strategy: preserve existing order + add new salespersons at the end
+        const existingIds = new Set(sortedCardsPerson.map((p) => p.uid));
+        const newSalesPersons = SalesPersons.filter(
+          (p) => !existingIds.has(p.uid)
+        );
 
-      // Optionally, save this default order to Firebase
-      saveOrderToFirebase([...SalesPersons]);
+        if (newSalesPersons.length > 0) {
+          const merged = [...sortedCardsPerson, ...newSalesPersons];
+          setSortedCardsPerson(merged);
+          saveOrderToFirebase(merged);
+        }
+      } else {
+        // Initial setup if no existing order
+        setSortedCardsPerson([...SalesPersons]);
+        saveOrderToFirebase([...SalesPersons]);
+      }
     }
   }, [SalesPersons, sortedCardsPerson]);
 
@@ -104,10 +111,11 @@ const TVScreen = () => {
         const results = [];
         querySnapshot.forEach((doc) => {
           const SalePerson = doc.data();
+          // Skip if user is marked as deleted
+          if (SalePerson.isDeleted) return;
           const { password, ...rest } = SalePerson;
           results.push(rest);
         });
-
         setSalesPersons(results);
       });
 
@@ -361,33 +369,77 @@ const TVScreen = () => {
   // Function to save order to Firebase
   const saveOrderToFirebase = async (order) => {
     try {
-      await setDoc(doc(db, "settings", "salesOrder"), { order });
+      // Filter out any stale entries that no longer exist in SalesPersons
+      const validOrder = order.filter((p) =>
+        SalesPersons?.some((sp) => sp.uid === p.uid)
+      );
+      await setDoc(doc(db, "settings", "salesOrder"), { order: validOrder });
     } catch (error) {
       console.error("Error saving order: ", error);
     }
   };
 
-  // Function to handle drag start
-  const handleDragStart = (index) => {
+  // Function to handle drag start with visual feedback
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.effectAllowed = "move";
+    // Set some visual feedback when dragging starts
+    e.target.classList.add("dragging");
     dragItem.current = index;
   };
 
-  // Function to handle drag enter
-  const handleDragEnter = (index) => {
+  // Function to handle drag over
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     dragOverItem.current = index;
+
+    // Add visual indicator for drop position
+    const cards = document.querySelectorAll(".person-card");
+    cards.forEach((card) => card.classList.remove("drag-over"));
+    cards[index].classList.add("drag-over");
+  };
+
+  // Function to handle drag end
+  const handleDragEnd = (e) => {
+    e.target.classList.remove("dragging");
+    // Remove visual indicators
+    const cards = document.querySelectorAll(".person-card");
+    cards.forEach((card) => card.classList.remove("drag-over"));
   };
 
   // Function to handle drop
-  const handleDrop = () => {
-    const items = [...sortedCardsPerson];
-    const draggedItem = items[dragItem.current];
-    items.splice(dragItem.current, 1);
-    items.splice(dragOverItem.current, 0, draggedItem);
+  const handleDrop = (e) => {
+    e.preventDefault();
 
-    setSortedCardsPerson(items);
-    saveOrderToFirebase(items);
+    // Copy current order
+    const copyItems = [...sortedCardsPerson];
+
+    // Remove dragged item
+    const draggedItemContent = copyItems[dragItem.current];
+
+    // Only proceed with the swap if both positions are valid
+    if (dragItem.current !== null && dragOverItem.current !== null) {
+      // Remove the dragged item
+      copyItems.splice(dragItem.current, 1);
+
+      // Insert at new position
+      copyItems.splice(dragOverItem.current, 0, draggedItemContent);
+
+      // Update state and save to Firebase
+      setSortedCardsPerson(copyItems);
+      saveOrderToFirebase(copyItems);
+    }
+
+    // Reset refs
     dragItem.current = null;
     dragOverItem.current = null;
+
+    // Remove visual indicators
+    e.target.classList.remove("drag-over");
+    document.querySelectorAll(".person-card").forEach((card) => {
+      card.classList.remove("dragging");
+      card.classList.remove("drag-over");
+    });
   };
 
   // This is a key fix - find sales data for each person
@@ -420,10 +472,11 @@ const TVScreen = () => {
   };
 
   // Determine which array to render cards from and ensure each person has their sales data
-  const displayPersons =
-    sortedCardsPerson && sortedCardsPerson.length > 0
-      ? sortedCardsPerson.map((person) => getPersonWithSales(person))
-      : SalesPersons.map((person) => getPersonWithSales(person));
+  const displayPersons = (
+    sortedCardsPerson?.length > 0 ? sortedCardsPerson : SalesPersons || []
+  )
+    .map((person) => getPersonWithSales(person))
+    .filter((p) => SalesPersons?.some((sp) => sp.uid === p.uid)); // Ensure only valid salespersons
 
   return (
     <div>
@@ -469,18 +522,19 @@ const TVScreen = () => {
           {displayPersons.map((person, index) => (
             <div
               key={person.uid}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragEnter={() => handleDragEnter(index)}
-              onDragOver={(e) => e.preventDefault()}
+              className="person-card cursor-move"
+              draggable="true"
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
               onDrop={handleDrop}
-              className="cursor-pointer"
             >
               <PersonCard
                 name={person?.name}
                 uid={person?.uid}
                 sales={person?.sales || []}
                 target={person?.target || 0}
+                isDeleted={person?.isDeleted || false}
                 salesCompleted={person?.salesCompleted || 0}
                 midMonthSales={person?.midMonthSales || 0}
               />
@@ -488,6 +542,22 @@ const TVScreen = () => {
           ))}
         </div>
       </div>
+
+      {/* Add CSS for drag-and-drop visual feedback */}
+      <style jsx>{`
+        .person-card.dragging {
+          opacity: 0.6;
+          transform: scale(0.98);
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+          z-index: 1000;
+        }
+
+        .person-card.drag-over {
+          border: 2px dashed #3498db;
+          transform: scale(1.01);
+          transition: transform 0.2s;
+        }
+      `}</style>
     </div>
   );
 };
@@ -584,10 +654,11 @@ const PersonCard = ({
   sales,
   target,
   salesCompleted,
+  isDeleted,
   midMonthSales,
 }) => {
   return (
-    <div className="bg-white p-4 rounded-lg border border-[#989898] m-1 shadow-lg w-[95vw] h-fit overflow-auto masonry-item cursor-grab">
+    <div className="bg-white p-4 rounded-lg border border-[#989898] m-1 shadow-lg w-[95vw] h-fit overflow-auto masonry-item">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold mb-4">{name}</h2>
 

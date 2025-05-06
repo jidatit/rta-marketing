@@ -275,7 +275,6 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
     // Check if the field should be numeric-only
     if (numericFields.includes(name)) {
-      console.log("enter for this field", name);
       // Allow numbers, decimal point, or empty string
       if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
         setFormData((prevData) => ({

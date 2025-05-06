@@ -135,7 +135,6 @@ const Filters = ({
                   <DatePicker
                     selected={receivedStartDate}
                     onChange={(date) => {
-                      console.log("Selected Received Start Date:", date); // Debugging
                       setReceivedStartDate(date);
                     }}
                     dateFormat="dd MMM yyyy"

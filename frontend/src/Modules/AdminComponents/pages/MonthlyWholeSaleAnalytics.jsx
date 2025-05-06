@@ -271,7 +271,7 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales }) => {
 
     loadTargets();
   }, [selectedMonth, selectedYear, selectedSalesperson, salesStats]); // Add salesStats here
-  console.log("sale stats", salesStats);
+
   const handleSave = async () => {
     const monthId = `${selectedYear}-${String(selectedMonth + 1).padStart(
       2,

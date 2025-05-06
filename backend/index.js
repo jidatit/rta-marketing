@@ -19,6 +19,8 @@ admin.initializeApp({
     universe_domain: process.env.universe_domain,
   }),
 });
+const db = admin.firestore();
+const auth = admin.auth();
 
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN }));
@@ -63,8 +65,51 @@ app.post("/enableUser", async (req, res) => {
     res.status(500).send("Error enabling user");
   }
 });
+app.post("/deleteUser", async (req, res) => {
+  try {
+    const { uid } = req.body;
 
+    const collections = ["employees", "virtual-assistants"];
+    let userDocRef = null;
+    let userData = null;
+
+    for (const collection of collections) {
+      const querySnapshot = await db
+        .collection(collection)
+        .where("uid", "==", uid)
+        .limit(1)
+        .get();
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        userDocRef = doc.ref;
+        userData = doc.data();
+        break;
+      }
+    }
+
+    if (!userDocRef || !userData) {
+      return res.status(404).json({ error: "User not found in collections" });
+    }
+
+    if (!userData.email) {
+      return res
+        .status(400)
+        .json({ error: "Email not found in user document" });
+    }
+
+    // ✅ Delete user from Firebase Auth (Admin SDK)
+    await auth.deleteUser(uid);
+
+    // ✅ Mark document as deleted
+    await userDocRef.update({ isDeleted: true });
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  // console.log(`Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
