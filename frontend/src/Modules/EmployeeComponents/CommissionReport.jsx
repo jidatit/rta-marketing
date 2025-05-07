@@ -46,6 +46,7 @@ const CommissionReportGenerator = ({ saleData }) => {
     : null;
 
   const calculateReportData = (data) => {
+    console.log("Calculating report data...", data);
     // Vehicle Costs
     const wbosVehicle = Number.parseFloat(data.vehicleCosts.wbosVehicle) || 0;
     const safety = Number.parseFloat(data.vehicleCosts.safetyInspection) || 0;
@@ -156,6 +157,7 @@ const CommissionReportGenerator = ({ saleData }) => {
     // Financing
     const interestRate = Number.parseFloat(data.financing.interestRate) || 0;
     const amountFunded = Number.parseFloat(data.financing.amountFunded) || 0;
+    const financeProvider = data.financing.financeProvider || "";
     const lien = Number.parseFloat(data.financing.lien) || 0;
     const trade = Number.parseFloat(data.financing.trade) || 0;
     const downpayment = Number.parseFloat(data.financing.downpayment) || 0;
@@ -216,6 +218,7 @@ const CommissionReportGenerator = ({ saleData }) => {
       },
       financing: {
         amountFunded: amountFunded,
+        financeProvider: financeProvider,
         provider: data.financing.provider || "Not Specified",
         interestRate,
         lien,
@@ -274,7 +277,7 @@ const CommissionReportGenerator = ({ saleData }) => {
       },
       financing: {
         amountFunded: saleData.amountFunded,
-        provider: saleData.financeProvider,
+        financeProvider: saleData.financeProvider,
         interestRate: saleData.interestRate,
         lien: saleData.lienAmount,
         downpayment: saleData.downpayment,
@@ -283,7 +286,7 @@ const CommissionReportGenerator = ({ saleData }) => {
       comments: saleData.comments,
     })
   );
-
+  console.log("Editable Report Data:", saleData);
   // Recalculate report data when editableReportData changes
   useEffect(() => {
     setEditableReportData((prev) => {
@@ -473,7 +476,7 @@ const CommissionReportGenerator = ({ saleData }) => {
                     className="flex justify-between mb-2"
                   >
                     <span>Sales Rep:</span>
-                    <span className="font-bold">Sales Agent</span>
+                    <span className="font-bold">{saleData?.salesRep}</span>
                   </Typography>
                   <Typography component="div" className="flex justify-between">
                     <span>Signature:</span>
@@ -503,7 +506,7 @@ const CommissionReportGenerator = ({ saleData }) => {
                           Date Received:
                         </TableCell>
                         <TableCell align="right">
-                          {saleData?.intermediateDate}
+                          {saleData?.dateLeadReceived}
                         </TableCell>
                       </TableRow>
                       <TableRow>
@@ -1135,8 +1138,10 @@ const CommissionReportGenerator = ({ saleData }) => {
                                 type={type}
                                 value={editableReportData.financing[key]}
                                 readOnly={!isVirtualAssistant}
+                                disabled={key === "financeProvider"} // ← Disable only financeProvider
                                 onChange={
-                                  isVirtualAssistant
+                                  isVirtualAssistant &&
+                                  key !== "financeProvider"
                                     ? (e) => {
                                         const value = e.target.value;
                                         setEditableReportData((prev) => ({

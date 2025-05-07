@@ -153,9 +153,10 @@ const updateReport = async (
             editableReportData.commission?.amount ?? saleItem.commission,
           amountFunded:
             editableReportData.financing?.amountFunded ?? saleItem.amountFunded,
+
           ...(saleData?.saleType !== "wholesale" && {
             financeProvider:
-              editableReportData.financing?.provider ??
+              editableReportData.financing?.financeProvider ??
               saleItem.financeProvider,
           }),
           trade: editableReportData.financing?.trade ?? saleItem.trade,

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { toast } from "react-toastify";
 import {
   Dialog,
@@ -93,7 +100,7 @@ const numericFields = [
 
 const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
   const { currentUser } = useAuth();
-
+  const [financeProviders, setFinanceProviders] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -270,6 +277,22 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     }
   }, [sale]);
 
+  const fetchFinanceProviders = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "financeProviders"));
+      const fetchedProviders = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+      }));
+      setFinanceProviders(fetchedProviders);
+    } catch (error) {
+      console.error("Error fetching finance providers: ", error);
+      toast.error("Failed to fetch finance providers: " + error.message);
+    }
+  };
+  useEffect(() => {
+    fetchFinanceProviders();
+  }, []);
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -722,12 +745,23 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
             {formData.saleType !== "wholesale" && (
               <Grid item xs={12} md={6}>
                 <TextField
+                  select
                   label="Finance Provider"
                   fullWidth
                   name="financeProvider"
                   value={formData.financeProvider}
                   onChange={handleChange}
-                />
+                  variant="outlined"
+                >
+                  <MenuItem value="">
+                    <em>Select Finance Provider</em>
+                  </MenuItem>
+                  {financeProviders.map((provider) => (
+                    <MenuItem key={provider.id} value={provider.name}>
+                      {provider.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
             )}
             <Grid item xs={12} md={6}>
