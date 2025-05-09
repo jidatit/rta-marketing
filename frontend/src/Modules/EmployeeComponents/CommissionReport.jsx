@@ -20,12 +20,13 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
-import { Download, View, X } from "lucide-react";
+import { Download, LogOut, View, X } from "lucide-react";
 import updateReport from "../../Utils/updateReport";
 import { useAuth } from "../../AuthContext";
 import { db } from "../../config/firebaseConfig";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import logo from "../../images/logo.png";
 
 const CommissionReportGenerator = ({ saleData }) => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -46,7 +47,6 @@ const CommissionReportGenerator = ({ saleData }) => {
     : null;
 
   const calculateReportData = (data) => {
-    console.log("Calculating report data...", data);
     // Vehicle Costs
     const wbosVehicle = Number.parseFloat(data.vehicleCosts.wbosVehicle) || 0;
     const safety = Number.parseFloat(data.vehicleCosts.safetyInspection) || 0;
@@ -119,6 +119,7 @@ const CommissionReportGenerator = ({ saleData }) => {
     const totalDealIncome =
       bosVehicle +
       gasoline +
+      admin +
       licensingCharge +
       warrantySold +
       gapProtection +
@@ -286,7 +287,7 @@ const CommissionReportGenerator = ({ saleData }) => {
       comments: saleData.comments,
     })
   );
-  console.log("Editable Report Data:", saleData);
+
   // Recalculate report data when editableReportData changes
   useEffect(() => {
     setEditableReportData((prev) => {
@@ -419,6 +420,15 @@ const CommissionReportGenerator = ({ saleData }) => {
     setPdfPreviewUrl(url);
     setOpenPdfPreview(true);
   };
+  function formatDateOrPlaceholder(date) {
+    return date ? (
+      date
+    ) : (
+      <Typography color="text.secondary" fontStyle="italic">
+        Not entered yet
+      </Typography>
+    );
+  }
 
   return (
     <Box className="p-4">
@@ -466,7 +476,7 @@ const CommissionReportGenerator = ({ saleData }) => {
             <Grid container spacing={2} className="mb-4">
               <Grid item xs={6}>
                 <Box display="flex" alignItems="center" className="mb-2">
-                  <img src="/logo.png" alt="Logo" className="w-54 h-24 mr-2" />
+                  <img src={logo} alt="Logo" className="w-54 h-24 mr-2" />
                 </Box>
               </Grid>
               <Grid item xs={6}>
@@ -506,23 +516,25 @@ const CommissionReportGenerator = ({ saleData }) => {
                           Date Received:
                         </TableCell>
                         <TableCell align="right">
-                          {saleData?.dateLeadReceived}
+                          {formatDateOrPlaceholder(saleData?.dateLeadReceived)}
                         </TableCell>
                       </TableRow>
+
                       <TableRow>
                         <TableCell component="th" scope="row">
                           Date of Sale:
                         </TableCell>
                         <TableCell align="right">
-                          {saleData?.saleDate}
+                          {formatDateOrPlaceholder(saleData?.saleDate)}
                         </TableCell>
                       </TableRow>
+
                       <TableRow>
                         <TableCell component="th" scope="row">
                           Date Funded:
                         </TableCell>
                         <TableCell align="right">
-                          {saleData?.fundedDate}
+                          {formatDateOrPlaceholder(saleData?.fundedDate)}
                         </TableCell>
                       </TableRow>
                     </TableBody>

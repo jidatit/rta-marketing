@@ -3,7 +3,21 @@ import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { useAuth } from "../../AuthContext";
 
-import { IoArrowBack } from "react-icons/io5";
+import {
+  IoAddCircleOutline,
+  IoArrowBack,
+  IoRemoveCircleOutline,
+} from "react-icons/io5";
+import {
+  Button,
+  Divider,
+  Grid,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useEffect } from "react";
 const SaleForm2 = ({
   formData,
   setShowModal,
@@ -26,8 +40,15 @@ const SaleForm2 = ({
       pac,
       safety,
       reserve,
+      otherCostItems,
     } = formData;
+
     if (isSecondFormDataValid()) {
+      const otherCostsTotal = otherCostItems.reduce((sum, item) => {
+        const amt = parseFloat(item.amount);
+        return sum + (isNaN(amt) ? 0 : amt);
+      }, 0);
+
       const grossProfit =
         parseFloat(salePrice) -
         parseFloat(unitCost) +
@@ -38,18 +59,18 @@ const SaleForm2 = ({
         parseFloat(gapCost) -
         parseFloat(pac) -
         parseFloat(safety) +
-        parseFloat(reserve);
+        parseFloat(reserve) -
+        otherCostsTotal;
 
       setFormData((prevData) => ({
         ...prevData,
         grossProfit: grossProfit.toFixed(2),
       }));
-
-      // console.log(formData);
     } else {
       toast.error("Please fill in all required fields.");
     }
   };
+
   const isSecondFormDataValid = () => {
     const requiredFields = [
       formData.salePrice,
@@ -83,7 +104,24 @@ const SaleForm2 = ({
       );
     }
   };
-
+  useEffect(() => {
+    // you can inline the validity check if you want—or just call your fn:
+    if (isSecondFormDataValid()) {
+      calculateGrossProfit();
+    }
+  }, [
+    formData.salePrice,
+    formData.unitCost,
+    formData.warCost,
+    formData.warr,
+    formData.gap,
+    formData.gapCost,
+    formData.admin,
+    formData.pac,
+    formData.safety,
+    formData.reserve,
+    formData.otherCostItems,
+  ]);
   const handleGoBack = () => {
     //code here
     setSecondForm(false);
@@ -98,6 +136,30 @@ const SaleForm2 = ({
       </div>
     ); // or you can display a fallback UI or redirect
   }
+  const handleAddOtherCost = () => {
+    setFormData((prev) => ({
+      ...prev,
+      otherCostItems: [...prev.otherCostItems, { amount: "", description: "" }],
+    }));
+  };
+
+  const handleRemoveOtherCost = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherCostItems: prev.otherCostItems.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleOtherCostChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updatedItems = [...prev.otherCostItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [field]: value,
+      };
+      return { ...prev, otherCostItems: updatedItems };
+    });
+  };
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center w-full overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
@@ -308,6 +370,95 @@ const SaleForm2 = ({
                         placeholder="Reserve"
                         required
                       />
+                    </div>
+                    {/* wrap everything in a 12-col grid with consistent gaps */}
+                    <div className="w-full grid grid-cols-12 gap-4">
+                      {/* header */}
+                      <div className="col-span-12">
+                        <h3 className="text-lg font-semibold mb-2">
+                          Other Cost Items
+                        </h3>
+                        <hr className="mb-4" />
+                      </div>
+
+                      {formData.otherCostItems.map((item, index) => (
+                        <React.Fragment key={index}>
+                          {/* amount = 5 columns */}
+                          <div className="col-span-12 sm:col-span-5">
+                            <label
+                              htmlFor={`other-amount-${index}`}
+                              className="block text-sm font-medium mb-1"
+                            >
+                              Other Cost {index + 1} Amount
+                            </label>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                                $
+                              </span>
+                              <input
+                                type="text"
+                                id={`other-amount-${index}`}
+                                value={item.amount}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === "" || /^[0-9]*\.?[0-9]*$/.test(v)) {
+                                    handleOtherCostChange(index, "amount", v);
+                                  }
+                                }}
+                                placeholder="0.00"
+                                className="block w-full pl-8 pr-3 py-2 border  border-gray-300 rounded-lg shadow-sm bg-gray-50 "
+                              />
+                            </div>
+                          </div>
+
+                          {/* description = 6 columns */}
+                          <div className="col-span-12 sm:col-span-6">
+                            <label
+                              htmlFor={`other-desc-${index}`}
+                              className="block text-sm font-medium mb-1"
+                            >
+                              Other Cost {index + 1} Description
+                            </label>
+                            <input
+                              type="text"
+                              id={`other-desc-${index}`}
+                              value={item.description}
+                              onChange={(e) =>
+                                handleOtherCostChange(
+                                  index,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Description"
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50"
+                            />
+                          </div>
+
+                          {/* delete button = 1 column, aligned bottom */}
+                          <div className="col-span-12 sm:col-span-1 flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveOtherCost(index)}
+                              className="p-1 text-red-500 hover:text-red-700"
+                            >
+                              <IoRemoveCircleOutline size={24} />
+                            </button>
+                          </div>
+                        </React.Fragment>
+                      ))}
+
+                      {/* “Add” button, full width row */}
+                      <div className="col-span-12">
+                        <button
+                          type="button"
+                          onClick={handleAddOtherCost}
+                          className="inline-flex items-center px-4 py-2 border rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          <IoAddCircleOutline className="mr-2" />
+                          Add Other Cost
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <button

@@ -55,6 +55,9 @@ const EmployeeDashboard = () => {
     saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
     InsuranceStatus: false,
     FundStatus: false,
+
+    //addiontal cost on sales perosn side
+    otherCostItems: [], // Array to store other cost items
   });
   const [files, setFiles] = useState([]);
 
