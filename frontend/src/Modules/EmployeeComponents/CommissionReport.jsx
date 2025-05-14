@@ -28,6 +28,12 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import logo from "../../images/logo.png";
 
+function f2(val) {
+  const n = Number.parseFloat(val);
+  if (isNaN(n)) return ""; // or "0" if you prefer
+  return Number.isInteger(n) ? n.toString() : n.toFixed(2);
+}
+
 const CommissionReportGenerator = ({ saleData }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const { currentUser } = useAuth();
@@ -47,34 +53,36 @@ const CommissionReportGenerator = ({ saleData }) => {
     : null;
 
   const calculateReportData = (data) => {
-    // Vehicle Costs
-    const wbosVehicle = Number.parseFloat(data.vehicleCosts.wbosVehicle) || 0;
-    const safety = Number.parseFloat(data.vehicleCosts.safetyInspection) || 0;
-    const carProof = Number.parseFloat(data.vehicleCosts.carProof) || 0;
-    const cleanUp = Number.parseFloat(data.vehicleCosts.cleanUp) || 0;
-    const parts = Number.parseFloat(data.vehicleCosts.parts) || 0;
-    const repairs = Number.parseFloat(data.vehicleCosts.repairs) || 0;
-    const tires = Number.parseFloat(data.vehicleCosts.tires) || 0;
-    const referral = Number.parseFloat(data.vehicleCosts.referral) || 0;
-    const gas = Number.parseFloat(data.vehicleCosts.gas) || 0;
-    const uber = Number.parseFloat(data.vehicleCosts.uber) || 0;
-    const driversTow = Number.parseFloat(data.vehicleCosts.driversTow) || 0;
-    const pictures = Number.parseFloat(data.vehicleCosts.pictures) || 0;
-    const invoiceCopy = Number.parseFloat(data.vehicleCosts.invoiceCopy) || 0;
-    const tints = Number.parseFloat(data.vehicleCosts.tints) || 0;
-    const purolator = Number.parseFloat(data.vehicleCosts.purolator) || 0;
-    const afcFloorPlan = Number.parseFloat(data.vehicleCosts.afcFloorPlan) || 0;
-    const mtoLicense = Number.parseFloat(data.vehicleCosts.mtoLicense) || 0;
-    const warrantyCost = Number.parseFloat(data.vehicleCosts.warrantyCost) || 0;
-    const gapProtectionCost =
-      Number.parseFloat(data.vehicleCosts.gapProtectionCost) || 0;
-    const acv = Number.parseFloat(data.vehicleCosts.acv) || 0;
+    // parse helpers
+    const p = (v) => Number.parseFloat(v) || 0;
 
-    const otherCostsTotal =
-      data.vehicleCosts.otherCostItems?.reduce(
-        (sum, item) => sum + (Number.parseFloat(item.amount) || 0),
-        0
-      ) || 0;
+    // Vehicle Costs
+    const wbosVehicle = p(data.vehicleCosts.wbosVehicle);
+    const safety = p(data.vehicleCosts.safetyInspection);
+    const carProof = p(data.vehicleCosts.carProof);
+    const cleanUp = p(data.vehicleCosts.cleanUp);
+    const parts = p(data.vehicleCosts.parts);
+    const repairs = p(data.vehicleCosts.repairs);
+    const tires = p(data.vehicleCosts.tires);
+    const referral = p(data.vehicleCosts.referral);
+    const gas = p(data.vehicleCosts.gas);
+    const uber = p(data.vehicleCosts.uber);
+    const driversTow = p(data.vehicleCosts.driversTow);
+    const pictures = p(data.vehicleCosts.pictures);
+    const invoiceCopy = p(data.vehicleCosts.invoiceCopy);
+    const tints = p(data.vehicleCosts.tints);
+    const purolator = p(data.vehicleCosts.purolator);
+    const afcFloorPlan = p(data.vehicleCosts.afcFloorPlan);
+    const mtoLicense = p(data.vehicleCosts.mtoLicense);
+    const warrantyCost = p(data.vehicleCosts.warrantyCost);
+    const gapProtectionCost = p(data.vehicleCosts.gapProtectionCost);
+    const acv = p(data.vehicleCosts.acv);
+
+    const otherCostsTotal = (data.vehicleCosts.otherCostItems || []).reduce(
+      (sum, item) => sum + p(item.amount),
+      0
+    );
+
     const totalVehicleCosts =
       wbosVehicle +
       safety +
@@ -97,24 +105,19 @@ const CommissionReportGenerator = ({ saleData }) => {
       otherCostsTotal;
 
     // Customer Costs
-    const bosVehicle = Number.parseFloat(data.customerCosts.bosVehicle) || 0;
-    const admin = Number.parseFloat(data.customerCosts.adminFee) || 0;
-    const gasoline = Number.parseFloat(data.customerCosts.gasoline) || 0;
-    const licensingCharge =
-      Number.parseFloat(data.customerCosts.licensingCharge) || 0;
-    const warrantySold =
-      Number.parseFloat(data.customerCosts.warrantySold) || 0;
-    const gapProtection =
-      Number.parseFloat(data.customerCosts.gapProtection) || 0;
-    const lenderReserve =
-      Number.parseFloat(data.customerCosts.lenderReserve) || 0;
-    const lenderBonus = Number.parseFloat(data.customerCosts.lenderBonus) || 0;
+    const bosVehicle = p(data.customerCosts.bosVehicle);
+    const admin = p(data.customerCosts.adminFee);
+    const gasoline = p(data.customerCosts.gasoline);
+    const licensingCharge = p(data.customerCosts.licensingCharge);
+    const warrantySold = p(data.customerCosts.warrantySold);
+    const gapProtection = p(data.customerCosts.gapProtection);
+    const lenderReserve = p(data.customerCosts.lenderReserve);
+    const lenderBonus = p(data.customerCosts.lenderBonus);
 
-    const otherIncomeItems =
-      data.customerCosts.otherIncomeItems?.reduce(
-        (sum, item) => sum + (Number.parseFloat(item.amount) || 0),
-        0
-      ) || 0;
+    const otherIncomeTotal = (data.customerCosts.otherIncomeItems || []).reduce(
+      (sum, item) => sum + p(item.amount),
+      0
+    );
 
     const totalDealIncome =
       bosVehicle +
@@ -125,106 +128,97 @@ const CommissionReportGenerator = ({ saleData }) => {
       gapProtection +
       lenderReserve +
       lenderBonus +
-      otherIncomeItems;
+      otherIncomeTotal;
 
+    // Gross and Commission
     const totalGross = totalDealIncome - totalVehicleCosts;
     const pacInput = data.dealSummary?.pac;
-    const pac =
-      pacInput === "" || pacInput === null || pacInput === undefined
-        ? 0
-        : Number.parseFloat(pacInput);
+    const pac = !pacInput && pacInput !== 0 ? 0 : p(pacInput);
     const salesGross = totalGross - pac;
 
-    const saleType = saleData?.saleType || "individual";
-    const inputRate = data.commission?.rate;
-
-    // Parse only for calculation
+    const saleType = data.saleData?.saleType || "individual";
+    const rateInput = data.commission?.rate;
     const commissionRateNumber =
       saleType === "wholesale"
         ? 0
-        : inputRate === "" || inputRate === null || inputRate === undefined
+        : !rateInput && rateInput !== 0
         ? 0
-        : Number.parseFloat(inputRate);
+        : p(rateInput);
 
-    // Calculate commission
     const commission =
       Math.round(salesGross * (commissionRateNumber / 100) * 100) / 100;
-
     const trueGross = salesGross - commission;
 
-    // Deal Summary
-    const warr = Number.parseFloat(data.customerCosts.warranty) || 0;
-
     // Financing
-    const interestRate = Number.parseFloat(data.financing.interestRate) || 0;
-    const amountFunded = Number.parseFloat(data.financing.amountFunded) || 0;
+    const interestRate = p(data.financing.interestRate);
+    const amountFunded = p(data.financing.amountFunded);
     const financeProvider = data.financing.financeProvider || "";
-    const lien = Number.parseFloat(data.financing.lien) || 0;
-    const trade = Number.parseFloat(data.financing.trade) || 0;
-    const downpayment = Number.parseFloat(data.financing.downpayment) || 0;
+    const lien = p(data.financing.lien);
+    const trade = p(data.financing.trade);
+    const downpayment = p(data.financing.downpayment);
+
+    // Warranty (customerCosts.warranty)
+    const warr = p(data.customerCosts.warranty);
 
     return {
       vehicleCosts: {
-        wbosVehicle,
-        safetyInspection: safety,
-        total: totalVehicleCosts,
-        carProof,
-        cleanUp,
-        parts,
-        repairs,
-        tires,
-        referral,
-        gas,
-        uber,
-        driversTow,
-        pictures,
-        invoiceCopy,
-        tints,
-        purolator,
-        afcFloorPlan,
-        mtoLicense,
-        warrantyCost,
-        gapProtectionCost,
-
-        acv,
-        otherCostItems: data.vehicleCosts.otherCostItems || [], // Include other costs array
-        otherCostsTotal, // Include sum of other costs
-        totalVehicleCosts,
+        wbosVehicle: f2(wbosVehicle),
+        safetyInspection: f2(safety),
+        carProof: f2(carProof),
+        cleanUp: f2(cleanUp),
+        parts: f2(parts),
+        repairs: f2(repairs),
+        tires: f2(tires),
+        referral: f2(referral),
+        gas: f2(gas),
+        uber: f2(uber),
+        driversTow: f2(driversTow),
+        pictures: f2(pictures),
+        invoiceCopy: f2(invoiceCopy),
+        tints: f2(tints),
+        purolator: f2(purolator),
+        afcFloorPlan: f2(afcFloorPlan),
+        mtoLicense: f2(mtoLicense),
+        warrantyCost: f2(warrantyCost),
+        gapProtectionCost: f2(gapProtectionCost),
+        acv: f2(acv),
+        otherCostItems: data.vehicleCosts.otherCostItems || [],
+        otherCostsTotal: f2(otherCostsTotal),
+        totalVehicleCosts: f2(totalVehicleCosts),
       },
       customerCosts: {
-        bosVehicle,
-        adminFee: admin,
-        gasoline,
-        licensingCharge,
-        warrantySold,
-        gapProtection,
-        gap: gapProtection,
-        warranty: warr,
-        lenderReserve,
-        lenderBonus,
+        bosVehicle: f2(bosVehicle),
+        adminFee: f2(admin),
+        gasoline: f2(gasoline),
+        licensingCharge: f2(licensingCharge),
+        warrantySold: f2(warrantySold),
+        gapProtection: f2(gapProtection),
+        warranty: f2(warr),
+        lenderReserve: f2(lenderReserve),
+        lenderBonus: f2(lenderBonus),
         otherIncomeItems: data.customerCosts.otherIncomeItems || [],
-        total: totalDealIncome,
+        total: f2(totalDealIncome),
       },
       dealSummary: {
-        totalExpenses: totalVehicleCosts,
-        totalIncome: totalDealIncome,
-        totalGross,
-        pac: pacInput,
-        salesGross,
-        trueGross,
+        totalExpenses: f2(totalVehicleCosts),
+        totalIncome: f2(totalDealIncome),
+        totalGross: f2(totalGross),
+        pac: f2(pac),
+        salesGross: f2(salesGross),
+        trueGross: f2(trueGross),
       },
       commission: {
-        rate: inputRate,
-        amount: commission.toFixed(2),
+        rate: data.commission?.rate ?? "",
+        amount: f2(commission),
       },
       financing: {
-        amountFunded: amountFunded,
-        financeProvider: financeProvider,
+        interestRate: f2(interestRate),
+        amountFunded: f2(amountFunded),
+        financeProvider,
         provider: data.financing.provider || "Not Specified",
-        interestRate,
-        lien,
-        trade,
-        downpayment,
+        lien: f2(lien),
+        trade: f2(trade),
+        downpayment: f2(downpayment),
       },
       comments: data.comments || "",
     };
@@ -384,28 +378,27 @@ const CommissionReportGenerator = ({ saleData }) => {
     const input = document.getElementById("reportContent");
     if (!input) return;
 
-    const prevTransform = input.style.transform;
-    const prevPadding = input.style.padding;
-    input.style.transformOrigin = "top left";
-    input.style.transform = "scale(0.85)";
-    input.style.padding = "8px";
+    // 1) Add our PDF‐only styles
+    input.classList.add("pdfMode");
 
+    // 2) Give the browser a tick to apply the class
     await new Promise((r) => setTimeout(r, 50));
 
+    // 3) Snapshot at 2× resolution
     const canvas = await html2canvas(input, { scale: 2 });
 
-    input.style.transform = prevTransform;
-    input.style.padding = prevPadding;
+    // 4) Remove the PDF styling immediately
+    input.classList.remove("pdfMode");
 
+    // 5) Build the PDF as before
     const imgData = canvas.toDataURL("image/png");
-
     const pdf = new jsPDF("p", "mm", "a4");
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
     const props = pdf.getImageProperties(imgData);
+
     let imgW = pageW;
     let imgH = (props.height * imgW) / props.width;
-
     if (imgH > pageH) {
       const scale = pageH / imgH;
       imgW *= scale;
@@ -420,6 +413,7 @@ const CommissionReportGenerator = ({ saleData }) => {
     setPdfPreviewUrl(url);
     setOpenPdfPreview(true);
   };
+
   function formatDateOrPlaceholder(date) {
     return date ? (
       date
@@ -742,7 +736,10 @@ const CommissionReportGenerator = ({ saleData }) => {
                         <TableCell align="right" fontWeight="bold">
                           <TextField
                             type="text"
-                            value={editableReportData.vehicleCosts.total ?? ""}
+                            value={
+                              editableReportData.vehicleCosts
+                                .totalVehicleCosts ?? ""
+                            }
                             readOnly
                             size="small"
                             variant="standard"

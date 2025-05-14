@@ -79,5 +79,20 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 .css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input {
-padding: 8px !important;
+  padding: 8px !important;
+}
+/* Float numbers above the field */
+#reportContent.pdfMode .MuiInput-underline .MuiInputBase-input {
+  position: relative;
+  top: -3px;
+}
+
+#reportContent.pdfMode .MuiInput-underline {
+  padding-bottom: 2px;
+}
+
+/* <---margin bottom for the $ / % adornments here to be same postion as number*/
+#reportContent.pdfMode .MuiInputAdornment-root {
+  position: relative;
+  top: -6px;
 }
