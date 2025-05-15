@@ -234,7 +234,7 @@ const SalesTable = ({
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 rounded-tl-md"
                 >
-                  Client
+                  Client/Dealership
                 </th>
                 <th
                   scope="col"
@@ -280,7 +280,11 @@ const SalesTable = ({
                       className="bg-white border-b dark:bg-white dark:border-gray-300"
                     >
                       <td className="px-2 py-3 sm:px-4 sm:py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                        <div className="font-medium">{sale.customerName}</div>
+                        <div className="font-medium">
+                          {sale.customerName
+                            ? sale?.customerName
+                            : sale?.dealershipPurchase}
+                        </div>
                         <div className="text-xs text-gray-500 sm:hidden">
                           {sale.vehicleMake} {sale.vehicleModel}
                         </div>

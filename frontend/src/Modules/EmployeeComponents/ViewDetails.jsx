@@ -111,22 +111,27 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <div className="flex items-center justify-between mb-6 ">
                   <h3 className="text-lg font-bold w-[45%]">Sale Details</h3>
                   <div className="">
-                    <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full  gap-x-2">
-                      <span>Gross Profit :</span>
-                      <p>{sale.grossProfit}</p>
+                    <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full gap-x-2">
+                      <span>Gross Profit</span>
+                      <p>{sale?.grossProfit}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4  ">
-                  <div className=" flex flex-col gap-2 w-[45%] ">
-                    <p className="text-sm font-medium text-slate-800 ">
-                      Customer Name
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col gap-2 w-[45%]">
+                    <p className="text-sm font-medium text-slate-800">
+                      {sale.saleType === "wholesale"
+                        ? "Dealership Name"
+                        : "Customer Name"}
                     </p>
-                    <p className="text-xl font-bold text-black ">
-                      {sale.customerName}
+                    <p className="text-xl font-bold text-black">
+                      {sale.saleType === "wholesale"
+                        ? sale.dealershipPurchase
+                        : sale.customerName}
                     </p>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Vehicle Make
                     </p>
@@ -135,8 +140,9 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4 ">
-                  <div className=" flex flex-col gap-2 w-[45%]">
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Vehicle Model
                     </p>
@@ -144,7 +150,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       {sale.vehicleModel}
                     </p>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Stock Number
                     </p>
@@ -153,20 +159,82 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4 ">
-                  <div className=" flex flex-col gap-2 w-[45%]">
-                    <p className="text-sm font-medium text-slate-800">VIN</p>
-                    <p className="text-xl font-bold text-black">{sale.VIN}</p>
+
+                {sale.saleType === "wholesale" ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Year
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.year}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Auction
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.auction}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Vehicle Purchase Price
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.vehiclePurchasePrice}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Vehicle Sold Price
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.vehicleSoldPrice}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Date Vehicle Received
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.dateVehicleReceived}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Date Vehicle Sold
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.dateVehicleSold}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col gap-2 w-[45%]">
+                      <p className="text-sm font-medium text-slate-800">VIN</p>
+                      <p className="text-xl font-bold text-black">{sale.VIN}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 w-[45%]">
+                      <p className="text-sm font-medium text-slate-800">
+                        Lead Source
+                      </p>
+                      <p className="text-xl font-bold text-black">
+                        {sale.leadSource}
+                      </p>
+                    </div>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
-                    <p className="text-sm font-medium text-slate-800">
-                      Lead Source
-                    </p>
-                    <p className="text-xl font-bold text-black">
-                      {sale.leadSource}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </TabPanel>
             <TabPanel value="2" style={{ padding: "0", margin: "0" }}>

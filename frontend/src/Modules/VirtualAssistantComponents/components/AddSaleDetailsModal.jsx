@@ -105,6 +105,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     customerName: sale?.customerName || "",
+    dealershipPurchase: sale?.dealershipPurchase || "",
     leadSource: sale?.leadSource || "",
     stockNumber: sale?.stockNumber || "",
     vehicle: `${sale?.vehicleMake || ""}`,
@@ -168,6 +169,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     if (sale) {
       setFormData({
         customerName: sale.customerName || "",
+        dealershipPurchase: sale?.dealershipPurchase || "",
         leadSource: sale.leadSource || "",
         stockNumber: sale.stockNumber || "",
         vehicle: `${sale.vehicleMake || ""} `,
@@ -631,7 +633,9 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 gutterBottom
                 sx={{ fontWeight: "medium" }}
               >
-                Customer Information
+                {formData.saleType === "wholesale"
+                  ? "Dealership Information"
+                  : "Customer Information"}
               </Typography>
               <Divider sx={{ mb: 1 }} />
             </Grid>
@@ -639,12 +643,24 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
             {/* First Row */}
             <Grid item xs={12} md={6}>
               <TextField
-                label="Customer Name"
+                label={
+                  formData.saleType === "wholesale"
+                    ? "Dealership Name"
+                    : "Customer Name"
+                }
                 fullWidth
                 size="small"
                 variant="outlined"
-                name="customerName"
-                value={formData.customerName}
+                name={
+                  formData.saleType === "wholesale"
+                    ? "dealershipPurchase"
+                    : "customerName"
+                }
+                value={
+                  formData.saleType === "wholesale"
+                    ? formData.dealershipPurchase
+                    : formData.customerName
+                }
                 onChange={handleChange}
               />
             </Grid>
@@ -1928,7 +1944,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">
-            Sale Details: {sale?.customerName || "New Sale"} -{" "}
+            Sale Details: {sale?.customerName || sale?.dealershipPurchase} -{" "}
             {sale?.stockNumber || ""}
           </Typography>
           <Button onClick={onClose} color="inherit" size="small">

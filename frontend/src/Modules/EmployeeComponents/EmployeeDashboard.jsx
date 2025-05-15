@@ -58,6 +58,17 @@ const EmployeeDashboard = () => {
 
     //addiontal cost on sales perosn side
     otherCostItems: [], // Array to store other cost items
+
+    // Add wholesale specific fields
+    year: "",
+    dealershipPurchase: "",
+    dealershipSold: "",
+    profitLoss: "",
+    dateVehicleReceived: "",
+    dateVehicleSold: "",
+    vehiclePurchasePrice: "",
+    vehicleSoldPrice: "",
+    auction: "",
   });
   const [files, setFiles] = useState([]);
 
@@ -188,6 +199,17 @@ const EmployeeDashboard = () => {
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
+
+        // Add wholesale specific fields
+        year: "",
+        dealershipPurchase: "",
+        dealershipSold: "",
+        profitLoss: "",
+        dateVehicleReceived: "",
+        dateVehicleSold: "",
+        vehiclePurchasePrice: "",
+        vehicleSoldPrice: "",
+        auction: "",
       });
       setThirdForm(false);
       toast.success("New Sale Added Successfully");
@@ -253,6 +275,17 @@ const EmployeeDashboard = () => {
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
+
+        // Add wholesale specific fields
+        year: "",
+        dealershipPurchase: "",
+        dealershipSold: "",
+        profitLoss: "",
+        dateVehicleReceived: "",
+        dateVehicleSold: "",
+        vehiclePurchasePrice: "",
+        vehicleSoldPrice: "",
+        auction: "",
       });
       setThirdForm(false);
       toast.success("New Sale Added Successfully");

@@ -593,6 +593,7 @@ const ClientCard = ({
   InsuranceStatus,
   FundStatus,
   vehicleModel,
+  saleType,
 }) => {
   const [limit, setLimit] = useState([]);
 
@@ -631,7 +632,10 @@ const ClientCard = ({
       style={{ backgroundColor: color }}
     >
       <div className="flex items-center justify-between gap-4 w-full p-1">
-        <h3 className="font-semibold">{name}</h3>
+        <div className="flex items-center gap-1">
+          <h3 className="font-semibold">{name}</h3>
+        </div>
+
         {grossProfit >= Number(limit[0]?.limit) ? <FaCircleCheck /> : null}
       </div>
 
@@ -677,13 +681,18 @@ const PersonCard = ({
           sales.map((sale, idx) => (
             <ClientCard
               key={idx}
-              name={sale.customerName}
+              name={
+                sale.saleType === "wholesale"
+                  ? sale.dealershipPurchase
+                  : sale.customerName
+              }
               company={sale.vehicleMake}
               vehicleModel={sale.vehicleModel}
               leadSource={sale.leadSource}
               FundStatus={sale.FundStatus}
               InsuranceStatus={sale.InsuranceStatus}
               grossProfit={sale.grossProfit}
+              saleType={sale.saleType}
             />
           ))
         ) : (

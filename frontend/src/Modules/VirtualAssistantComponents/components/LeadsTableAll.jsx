@@ -416,7 +416,7 @@ const LeadsPageVA = ({
       label: "Lead Source",
       render: (value, row) => (
         <div className="max-w-xs truncate" title={value}>
-          {value}
+          {value ? value : "N/A"}
         </div>
       ),
     },

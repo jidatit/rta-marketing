@@ -499,10 +499,14 @@ const CommissionReportGenerator = ({ saleData }) => {
                     <TableBody>
                       <TableRow>
                         <TableCell component="th" scope="row">
-                          Customer:
+                          {saleData?.saleType === "wholesale"
+                            ? "Dealership:"
+                            : "Customer:"}
                         </TableCell>
                         <TableCell align="right">
-                          {saleData?.customerName}
+                          {saleData?.saleType === "wholesale"
+                            ? saleData?.dealershipPurchase
+                            : saleData?.customerName}
                         </TableCell>
                       </TableRow>
                       <TableRow>

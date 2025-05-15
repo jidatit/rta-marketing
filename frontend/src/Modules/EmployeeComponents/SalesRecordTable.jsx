@@ -260,7 +260,7 @@ const SaleRecordTable = ({ setShowModal }) => {
           <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white rounded-t-md">
             <tr>
               <th scope="col" className="px-4 py-4 rounded-tl-md">
-                Client Name
+                Client/Dealership
               </th>
               <th scope="col" className="px-4 py-4">
                 Car Name
@@ -287,7 +287,9 @@ const SaleRecordTable = ({ setShowModal }) => {
                   className="bg-white border-b dark:bg-white dark:border-gray-300"
                 >
                   <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                    {sale.customerName}
+                    {sale?.customerName
+                      ? sale?.customerName
+                      : sale?.dealershipPurchase}
                   </td>
                   <td className="px-4 py-4 text-gray-900">
                     {sale.vehicleMake}

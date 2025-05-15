@@ -237,7 +237,16 @@ const SalesOfSPTable = ({ id }) => {
 
   // Table columns configuration
   const salesColumns = [
-    { key: "customerName", label: "Client Name" },
+    {
+      key: "name",
+      label: "Client/Dealership",
+      render: (value, row) => {
+        if (row?.saleType === "wholesale") {
+          return row?.dealershipPurchase || "N/A";
+        }
+        return row?.customerName || "N/A";
+      },
+    },
     {
       key: "carName",
       label: "Vehicle Type",
