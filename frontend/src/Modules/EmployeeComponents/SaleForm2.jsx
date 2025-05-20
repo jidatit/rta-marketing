@@ -44,7 +44,7 @@ const SaleForm2 = ({
     } = formData;
 
     if (isSecondFormDataValid()) {
-      const otherCostsTotal = otherCostItems.reduce((sum, item) => {
+      const otherCostsTotal = otherCostItems?.reduce((sum, item) => {
         const amt = parseFloat(item.amount);
         return sum + (isNaN(amt) ? 0 : amt);
       }, 0);
@@ -139,20 +139,23 @@ const SaleForm2 = ({
   const handleAddOtherCost = () => {
     setFormData((prev) => ({
       ...prev,
-      otherCostItems: [...prev.otherCostItems, { amount: "", description: "" }],
+      otherCostItems: [
+        ...prev?.otherCostItems,
+        { amount: "", description: "" },
+      ],
     }));
   };
 
   const handleRemoveOtherCost = (index) => {
     setFormData((prev) => ({
       ...prev,
-      otherCostItems: prev.otherCostItems.filter((_, i) => i !== index),
+      otherCostItems: prev?.otherCostItems?.filter((_, i) => i !== index),
     }));
   };
 
   const handleOtherCostChange = (index, field, value) => {
     setFormData((prev) => {
-      const updatedItems = [...prev.otherCostItems];
+      const updatedItems = [...prev?.otherCostItems];
       updatedItems[index] = {
         ...updatedItems[index],
         [field]: value,
@@ -381,7 +384,7 @@ const SaleForm2 = ({
                         <hr className="mb-4" />
                       </div>
 
-                      {formData.otherCostItems.map((item, index) => (
+                      {formData?.otherCostItems?.map((item, index) => (
                         <React.Fragment key={index}>
                           {/* amount = 5 columns */}
                           <div className="col-span-12 sm:col-span-5">

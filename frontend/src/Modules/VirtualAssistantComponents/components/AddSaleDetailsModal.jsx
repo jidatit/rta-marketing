@@ -164,6 +164,20 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     trueGross: "",
     daysToDelivery: "",
     daysToFunding: "",
+
+    //wholesale furher information
+    year: sale?.year || "",
+    dealershipSold: sale?.dealershipSold || "",
+    profitLoss: sale?.profitLoss || "",
+    dateVehicleReceived: sale?.dateVehicleReceived
+      ? new Date(sale.dateVehicleReceived)
+      : null,
+    dateVehicleSold: sale?.dateVehicleSold
+      ? new Date(sale.dateVehicleSold)
+      : null,
+    vehiclePurchasePrice: sale?.vehiclePurchasePrice || "",
+    vehicleSoldPrice: sale?.vehicleSoldPrice || "",
+    auction: sale?.auction || "",
   });
   useEffect(() => {
     if (sale) {
@@ -229,6 +243,20 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         trueGross: sale.trueGross || "",
         daysToDelivery: sale.daysToDelivery || "",
         daysToFunding: sale.daysToFunding || "",
+
+        //wholesale furher information
+        year: sale?.year || "",
+        dealershipSold: sale?.dealershipSold || "",
+        profitLoss: sale?.profitLoss || "",
+        dateVehicleReceived: sale?.dateVehicleReceived
+          ? new Date(sale.dateVehicleReceived)
+          : null,
+        dateVehicleSold: sale?.dateVehicleSold
+          ? new Date(sale.dateVehicleSold)
+          : null,
+        vehiclePurchasePrice: sale?.vehiclePurchasePrice || "",
+        vehicleSoldPrice: sale?.vehicleSoldPrice || "",
+        auction: sale?.auction || "",
 
         otherIncomeItems: sale.otherIncomeItems || [
           ...(sale.otherIncome1Amount
@@ -344,6 +372,8 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       saleDate: formatDate(formData.saleDate),
       dateLeadReceived: formatDate(formData.dateLeadReceived),
       fundedDate: formatDate(formData.fundedDate),
+      dateVehicleReceived: formatDate(formData.dateVehicleReceived),
+      dateVehicleSold: formatDate(formData.dateVehicleSold),
     };
 
     try {
@@ -746,6 +776,117 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </Box>
             </Grid>
+            {formData.saleType === "wholesale" && (
+              // Wholesale specific fields
+              <>
+                {/* <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Year"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="year"
+                    value={formData.year}
+                    onChange={handleChange}
+                  />
+                </Grid> */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Vehicle Purchase Price"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="vehiclePurchasePrice"
+                    value={formData.vehiclePurchasePrice}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Vehicle Sold Price"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="vehicleSoldPrice"
+                    value={formData.vehicleSoldPrice}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Auction"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="auction"
+                    value={formData.auction}
+                    onChange={handleChange}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Profit/Loss"
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    name="profitLoss"
+                    value={formData.profitLoss}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Date Vehicle Received"
+                      value={formData.dateVehicleReceived}
+                      onChange={(date) =>
+                        handleDateChange("dateVehicleReceived", date)
+                      }
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: "small",
+                          variant: "outlined",
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Date Vehicle Sold"
+                      value={formData.dateVehicleSold}
+                      onChange={(date) =>
+                        handleDateChange("dateVehicleSold", date)
+                      }
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: "small",
+                          variant: "outlined",
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+              </>
+            )}
           </Grid>
         );
       case 1:

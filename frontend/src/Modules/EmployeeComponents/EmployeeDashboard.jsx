@@ -23,7 +23,7 @@ const EmployeeDashboard = () => {
   const [thirdForm, setThirdForm] = useState(false);
   const [firstForm, setFirstForm] = useState(false);
   const { currentUser } = useAuth();
-  console.log("currentUser", currentUser);
+
   const getCurrentTime = () => {
     const now = new Date();
     return now.toLocaleTimeString("en-US", { hour12: false }); // Format: HH:mm:ss
@@ -199,8 +199,10 @@ const EmployeeDashboard = () => {
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
+        otherCostItems: [],
 
         // Add wholesale specific fields
+
         year: "",
         dealershipPurchase: "",
         dealershipSold: "",
@@ -275,6 +277,7 @@ const EmployeeDashboard = () => {
         saleTime: getCurrentTime(), // Only stores the time (HH:mm:ss)
         InsuranceStatus: false,
         FundStatus: false,
+        otherCostItems: [],
 
         // Add wholesale specific fields
         year: "",
