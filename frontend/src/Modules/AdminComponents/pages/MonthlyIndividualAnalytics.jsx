@@ -25,6 +25,7 @@ import {
 import { db } from "../../../config/firebaseConfig";
 import { FaSave } from "react-icons/fa";
 import { toast } from "react-toastify";
+import logo from "../../../images/logo.png";
 const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
   const months = [
     "January",
@@ -321,7 +322,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start w-full  pt-5 pb-3">
         <div className="mb-4 md:mb-0">
-          <img src="/logo.png" alt="RightTurn Auto Credit" className="h-16" />
+          <img src={logo} alt="RightTurn Auto Credit" className="h-16" />
         </div>
 
         <div className="flex flex-col w-full md:w-auto gap-4 ">
@@ -578,8 +579,17 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales }) => {
       </div>
 
       {/* Table Section */}
-      <div className="w-full ">
-        <SalesTrackingTable sales={filteredSales} />
+
+      <div className="w-full">
+        {filteredSales.length > 0 ? (
+          <SalesTrackingTable sales={filteredSales} />
+        ) : (
+          <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-gray-500">
+              No sales data available for selected period
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
