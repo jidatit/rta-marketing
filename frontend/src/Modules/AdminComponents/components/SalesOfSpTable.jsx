@@ -354,6 +354,7 @@ const SalesOfSPTable = ({ id }) => {
       </div>
       {isModalOpen ? (
         <ViewDetails
+          hide={true}
           onClose={() => {
             setIsModalOpen(false);
           }}

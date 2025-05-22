@@ -64,6 +64,63 @@ export default function SalesTrackingTable({ sales = [] }) {
     (sale) => sale.saleType === "wholesale"
   );
 
+  // Add helper function to check if details are pending
+  const isDetailsComplete = (sale) => {
+    return sale.updatedAt || sale.updatedBy || sale.updatedById;
+  };
+
+  // Add array of numeric fields that need decimal formatting
+  const numericFields = [
+    "grossProfit",
+    "salesGross",
+    "commission",
+    "trueGross",
+    "interestRate",
+    "lienAmount",
+    "vehiclePurchasePrice",
+    "profitLoss",
+  ];
+
+  // Add helper function to format numbers
+  const formatNumber = (value) => {
+    if (!value && value !== 0) return "N/A";
+    const number = parseFloat(value);
+    return isNaN(number) ? value : number.toFixed(2);
+  };
+
+  // Update the renderCellContent function
+  const renderCellContent = (sale, col) => {
+    // Check if details are pending
+    if (!isDetailsComplete(sale)) {
+      if (col.key === "grossProfit") {
+        return (
+          <span className="text-xs text-gray-500 italic">Details pending</span>
+        );
+      }
+      if (!sale[col.key]) {
+        return (
+          <span className="text-xs text-gray-500 italic">Details pending</span>
+        );
+      }
+    }
+
+    // Handle specific column types
+    if (col.key === "vehicle") {
+      return `${sale.vehicleMake || "N/A"} ${sale.vehicleModel || ""}`;
+    }
+
+    if (dateFields.includes(col.key)) {
+      return formatDate(sale[col.key]);
+    }
+
+    // Format numeric fields
+    if (numericFields.includes(col.key)) {
+      return formatNumber(sale[col.key]);
+    }
+
+    return sale[col.key] || "N/A";
+  };
+
   return (
     <div className="overflow-x-auto w-full">
       {/* Individual Sales Table */}
@@ -76,7 +133,7 @@ export default function SalesTrackingTable({ sales = [] }) {
                 {individualColumns.map((col, index) => (
                   <th
                     key={index}
-                    className="border border-[#011c64] text-white p-2 text-sm"
+                    className="border border-[#011c64] text-white p-2 text-sm truncate"
                   >
                     {col.label}
                   </th>
@@ -89,15 +146,9 @@ export default function SalesTrackingTable({ sales = [] }) {
                   {individualColumns.map((col, colIndex) => (
                     <td
                       key={colIndex}
-                      className="border border-gray-300 p-2 text-sm"
+                      className="border  border-gray-300 p-2 text-sm truncate"
                     >
-                      {col.key === "vehicle"
-                        ? `${sale.vehicleMake || "N/A"} ${
-                            sale.vehicleModel || ""
-                          }`
-                        : dateFields.includes(col.key)
-                        ? formatDate(sale[col.key])
-                        : sale[col.key] || "N/A"}
+                      {renderCellContent(sale, col)}
                     </td>
                   ))}
                 </tr>
@@ -117,7 +168,7 @@ export default function SalesTrackingTable({ sales = [] }) {
                 {wholesaleColumns.map((col, index) => (
                   <th
                     key={index}
-                    className="border border-[#011c64] text-white p-2 text-sm"
+                    className="border border-[#011c64] text-white p-2 text-sm truncate"
                   >
                     {col.label}
                   </th>
@@ -130,15 +181,9 @@ export default function SalesTrackingTable({ sales = [] }) {
                   {wholesaleColumns.map((col, colIndex) => (
                     <td
                       key={colIndex}
-                      className="border border-gray-300 p-2 text-sm"
+                      className="border border-gray-300 p-2 text-sm truncate"
                     >
-                      {col.key === "vehicle"
-                        ? `${sale.vehicleMake || "N/A"} ${
-                            sale.vehicleModel || ""
-                          }`
-                        : dateFields.includes(col.key)
-                        ? formatDate(sale[col.key])
-                        : sale[col.key] || "N/A"}
+                      {renderCellContent(sale, col)}
                     </td>
                   ))}
                 </tr>

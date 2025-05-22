@@ -98,7 +98,7 @@ const updateReport = async (
             [],
 
           totalVehicleCosts:
-            editableReportData.vehicleCosts?.total ??
+            editableReportData.vehicleCosts?.totalVehicleCosts ??
             saleItem.totalVehicleCosts,
           bosVehicle:
             editableReportData.customerCosts?.bosVehicle ?? saleItem.bosVehicle,
@@ -143,6 +143,10 @@ const updateReport = async (
             editableReportData.dealSummary?.totalExpenses ??
             saleItem.totalExpenses,
           totalGross:
+            editableReportData.dealSummary?.totalGross ?? saleItem.totalGross,
+          gross:
+            editableReportData.dealSummary?.totalGross ?? saleItem.totalGross,
+          grossProfit:
             editableReportData.dealSummary?.totalGross ?? saleItem.totalGross,
           pac: editableReportData.dealSummary?.pac ?? saleItem.pac,
           salesGross:

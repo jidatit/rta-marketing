@@ -500,17 +500,18 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
       0
     );
 
-    // const totalIncome =
-    //   bosVehicle +
-    //   adminFee +
-    //   gasoline +
-    //   licensingCharge +
-    //   warrantySold +
-    //   gapProtection +
-    //   otherIncome1 +
-    //   otherIncome2 +
-    //   lenderReserve +
-    //   lenderBonus;
+    const totalIncome =
+      bosVehicle +
+      adminFee +
+      gasoline +
+      licensingCharge +
+      warrantySold +
+      gapProtection +
+      otherIncome1 +
+      otherIncome2 +
+      lenderReserve +
+      lenderBonus +
+      otherIncomeTotal;
 
     // Calculate totalCOGS
     const wbosVehicle = Number.parseFloat(formData.wbosVehicle || "0");
@@ -573,7 +574,8 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
 
     // Calculate salesGross
     const pac = Number.parseFloat(formData.pac || "0");
-    const gross = Number.parseFloat(formData?.gross || "0");
+    // const gross = Number.parseFloat(formData?.gross || "0");
+    const gross = Number.parseFloat(totalIncome - totalCOGS || "0");
     const salesGross = gross - pac;
 
     // Calculate commission
@@ -598,7 +600,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     // Update formData with calculated values
     setFormData((prev) => ({
       ...prev,
-      // totalIncome: totalIncome.toFixed(2),
+      totalIncome: totalIncome.toFixed(2),
       totalCOGS: totalCOGS.toFixed(2),
       gross: gross.toFixed(2),
       salesGross: salesGross.toFixed(2),
@@ -1870,7 +1872,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
             <Grid item xs={12} md={4}>
               <Box sx={{ mt: 1 }}>
                 <TextField
-                  label="Gross"
+                  label="Gross (Total Income - Total COGS)"
                   fullWidth
                   size="small"
                   variant="outlined"
@@ -1945,7 +1947,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
             <Grid item xs={12} md={6}>
               <Box sx={{ mt: 1 }}>
                 <TextField
-                  label="True Gross"
+                  label="True Gross (Sale Gross - Comission)"
                   fullWidth
                   size="small"
                   variant="outlined"

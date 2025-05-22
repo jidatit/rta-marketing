@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   collection,
   getDocs,
@@ -87,7 +87,6 @@ const sendLeadNotification = async (employee, manager, threshold) => {
 };
 
 // Custom hook to continuously monitor lead counts by month
-// Modified to return a trigger function and status
 export const useLeadMonitoring = (
   db,
   threshold = 10,
@@ -99,9 +98,22 @@ export const useLeadMonitoring = (
     error: null,
   });
 
-  // Create the monitoring function outside useEffect so we can return it
-  const monitorLeads = async () => {
+  // Use refs to prevent multiple simultaneous checks and track initialization
+  const isCheckingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+  const intervalRef = useRef(null);
+
+  // Create the monitoring function
+  const monitorLeads = async (isManualTrigger = false) => {
+    // Prevent multiple simultaneous checks
+    if (isCheckingRef.current) {
+      console.log("Check already in progress, skipping...");
+      return { success: false, message: "Check already in progress" };
+    }
+
     try {
+      isCheckingRef.current = true;
+
       // Set status to running
       setMonitoringStatus((prev) => ({
         ...prev,
@@ -114,7 +126,7 @@ export const useLeadMonitoring = (
       const currentYear = currentDate.getFullYear();
       const monthYearKey = `${currentYear}-${currentMonth + 1}`;
 
-      // IMPROVED STRUCTURE: Get the collection of monthly notification documents
+      // Get the collection of monthly notification documents
       const notificationsCollectionRef = collection(
         db,
         "notificationHistory",
@@ -159,42 +171,75 @@ export const useLeadMonitoring = (
         }
       });
 
+      // Only proceed with notifications if there are employees to notify
+      if (employeesToNotify.length === 0) {
+        setMonitoringStatus({
+          running: false,
+          lastCheck: new Date(),
+          error: null,
+        });
+
+        return {
+          success: true,
+          employeesNotified: 0,
+          message: "No new notifications needed",
+        };
+      }
+
       // Send notifications for employees who exceeded threshold
       const updatedSentNotifications = [...sentNotifications];
+      let successfulNotifications = 0;
 
       for (const employee of employeesToNotify) {
-        // Send emails to employee and manager
-        const success = await sendLeadNotification(
-          employee,
-          { email: managerEmail, name: managerName },
-          threshold
-        );
+        try {
+          // Send emails to employee and manager
+          const success = await sendLeadNotification(
+            employee,
+            { email: managerEmail, name: managerName },
+            threshold
+          );
 
-        if (success) {
-          updatedSentNotifications.push(employee.uid);
+          if (success) {
+            updatedSentNotifications.push(employee.uid);
+            successfulNotifications++;
+            console.log(`Notification sent successfully for ${employee.name}`);
+          } else {
+            console.error(`Failed to send notification for ${employee.name}`);
+          }
+        } catch (error) {
+          console.error(
+            `Error sending notification for ${employee.name}:`,
+            error
+          );
         }
       }
 
-      // Update notification history in Firestore
-      if (employeesToNotify.length > 0) {
-        // If the document doesn't exist yet, create it
-        if (!currentMonthDocSnap.exists()) {
-          await setDoc(currentMonthDocRef, {
-            notifiedUserIds: updatedSentNotifications,
-            month: currentMonth + 1,
-            year: currentYear,
-            createdAt: new Date(),
-          });
-        } else {
-          // Otherwise update the existing document
-          await setDoc(
-            currentMonthDocRef,
-            {
+      // Update notification history in Firestore only if we sent notifications
+      if (successfulNotifications > 0) {
+        try {
+          if (!currentMonthDocSnap.exists()) {
+            await setDoc(currentMonthDocRef, {
               notifiedUserIds: updatedSentNotifications,
-              updatedAt: new Date(),
-            },
-            { merge: true }
+              month: currentMonth + 1,
+              year: currentYear,
+              createdAt: new Date(),
+              lastUpdated: new Date(),
+            });
+          } else {
+            await setDoc(
+              currentMonthDocRef,
+              {
+                notifiedUserIds: updatedSentNotifications,
+                lastUpdated: new Date(),
+              },
+              { merge: true }
+            );
+          }
+          console.log(
+            `Updated notification history for ${successfulNotifications} employees`
           );
+        } catch (error) {
+          console.error("Error updating notification history:", error);
         }
       }
 
@@ -207,7 +252,8 @@ export const useLeadMonitoring = (
 
       return {
         success: true,
-        employeesNotified: employeesToNotify.length,
+        employeesNotified: successfulNotifications,
+        message: `Successfully notified ${successfulNotifications} employees`,
       };
     } catch (error) {
       console.error("Error monitoring leads:", error);
@@ -221,31 +267,78 @@ export const useLeadMonitoring = (
         success: false,
         error: error.message,
       };
+    } finally {
+      isCheckingRef.current = false;
     }
   };
 
   useEffect(() => {
-    let intervalId;
+    // Only initialize once
+    if (hasInitializedRef.current) {
+      return;
+    }
 
-    // Run immediately on mount
-    monitorLeads();
+    hasInitializedRef.current = true;
 
-    // Set up interval to check regularly
-    intervalId = setInterval(monitorLeads, checkIntervalMinutes * 60 * 1000);
+    // Don't run immediately on mount to prevent unwanted emails
+    // Only set up the interval
+    intervalRef.current = setInterval(() => {
+      monitorLeads(false);
+    }, checkIntervalMinutes * 60 * 1000);
 
     // Cleanup on unmount
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      hasInitializedRef.current = false;
     };
   }, [db, threshold, checkIntervalMinutes]);
 
+  // Manual trigger function that can be called explicitly
+  const triggerManualCheck = () => {
+    return monitorLeads(true);
+  };
+
   // Return both the status AND the function to trigger manually
-  return { status: monitoringStatus, triggerCheck: monitorLeads };
+  return {
+    status: monitoringStatus,
+    triggerCheck: triggerManualCheck,
+    isChecking: isCheckingRef.current,
+  };
 };
 
 // Component to handle continuous monitoring
 export const LeadMonitor = ({ threshold = 10, checkIntervalMinutes = 60 }) => {
-  const { status } = useLeadMonitoring(db, threshold, checkIntervalMinutes);
+  const { status, triggerCheck } = useLeadMonitoring(
+    db,
+    threshold,
+    checkIntervalMinutes
+  );
+
+  // Optional: Add a manual trigger button for testing (remove in production)
+  const handleManualCheck = async () => {
+    console.log("Manual check triggered");
+    const result = await triggerCheck();
+    console.log("Manual check result:", result);
+  };
+
+  // For development/testing purposes, you can uncomment this to add a manual trigger button
+  /*
+  return (
+    <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000 }}>
+      <button onClick={handleManualCheck} disabled={status.running}>
+        {status.running ? 'Checking...' : 'Manual Check'}
+      </button>
+      {status.lastCheck && (
+        <div style={{ fontSize: '12px', marginTop: '5px' }}>
+          Last check: {status.lastCheck.toLocaleTimeString()}
+        </div>
+      )}
+    </div>
+  );
+  */
 
   // This is a "silent" component that doesn't render anything visible
   // It just sets up the monitoring system

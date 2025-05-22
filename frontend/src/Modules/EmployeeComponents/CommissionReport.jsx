@@ -78,7 +78,22 @@ const CommissionReportGenerator = ({ saleData }) => {
     const gapProtectionCost = p(data.vehicleCosts.gapProtectionCost);
     const acv = p(data.vehicleCosts.acv);
 
-    const otherCostsTotal = (data.vehicleCosts.otherCostItems || []).reduce(
+    // Format other items amounts to 2 decimal places
+    const formattedOtherCostItems = (
+      data.vehicleCosts.otherCostItems || []
+    ).map((item) => ({
+      ...item,
+      amount: f2(p(item.amount)),
+    }));
+
+    const formattedOtherIncomeItems = (
+      data.customerCosts.otherIncomeItems || []
+    ).map((item) => ({
+      ...item,
+      amount: f2(p(item.amount)),
+    }));
+
+    const otherCostsTotal = formattedOtherCostItems.reduce(
       (sum, item) => sum + p(item.amount),
       0
     );
@@ -114,7 +129,7 @@ const CommissionReportGenerator = ({ saleData }) => {
     const lenderReserve = p(data.customerCosts.lenderReserve);
     const lenderBonus = p(data.customerCosts.lenderBonus);
 
-    const otherIncomeTotal = (data.customerCosts.otherIncomeItems || []).reduce(
+    const otherIncomeTotal = formattedOtherIncomeItems.reduce(
       (sum, item) => sum + p(item.amount),
       0
     );
@@ -182,7 +197,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         warrantyCost: f2(warrantyCost),
         gapProtectionCost: f2(gapProtectionCost),
         acv: f2(acv),
-        otherCostItems: data.vehicleCosts.otherCostItems || [],
+        otherCostItems: formattedOtherCostItems,
         otherCostsTotal: f2(otherCostsTotal),
         totalVehicleCosts: f2(totalVehicleCosts),
       },
@@ -196,7 +211,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         warranty: f2(warr),
         lenderReserve: f2(lenderReserve),
         lenderBonus: f2(lenderBonus),
-        otherIncomeItems: data.customerCosts.otherIncomeItems || [],
+        otherIncomeItems: formattedOtherIncomeItems,
         total: f2(totalDealIncome),
       },
       dealSummary: {
@@ -290,7 +305,7 @@ const CommissionReportGenerator = ({ saleData }) => {
         ...prev,
         vehicleCosts: {
           ...prev.vehicleCosts,
-          total: recalculated.vehicleCosts.total,
+          totalVehicleCosts: recalculated.vehicleCosts.totalVehicleCosts,
         },
         customerCosts: {
           ...prev.customerCosts,
@@ -955,7 +970,7 @@ const CommissionReportGenerator = ({ saleData }) => {
                           { label: "PAC", key: "pac" },
                           { label: "Sales Gross", key: "salesGross" },
 
-                          { label: "True Gross", key: "trueGross" },
+                          // { label: "True Gross", key: "trueGross" },
                         ].map(({ label, key }) => (
                           <TableRow key={key}>
                             <TableCell>{label}</TableCell>
