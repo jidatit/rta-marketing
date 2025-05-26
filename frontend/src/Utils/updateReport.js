@@ -37,6 +37,13 @@ const updateReport = async (
           generatedBy: currentUser?.userType || "unknown",
           generatedById: currentUser?.id || "unknown",
         };
+        const reportStatus = {
+          generatedAt: new Date().toISOString(),
+          generatedBy: currentUser?.userType || "unknown",
+          generatedById: currentUser?.id || "unknown",
+          status: "pending",
+          note: "",
+        };
 
         return {
           ...saleItem,
@@ -176,6 +183,7 @@ const updateReport = async (
           updatedById: currentUser?.id || "unknown",
           // Add report history and count
           reportHistory: [...currentReportHistory, newHistoryEntry],
+          reportStatus,
           reportCount: currentReportCount + 1,
         };
       }

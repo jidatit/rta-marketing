@@ -48,6 +48,11 @@ const AdminSidebar = () => {
       route: "monthlyAnalytics",
       matcher: (route) => route === "/AdminLayout/monthlyAnalytics",
     },
+    {
+      name: "Commission Sheet",
+      route: "comission",
+      matcher: (route) => route === "/AdminLayout/comission",
+    },
   ];
 
   // Update active item whenever location changes

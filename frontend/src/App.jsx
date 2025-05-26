@@ -39,6 +39,7 @@ import { LeadMonitor } from "./Modules/AdminComponents/components/LeadsMonitor.j
 import GraphsPage from "./Modules/AdminComponents/pages/GraphsPage.jsx";
 import SalesVAPage from "./Modules/VirtualAssistantComponents/pages/SalesPage.jsx";
 import SalesAnalyticsMain from "./Modules/AdminComponents/pages/MonthlySaleAnalytics.jsx";
+import CommissionPage from "./Modules/AdminComponents/CommissionPage.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -231,6 +232,12 @@ function App() {
                     path="monthly-target"
                     element={
                       currentUser ? <MonthlyTarget /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="comission"
+                    element={
+                      currentUser ? <CommissionPage /> : <Navigate to="/" />
                     }
                   />
                 </Route>

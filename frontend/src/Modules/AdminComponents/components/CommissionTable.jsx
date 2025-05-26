@@ -8,13 +8,14 @@ import {
   where,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { db } from "../../config/firebaseConfig";
+
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useAuth } from "../../AuthContext";
+import { db } from "../../../config/firebaseConfig";
+import { useAuth } from "../../../AuthContext";
 
-const SalesTable = ({
-  currentClients,
+const CommissionTable = ({
+  sales,
   handleDeleteSale,
   handleOpenViewModal,
   setShowModal,
@@ -133,7 +134,7 @@ const SalesTable = ({
   };
   return (
     <>
-      <Transition appear show={isConfirmOpen} as={Fragment}>
+      {/* <Transition appear show={isConfirmOpen} as={Fragment}>
         <Dialog
           as="div"
           className="relative z-50"
@@ -225,7 +226,7 @@ const SalesTable = ({
             </div>
           </div>
         </Dialog>
-      </Transition>{" "}
+      </Transition>{" "} */}
       <div className="overflow-x-auto">
         <div className="min-w-[800px] md:min-w-0 min-h-[280px]">
           <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios ">
@@ -235,28 +236,28 @@ const SalesTable = ({
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 rounded-tl-md"
                 >
-                  Client/Dealership
+                  Sales person
                 </th>
                 <th
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 hidden sm:table-cell"
                 >
-                  Vehicle
+                  Client/Dealership
                 </th>
                 <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4">
-                  Date
+                  Sale Date
                 </th>
                 <th
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 hidden md:table-cell"
                 >
-                  Insurance
+                  Sheet Date
                 </th>
                 <th
                   scope="col"
                   className="px-2 py-3 sm:px-4 sm:py-4 hidden md:table-cell"
                 >
-                  Fund
+                  Status
                 </th>
                 <th
                   scope="col"
@@ -267,8 +268,8 @@ const SalesTable = ({
               </tr>
             </thead>
             <tbody className="border-t-0 border-gray-300 border-1">
-              {currentClients && currentClients.length > 0 ? (
-                currentClients.map((sale, saleIndex) => {
+              {sales && sales.length > 0 ? (
+                sales.map((sale, saleIndex) => {
                   const currentDate = new Date(sale.intermediateDate);
                   const nextMonth = new Date(
                     currentDate.getFullYear(),
@@ -282,43 +283,44 @@ const SalesTable = ({
                     >
                       <td className="px-2 py-3 sm:px-4 sm:py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
                         <div className="font-medium">
-                          {sale.customerName
-                            ? sale?.customerName
-                            : sale?.dealershipPurchase}
-                        </div>
-                        <div className="text-xs text-gray-500 sm:hidden">
-                          {sale.vehicleMake} {sale.vehicleModel}
+                          {sale.salesRep ? sale?.salesRep : "--"}
                         </div>
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4 text-gray-900 hidden sm:table-cell">
-                        {sale.vehicleMake} {sale.vehicleModel}
+                        {/* {sale.vehicleMake} {sale.vehicleModel} */}
+                        {sale.customerName
+                          ? sale?.customerName
+                          : sale?.dealershipPurchase}
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4 text-gray-900">
                         {sale.saleDate}
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4 hidden md:table-cell">
                         <div className="flex items-center">
-                          <span
-                            className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                              sale.InsuranceStatus
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          ></span>
-                          <span className="hidden lg:inline">
-                            {sale.InsuranceStatus ? "Completed" : "Pending"}
-                          </span>
+                          {sale?.reportStatus?.generatedAt
+                            ? new Date(
+                                sale.reportStatus.generatedAt
+                              ).toLocaleDateString("en-GB", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "--"}
                         </div>
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4 hidden md:table-cell">
                         <div className="flex items-center">
                           <span
                             className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                              sale.FundStatus ? "bg-green-500" : "bg-red-500"
+                              sale?.reportStatus?.status === "accepted"
+                                ? "bg-green-500"
+                                : "bg-red-500"
                             }`}
                           ></span>
                           <span className="hidden lg:inline">
-                            {sale.FundStatus ? "Completed" : "Pending"}
+                            {sale?.reportStatus?.status
+                              ? sale?.reportStatus?.status
+                              : "pending"}
                           </span>
                         </div>
                       </td>
@@ -458,4 +460,4 @@ const SalesTable = ({
   );
 };
 
-export default SalesTable;
+export default CommissionTable;
