@@ -15,15 +15,14 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
   const [salesPerson, setSalesPerson] = useState("");
   const [salesPersonId, setSalesPersonId] = useState("");
   const [uploading, setUploading] = useState(false);
-  // console.log("selected id", salesPersonId);
-
   const [month, setMonth] = useState(() => {
     const today = new Date();
     return today.toISOString().slice(0, 7);
   });
   const [targetAmount, setTargetAmount] = useState(0);
+  const [grossTarget, setGrossTarget] = useState(0); // Add new state
   const [employees, setEmployees] = useState([]);
-  // console.log(employees);
+
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
@@ -41,60 +40,21 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
     fetchEmployees();
   }, []);
 
-  // const handleAddTarget = async () => {
-  //   if (!salesPersonId || !targetAmount) {
-  //     alert("Please select a salesperson and enter a valid target amount.");
-  //     return;
-  //   }
-  //   setUploading(true);
-
-  //   try {
-  //     const monthRef = doc(db, "monthlyTargets", month);
-  //     const monthDoc = await getDoc(monthRef);
-
-  //     let newData = {
-  //       target: targetAmount,
-  //       updatedAt: serverTimestamp(),
-  //     };
-
-  //     if (!monthDoc.exists()) {
-  //       // If the month document doesn't exist, create it
-  //       await setDoc(monthRef, {
-  //         [salesPersonId]: {
-  //           ...newData,
-  //           createdAt: serverTimestamp(),
-  //         },
-  //       });
-  //     } else {
-  //       // If the month document exists, update the target for the salesperson
-  //       await setDoc(
-  //         monthRef,
-  //         {
-  //           [salesPersonId]: {
-  //             ...newData,
-  //             createdAt:
-  //               monthDoc.data()?.[salesPersonId]?.createdAt ||
-  //               serverTimestamp(),
-  //           },
-  //         },
-  //         { merge: true }
-  //       );
-  //     }
-
-  //     console.log("Target successfully set for", salesPerson);
-  //     setShowModal(false);
-  //     setUploading(false);
-  //   } catch (error) {
-  //     console.error("Error setting target:", error);
-  //     setUploading(false);
-  //   }
-  // };
-
   const handleAddTarget = async () => {
-    if (!salesPersonId || !salesPerson || !targetAmount) {
-      alert("Please select a salesperson and enter a valid target amount.");
+    // Validate all required fields
+    if (!salesPersonId || !salesPerson || !targetAmount || !grossTarget) {
+      alert(
+        "Please fill all required fields (Sales Person, Target Amount, and Gross Target)."
+      );
       return;
     }
+
+    // Validate numbers are positive
+    if (targetAmount <= 0 || grossTarget <= 0) {
+      alert("Target amounts must be greater than zero.");
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -102,13 +62,13 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
       const monthDoc = await getDoc(monthRef);
 
       let newData = {
-        name: salesPerson, // Store the salesperson's name
-        target: targetAmount,
+        name: salesPerson,
+        target: Number(targetAmount),
+        grossTarget: Number(grossTarget),
         updatedAt: serverTimestamp(),
       };
 
       if (!monthDoc.exists()) {
-        // If the month document doesn't exist, create it
         await setDoc(monthRef, {
           [salesPersonId]: {
             ...newData,
@@ -116,7 +76,6 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
           },
         });
       } else {
-        // If the month document exists, update the target for the salesperson
         await setDoc(
           monthRef,
           {
@@ -131,14 +90,20 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
         );
       }
 
-      // console.log("Target successfully set for", salesPerson);
       setShowModal(false);
       setUploading(false);
       fetchData();
     } catch (error) {
       console.error("Error setting target:", error);
       setUploading(false);
+      alert("Error setting target. Please try again.");
     }
+  };
+
+  // Add these validation functions at the top of your component
+  const validateNumber = (value) => {
+    const regex = /^\d*\.?\d{0,2}$/;
+    return regex.test(value);
   };
 
   return (
@@ -193,29 +158,80 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-2xl mb-2">Target Amount</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  className="w-full p-3 border rounded-lg pr-16 h-[57px]"
-                  value={targetAmount}
-                  onChange={(e) => setTargetAmount(Number(e.target.value))}
-                  placeholder="Enter target amount"
-                />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <button
-                    onClick={() => setTargetAmount(targetAmount - 1)}
-                    className="hover:bg-gray-100 p-1 rounded-full"
-                  >
-                    <FaMinusCircle className="text-red-500 text-lg" />
-                  </button>
-                  <button
-                    onClick={() => setTargetAmount(targetAmount + 1)}
-                    className="hover:bg-gray-100 p-1 rounded-full"
-                  >
-                    <FaPlusCircle className="text-green-500 text-lg" />
-                  </button>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-2xl mb-2">Target Amount</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full p-3 border rounded-lg pr-16 h-[57px]"
+                    value={targetAmount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || validateNumber(value)) {
+                        setTargetAmount(value === "" ? "" : Number(value));
+                      }
+                    }}
+                    placeholder="Enter unit target"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setTargetAmount(
+                          Math.max(0, Number(targetAmount || 0) - 1)
+                        )
+                      }
+                      className="hover:bg-gray-100 p-1 rounded-full"
+                    >
+                      <FaMinusCircle className="text-red-500 text-lg" />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setTargetAmount(Number(targetAmount || 0) + 1)
+                      }
+                      className="hover:bg-gray-100 p-1 rounded-full"
+                    >
+                      <FaPlusCircle className="text-green-500 text-lg" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-2xl mb-2">Gross Target ($)</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full p-3 border rounded-lg pr-16 h-[57px]"
+                    value={grossTarget}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || validateNumber(value)) {
+                        setGrossTarget(value === "" ? "" : Number(value));
+                      }
+                    }}
+                    placeholder="Enter gross target"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setGrossTarget(
+                          Math.max(0, Number(grossTarget || 0) - 1000)
+                        )
+                      }
+                      className="hover:bg-gray-100 p-1 rounded-full"
+                    >
+                      <FaMinusCircle className="text-red-500 text-lg" />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setGrossTarget(Number(grossTarget || 0) + 1000)
+                      }
+                      className="hover:bg-gray-100 p-1 rounded-full"
+                    >
+                      <FaPlusCircle className="text-green-500 text-lg" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -224,7 +240,7 @@ const MonthlyTargetModal = ({ setShowModal, fetchData }) => {
           {/* Footer */}
           <div className="mt-8 flex justify-end">
             <button
-              className="bg-blue-900 text-white px-6 py-2 rounded-lg text-2xl font-medium hover:bg-blue-800 mt-[50px] transition-colors"
+              className="bg-blue-900 text-white px-6 py-2 rounded-lg text-2xl font-medium hover:bg-blue-800 mt-[50px] transition-colors disabled:opacity-50"
               onClick={handleAddTarget}
               disabled={uploading}
             >

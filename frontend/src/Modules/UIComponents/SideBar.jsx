@@ -33,6 +33,23 @@ const SideBar = () => {
             </p>
           </Link>
           <Link
+            to="/EmployeeLayout/analytics" // Updated to correct path
+            className={`w-full transition-all duration-300 ease-in-out rounded-md ${
+              activeItem === "Analytics"
+                ? "bg-white rounded-md shadow-lg"
+                : "hover:bg-white rounded-md hover:text-blue-900"
+            }`}
+            onClick={() => handleItemClick("Analytics")}
+          >
+            <p
+              className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
+                activeItem === "Analytics" ? "text-blue-800" : "text-white"
+              }`}
+            >
+              Analytics{" "}
+            </p>
+          </Link>
+          <Link
             to="/tv"
             className={`w-full transition-all duration-300 ease-in-out rounded-md ${
               activeItem === "tv"

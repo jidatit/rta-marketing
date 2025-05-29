@@ -39,6 +39,7 @@ import { LeadMonitor } from "./Modules/AdminComponents/components/LeadsMonitor.j
 import GraphsPage from "./Modules/AdminComponents/pages/GraphsPage.jsx";
 import SalesVAPage from "./Modules/VirtualAssistantComponents/pages/SalesPage.jsx";
 import SalesAnalyticsMain from "./Modules/AdminComponents/pages/MonthlySaleAnalytics.jsx";
+import EmployeeSalesAnalytics from "./Modules/EmployeeComponents/pages/EmployeeSalesAnalytics.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -118,6 +119,16 @@ function App() {
                   <Route
                     path="saleForm1"
                     element={currentUser ? <SaleForm1 /> : <Navigate to="/" />}
+                  />
+                  <Route
+                    path="analytics"
+                    element={
+                      currentUser ? (
+                        <EmployeeSalesAnalytics />
+                      ) : (
+                        <Navigate to="/" />
+                      )
+                    }
                   />
                 </Route>
                 <Route

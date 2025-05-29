@@ -47,10 +47,11 @@ export const SalesDataProvider = ({ children }) => {
         if (!salesDocSnap.exists()) {
           salesDataArray.push({
             userId,
-            target: target.target || 0,
-            name: target.name,
+            target: target?.target || 0,
+            grossTarget: target?.grossTarget || 0,
+            name: target?.name,
             salesCompleted: 0,
-            pending: target.target || 0,
+            pending: target?.target || 0,
             midMonth: 0,
           });
           continue;
@@ -74,6 +75,8 @@ export const SalesDataProvider = ({ children }) => {
         salesDataArray.push({
           userId,
           target: target.target || 0,
+          grossTarget: target?.grossTarget || 0,
+
           name: target.name,
           salesCompleted: totalSalesCount,
           pending: (target.target || 0) - totalSalesCount,

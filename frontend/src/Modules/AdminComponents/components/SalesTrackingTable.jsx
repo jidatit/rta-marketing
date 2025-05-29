@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function SalesTrackingTable({ sales = [] }) {
+export default function SalesTrackingTable({ sales = [], isEmployee }) {
   const displaySales = sales.length > 0 ? sales : [];
 
   const formatDate = (dateString) => {
@@ -20,23 +20,35 @@ export default function SalesTrackingTable({ sales = [] }) {
     "dateVehicleSold",
   ];
   // Separate columns for individual and wholesale sales
-  const individualColumns = [
-    { key: "customerName", label: "Customer Name" },
-    { key: "leadSource", label: "Lead Source" },
-    { key: "dateLeadReceived", label: "Date Lead Received" },
-    { key: "saleDate", label: "Sale Date" },
-    { key: "salesRep", label: "Sales Rep" },
-    { key: "grossProfit", label: "Gross" },
-    { key: "salesGross", label: "Sales Gross" },
-    { key: "commission", label: "Commission" },
-    { key: "trueGross", label: "True Gross" },
-    { key: "financeProvider", label: "Finance Provider" },
-    { key: "interestRate", label: "Interest Rate" },
-    { key: "stockNumber", label: "Stock #" },
-    { key: "vehicle", label: "Vehicle" },
-    { key: "tradeDescription", label: "Trade Description" },
-    { key: "lienAmount", label: "Lien" },
-  ];
+  const individualColumns = isEmployee
+    ? [
+        { key: "customerName", label: "Customer Name" },
+        { key: "leadSource", label: "Lead Source" },
+        { key: "dateLeadReceived", label: "Date Lead Received" },
+        { key: "saleDate", label: "Sale Date" },
+        { key: "salesGross", label: "Sales Gross" },
+        { key: "commission", label: "Commission" },
+        { key: "financeProvider", label: "Finance Provider" },
+        { key: "interestRate", label: "Interest Rate" },
+        { key: "stockNumber", label: "Stock #" },
+      ]
+    : [
+        { key: "customerName", label: "Customer Name" },
+        { key: "leadSource", label: "Lead Source" },
+        { key: "dateLeadReceived", label: "Date Lead Received" },
+        { key: "saleDate", label: "Sale Date" },
+        { key: "salesRep", label: "Sales Rep" },
+        { key: "grossProfit", label: "Gross" },
+        { key: "salesGross", label: "Sales Gross" },
+        { key: "commission", label: "Commission" },
+        { key: "trueGross", label: "True Gross" },
+        { key: "financeProvider", label: "Finance Provider" },
+        { key: "interestRate", label: "Interest Rate" },
+        { key: "stockNumber", label: "Stock #" },
+        { key: "vehicle", label: "Vehicle" },
+        { key: "tradeDescription", label: "Trade Description" },
+        { key: "lienAmount", label: "Lien" },
+      ];
 
   const wholesaleColumns = [
     { key: "dealershipPurchase", label: "Dealership" },
