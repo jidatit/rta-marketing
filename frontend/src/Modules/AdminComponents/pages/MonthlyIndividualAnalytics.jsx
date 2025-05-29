@@ -14,6 +14,7 @@ import {
 import { FaCalendar, FaPencil, FaSatellite } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import SalesTrackingTable from "../components/SalesTrackingTable";
+import MonthlyPerformanceChart from "../components/MonthlyPerformanceChart";
 import {
   collection,
   doc,
@@ -129,7 +130,14 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   }, [salesStats.totalSales, targetAchieved, selectedSalesperson]);
   // Handle year change
   const handleYearChange = (e) => {
-    setSelectedYear(parseInt(e.target.value));
+    const newYear = parseInt(e.target.value, 10);
+    setSelectedYear(newYear);
+
+    // Build YYYY-MM format for context
+    const monthNumber = selectedMonth + 1;
+    const isoMonth = `${newYear}-${String(monthNumber).padStart(2, "0")}`;
+
+    setSelectedMonthFromContext(isoMonth);
   };
 
   const updateAchievedTargets = async () => {
@@ -276,7 +284,6 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           const employeeData = salesData?.find(
             (data) => data.userId === currentUser?.uid
           );
-
           if (employeeData) {
             setMonthlyUnitsTarget(employeeData.target || 0);
             setMonthlyGrossTarget(employeeData.grossTarget || 0);
@@ -380,10 +387,74 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       console.error("Error saving monthly target:", error);
     }
   };
-  useEffect(() => {
-    console.log("target loading", targetLoading);
-  }, [targetLoading]);
+
   const canEdit = !isEmployee && selectedSalesperson;
+
+  // Add after your existing state declarations
+  const prepareChartData = () => {
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const yearlyData = monthNames.map((month, index) => {
+      const monthSales = allSales.filter((sale) => {
+        const saleDate = new Date(sale.saleDate);
+        return (
+          saleDate.getMonth() === index &&
+          saleDate.getFullYear() === selectedYear &&
+          (selectedSalesperson === "All" || sale.userId === selectedSalesperson)
+        );
+      });
+
+      const monthStats = {
+        totalSales: monthSales.length,
+        totalSalesPrice: monthSales.reduce(
+          (acc, curr) => acc + parseFloat(curr.salesGross || 0),
+          0
+        ),
+      };
+
+      return {
+        month,
+        isCurrentMonth: index === selectedMonth,
+        stats: monthStats,
+      };
+    });
+
+    return {
+      labels: monthNames,
+      selectedMonthIndex: selectedMonth,
+      series: [
+        {
+          name: "Units Sold",
+          type: "column",
+          data: yearlyData.map((data) => ({
+            x: data.month,
+            y: data.stats.totalSales,
+          })),
+        },
+        {
+          name: "Sales Gross",
+          type: "line",
+          data: yearlyData.map((data) => ({
+            x: data.month,
+            y: data.stats.totalSalesPrice,
+          })),
+        },
+      ],
+    };
+  };
 
   return (
     <div className="flex flex-col items-center h-full w-full bg-white px-5">
@@ -663,6 +734,11 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       </div>
 
       {/* Table Section */}
+      {allSales?.length > 0 && (
+        <div className="w-full mt-2">
+          <MonthlyPerformanceChart salesData={prepareChartData()} />
+        </div>
+      )}
 
       <div className="w-full">
         {filteredSales.length > 0 ? (

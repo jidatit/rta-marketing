@@ -28,6 +28,7 @@ import { toast } from "react-toastify";
 import logo from "../../../images/logo.png";
 import { useSalesData } from "../../../SalesDataContext";
 import { useAuth } from "../../../AuthContext";
+import MonthlyPerformanceChart from "../components/MonthlyPerformanceChart";
 const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   const { currentUser } = useAuth();
   const {
@@ -125,8 +126,16 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
 
   // Handle year change
   const handleYearChange = (e) => {
-    setSelectedYear(parseInt(e.target.value));
+    const newYear = parseInt(e.target.value, 10);
+    setSelectedYear(newYear);
+
+    // Build YYYY-MM format for context
+    const monthNumber = selectedMonth + 1;
+    const isoMonth = `${newYear}-${String(monthNumber).padStart(2, "0")}`;
+
+    setSelectedMonthFromContext(isoMonth);
   };
+
   const updateAchievedTargets = async () => {
     const monthId = `${selectedYear}-${String(selectedMonth + 1).padStart(
       2,
@@ -400,6 +409,72 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       console.error("Error saving monthly target:", error);
     }
   };
+  // Add after your existing state declarations
+  const prepareChartData = () => {
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const yearlyData = monthNames.map((month, index) => {
+      const monthSales = allSales.filter((sale) => {
+        const saleDate = new Date(sale.saleDate);
+        return (
+          saleDate.getMonth() === index &&
+          saleDate.getFullYear() === selectedYear &&
+          (selectedSalesperson === "All" || sale.userId === selectedSalesperson)
+        );
+      });
+
+      const monthStats = {
+        totalSales: monthSales.length,
+        totalSalesPrice: monthSales.reduce(
+          (acc, curr) => acc + parseFloat(curr.salesGross || 0),
+          0
+        ),
+      };
+
+      return {
+        month,
+        isCurrentMonth: index === selectedMonth,
+        stats: monthStats,
+      };
+    });
+
+    return {
+      labels: monthNames,
+      selectedMonthIndex: selectedMonth,
+      series: [
+        {
+          name: "Units Sold",
+          type: "column",
+          data: yearlyData.map((data) => ({
+            x: data.month,
+            y: data.stats.totalSales,
+          })),
+        },
+        {
+          name: "Sales Gross",
+          type: "line",
+          data: yearlyData.map((data) => ({
+            x: data.month,
+            y: data.stats.totalSalesPrice,
+          })),
+        },
+      ],
+    };
+  };
+
   const canEdit = !isEmployee && selectedSalesperson;
   return (
     <div className="flex flex-col items-center h-full w-full bg-white px-5">
@@ -458,25 +533,31 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                 ))}
               </Select>
             </FormControl>
-            <div className="flex items-center">
-              <span className="text-[#011c64] font-semibold mr-2">
-                Select Salesperson
-              </span>
-              <FormControl size="small" variant="outlined" className="min-w-32">
-                <Select
-                  value={selectedSalesperson}
-                  onChange={handleSalespersonChange}
-                  className="bg-white"
+            {!isEmployee && (
+              <div className="flex items-center">
+                <span className="text-[#011c64] font-semibold mr-2">
+                  Select Salesperson
+                </span>
+                <FormControl
+                  size="small"
+                  variant="outlined"
+                  className="min-w-32"
                 >
-                  <MenuItem value="All">All</MenuItem>
-                  {salespeople.map((person) => (
-                    <MenuItem key={person.id} value={person.id}>
-                      {person.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
+                  <Select
+                    value={selectedSalesperson}
+                    onChange={handleSalespersonChange}
+                    className="bg-white"
+                  >
+                    <MenuItem value="All">All</MenuItem>
+                    {salespeople.map((person) => (
+                      <MenuItem key={person.id} value={person.id}>
+                        {person.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
@@ -673,6 +754,13 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           </div>
         </div>
       </div>
+
+      {/* Table Section */}
+      {allSales?.length > 0 && (
+        <div className="w-full mt-2">
+          <MonthlyPerformanceChart salesData={prepareChartData()} />
+        </div>
+      )}
 
       {/* Table Section */}
       <div className="w-full">
