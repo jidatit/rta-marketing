@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import TabsSelector from "./components/TabsSelector";
 import { FaCalendarAlt } from "react-icons/fa";
 import {
   FaArrowLeft,
@@ -12,26 +11,31 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   collection,
+  doc,
   getDocs,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "../../config/firebaseConfig";
 import { toast } from "react-toastify";
-import CommissionTable from "./components/CommissionTable";
+import { auth, db } from "../../config/firebaseConfig";
+import TabsSelector from "../AdminComponents/components/TabsSelector";
+import { useAuth } from "../../AuthContext";
+import CommissionTable from "./EmployeeCommissionTable";
 
-const CommissionPage = () => {
+const EmployeeCommissionPage = () => {
   const [allSales, setAllSales] = useState([]);
   const [sales, setSales] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
+  const { currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
-  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [showDateFilter, setShowDateFilter] = useState(true);
   const [tab, setTab] = useState("all");
   const [SalesPerson, setSalesPerson] = useState([]);
   const [uId, setUid] = useState([]);
@@ -54,13 +58,14 @@ const CommissionPage = () => {
 
     setValue(event.target.value);
   };
+
   const handleFilter = () => {};
   const handleClearFilter = () => {
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
     setSelectedSalesPerson("");
-    setShowDateFilter(false);
+    // setShowDateFilter(false);
   };
   const sortedFilteredClients = filteredReportHistorySales.sort((a, b) => {
     const dateA = new Date(a.saleDate);
@@ -82,95 +87,37 @@ const CommissionPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  const fetchSalesData = () => {
-    try {
-      const salesCollection = collection(db, "sales");
-      const unsubscribe = onSnapshot(salesCollection, (querySnapshot) => {
-        const salesData = [];
-        const uIds = [];
+  useEffect(() => {
+    const fetchSalesData = async () => {
+      try {
+        const user = auth.currentUser; // Get the currently logged-in user
+        if (user) {
+          const docRef = doc(db, "sales", user.uid); // Use the user's uid as the document ID
+          onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+              const salesData = docSnap.data().sales || [];
+              const saleDataWithDocID = salesData.map((sale) => ({
+                ...sale,
+                documentId: docSnap.id,
+              }));
 
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const id = doc.id;
-          uIds.push(id);
-
-          // Transform sales data to include document IDs
-          const dataWithId = data.sales.map((sale) => ({
-            documentId: doc.id,
-            ...sale,
-          }));
-
-          const dataObject = {
-            sales: dataWithId,
-            id: id,
-          };
-
-          salesData.push(dataObject);
-        });
-
-        setUid(uIds); // Store all unique document IDs
-        setSales(salesData); // Store grouped sales data
-
-        // Flatten the sales data for easier filtering
-        const flattenedSales = salesData.flatMap((item) => item.sales);
-        setAllSales(flattenedSales);
-        setFilteredClients(flattenedSales); // Initialize filtered clients with all sales
-
-        // Fetch salesperson data whenever sales data updates
-        fetchSalesPerson();
-      });
-
-      return unsubscribe; // Cleanup function
-    } catch (error) {
-      console.error("Error setting up sales data listener: ", error);
-    }
-  };
-
-  const fetchSalesPerson = async () => {
-    try {
-      if (uId.length > 0) {
-        const SalePersonsRef = collection(db, "employees");
-
-        // Create queries for all salesperson UIDs
-        const queryPromises = uId.map((uid) => {
-          const q = query(SalePersonsRef, where("uid", "==", uid));
-          return getDocs(q);
-        });
-
-        // Execute all queries in parallel
-        const querySnapshots = await Promise.all(queryPromises);
-
-        // Process results
-        const salesPersons = [];
-        querySnapshots.forEach((snapshot) => {
-          snapshot.forEach((doc) => {
-            const { name, uid } = doc.data();
-            salesPersons.push({ name, uid });
+              // console.log(salesData);
+              setAllSales(saleDataWithDocID);
+              setFilteredClients(saleDataWithDocID); // Initially set filteredClients to all clients
+            } else {
+              toast.info("No sales data found for this user.");
+            }
           });
-        });
-
-        // Remove duplicates and set salespersons
-        const uniqueSalesPersons = Array.from(
-          new Map(salesPersons.map((person) => [person.uid, person])).values()
-        );
-        setSalesPerson(Array.from(uniqueSalesPersons));
+        } else {
+          toast.error("User not authenticated");
+        }
+      } catch (err) {
+        toast.error(`Error fetching sales data: ${err.message}`);
       }
-    } catch (error) {
-      console.error("Error fetching Sales Persons: ", error);
-      toast.error("Failed to fetch Sales Person: " + error.message);
-    }
-  };
+    };
 
-  useEffect(() => {
-    const unsubscribe = fetchSalesData();
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (uId.length > 0) {
-      fetchSalesPerson();
-    }
-  }, [uId]);
+    fetchSalesData();
+  }, [currentUser]);
 
   useEffect(() => {
     if (allSales.length > 0) {
@@ -237,7 +184,7 @@ const CommissionPage = () => {
             } overflow-hidden transition-all duration-500 ease-in-out `}
           >
             <div className="flex justify-end items-center mb-4">
-              <div className="relative w-52 mx-4">
+              {/* <div className="relative w-52 mx-4">
                 <select
                   key={selectedSalesPerson}
                   name="Sales Person"
@@ -259,7 +206,7 @@ const CommissionPage = () => {
                 </select>
 
                 <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
-              </div>
+              </div> */}
 
               {!showDateFilter ? (
                 <div
@@ -393,4 +340,4 @@ const CommissionPage = () => {
   );
 };
 
-export default CommissionPage;
+export default EmployeeCommissionPage;

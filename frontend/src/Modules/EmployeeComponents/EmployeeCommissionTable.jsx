@@ -11,10 +11,16 @@ import { toast } from "react-toastify";
 
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { db } from "../../../config/firebaseConfig";
-import { useAuth } from "../../../AuthContext";
-import CommissionModal from "./CommissionModal";
-import NotesDetail from "./NotesDetail";
+import CommissionModal from "../AdminComponents/components/CommissionModal";
+import { useAuth } from "../../AuthContext";
+import { db } from "../../config/firebaseConfig";
+import {
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 
 const CommissionTable = ({
   sales,
@@ -33,13 +39,84 @@ const CommissionTable = ({
   const { currentUser } = useAuth();
   const [openDropDown, setOpenDropDown] = useState(false);
   const [openCommissionModal, setOpenCommissionModal] = useState(false);
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+
+  const updateReport = async (db, saleData, newStatus, newNote) => {
+    let isSubmitting = true;
+
+    try {
+      if (!saleData?.documentId) throw new Error("Missing document ID");
+      if (!saleData?.saleId) throw new Error("Missing sale ID");
+
+      const saleRef = doc(db, "sales", saleData.documentId);
+      const saleDoc = await getDoc(saleRef);
+
+      if (!saleDoc.exists()) {
+        throw new Error("Sale document not found");
+      }
+
+      const salesData = saleDoc.data().sales || [];
+
+      const updatedSales = salesData.map((saleItem) => {
+        if (saleItem?.saleId === saleData.saleId) {
+          return {
+            ...saleItem,
+            reportStatus: {
+              ...saleItem.reportStatus,
+              status: newStatus,
+              note: newNote,
+            },
+          };
+        }
+        return saleItem;
+      });
+
+      await updateDoc(saleRef, {
+        sales: updatedSales,
+      });
+
+      toast.success("Report status updated successfully!");
+    } catch (error) {
+      console.error("Error updating report status:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update report status"
+      );
+    } finally {
+      isSubmitting = false;
+    }
+
+    return { isSubmitting };
+  };
+
+  // handlers
+  const handleAccept = () => {
+    if (!selectedSale) return;
+    console.log("Commission Accepted for sale:", selectedSale.saleId);
+    updateReport(db, selectedSale, "accepted", "");
+    // Add your actual acceptance logic here
+  };
+
+  const handleReject = (reason) => {
+    if (!selectedSale) return;
+    console.log(
+      "Commission Rejected for sale:",
+      selectedSale.saleId,
+      "Reason:",
+      reason
+    );
+    updateReport(db, selectedSale, "rejected", reason);
+
+    // Add your actual rejection logic here
+  };
 
   const handleCommissionModal = () => {
     setOpenCommissionModal(!openCommissionModal);
   };
-  const closeViewNote = () => {
-    setviewNote(false);
-  };
+
   console.log("sales", sales);
 
   //close of the dropdown
@@ -147,99 +224,6 @@ const CommissionTable = ({
   };
   return (
     <>
-      {/* <Transition appear show={isConfirmOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-50"
-          onClose={() => setIsConfirmOpen(false)}
-        >
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    Confirm Transfer
-                  </Dialog.Title>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      Are you sure you want to transfer this sale to the first
-                      day of next month?
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                      onClick={() => setIsConfirmOpen(false)}
-                      disabled={isTransferring}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:opacity-50"
-                      onClick={confirmTransfer}
-                      disabled={isTransferring}
-                    >
-                      {isTransferring ? (
-                        <>
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Transferring...
-                        </>
-                      ) : (
-                        "Confirm Transfer"
-                      )}
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>{" "} */}
       <div className="overflow-x-auto">
         <div className="min-w-[800px] md:min-w-0 min-h-[280px]">
           <table className="w-full table-fixed text-sm text-left text-black rtl:text-right dark:text-black font-radios ">
@@ -330,7 +314,7 @@ const CommissionTable = ({
                                 : "bg-red-500"
                             }`}
                           ></span>
-                          <span className="hidden lg:inline capitalize">
+                          <span className="hidden capitalize lg:inline">
                             {sale?.reportStatus?.status
                               ? sale?.reportStatus?.status
                               : "pending"}
@@ -372,81 +356,50 @@ const CommissionTable = ({
                               <div className="py-1">
                                 {/* View Details Option */}
                                 <button
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50  disabled:cursor-not-allowed "
                                   onClick={() => {
-                                    console.log("view sheet");
-                                    setEdit(false);
+                                    console.log("view details");
+                                    // setOpenCommissionModal(true);
                                     handleCommissionModal();
-
-                                    // handleOpenViewModal(sale);
-                                    // setOpenDropDown(null); // close dropdown after click
+                                    console.log("openCM", openCommissionModal);
+                                    setOpenDropDown(false);
                                   }}
                                 >
-                                  View Sheet
+                                  View Details
+                                </button>
+                                <button
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  onClick={() => {
+                                    console.log("Accepted");
+                                    setSelectedSale(sale); // Store the selected sale
+                                    setAcceptDialogOpen(true);
+                                    setOpenDropDown(false);
+                                  }}
+                                >
+                                  Accept
                                 </button>
 
                                 {/* Update Option */}
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50  disabled:cursor-not-allowed "
                                   onClick={() => {
-                                    console.log("view notes");
-                                    if (
-                                      sale.reportStatus?.status === "rejected"
-                                    ) {
-                                      setviewNote(true);
-                                    }
-                                  }}
-                                  disabled={
-                                    sale.reportStatus?.status !== "rejected"
-                                  }
-                                >
-                                  View Notes
-                                </button>
-                                <button
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                                  onClick={() => {
-                                    console.log("Edit Sheet");
-                                    setEdit(true);
-                                    handleCommissionModal();
+                                    console.log("Rejected");
+                                    setSelectedSale(sale); // Store the selected sale
+                                    setRejectDialogOpen(true);
+                                    setOpenDropDown(false);
                                   }}
                                 >
-                                  Edit Sheet
+                                  Reject
                                 </button>
 
-                                {/* Delete Sale Option */}
-                                {/* {!VA && (
-                                  <button
-                                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
-                                    onClick={() => {
-                                      if (
-                                        window.confirm(
-                                          "Are you sure you want to delete this sale? This action cannot be undone."
-                                        )
-                                      ) {
-                                        handleDeleteSale(
-                                          sale.saleId,
-                                          sale.documentId
-                                        );
-                                        setOpenDropDown(null); // close dropdown after click (even if cancel delete)
-                                      }
-                                    }}
-                                  >
-                                    Delete Sale
-                                  </button>
-                                )} */}
                                 {openCommissionModal && (
                                   <CommissionModal
                                     openDialog={openCommissionModal}
                                     setOpenDialog={setOpenCommissionModal}
                                     saleData={sale}
-                                    editMode={edit}
+                                    editMode={false}
                                   />
                                 )}
-                                <NotesDetail
-                                  open={viewNote}
-                                  close={closeViewNote}
-                                  note={sale?.reportStatus?.note}
-                                />
                               </div>
                             </div>
                           )}
@@ -458,7 +411,7 @@ const CommissionTable = ({
               ) : (
                 <tr>
                   <td colSpan="6" className="w-full p-4 text-center">
-                    No commission data available{" "}
+                    No Commission data available{" "}
                   </td>
                 </tr>
               )}
@@ -466,6 +419,97 @@ const CommissionTable = ({
           </table>
         </div>
       </div>
+      {/* Accept Confirmation Modal */}
+      {acceptDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
+          <div className="relative w-[45%] max-w-4xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
+            <button
+              onClick={() => setAcceptDialogOpen(false)}
+              className="absolute text-2xl text-gray-600 top-2 right-2 hover:text-gray-800"
+            >
+              &times;
+            </button>
+            <h2 className="mb-4 text-xl font-bold text-center">
+              Confirm Acceptance
+            </h2>
+
+            <div className="py-6">
+              <p className="text-center mb-6">
+                Are you sure you want to accept this commission?
+              </p>
+
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setAcceptDialogOpen(false)}
+                  className="px-3 py-2 mx-4 text-white bg-red-500 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleAccept();
+                    setAcceptDialogOpen(false);
+                  }}
+                  className="px-3 py-2 mx-4 text-white bg-[#003160] rounded-lg"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {rejectDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
+          <div className="relative w-[45%] max-w-4xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
+            <button
+              onClick={() => setRejectDialogOpen(false)}
+              className="absolute text-2xl text-gray-600 top-2 right-2 hover:text-gray-800"
+            >
+              &times;
+            </button>
+            <h2 className="mb-4 text-xl font-bold text-center">
+              Provide Rejection Reason
+            </h2>
+
+            <div className="py-6">
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for rejection
+                </label>
+                <textarea
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-[#003160] focus:border-transparent"
+                  rows={4}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Enter the reason for rejection..."
+                />
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setRejectDialogOpen(false)}
+                  className="px-3 py-2 mx-4 text-white bg-red-500 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleReject(rejectionReason);
+                    setRejectionReason("");
+                    setRejectDialogOpen(false);
+                  }}
+                  className="px-3 py-2 mx-4 text-white bg-[#003160] rounded-lg"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

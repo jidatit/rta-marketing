@@ -82,6 +82,7 @@ const SaleRecordTable = ({ setShowModal }) => {
 
     fetchSalesData();
   }, [currentUser]);
+
   const handleFundStatus = async (clientId, index, saleId) => {
     // console.log("car funded");
     try {

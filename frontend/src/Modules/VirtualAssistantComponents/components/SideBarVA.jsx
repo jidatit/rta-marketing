@@ -15,6 +15,8 @@ const SideBarVA = () => {
       setActiveItem("sales");
     } else if (path.includes("tv")) {
       setActiveItem("tv");
+    } else if (path.includes("comission")) {
+      setActiveItem("comission");
     }
   }, [location]);
 
@@ -66,6 +68,14 @@ const SideBarVA = () => {
             aria-current={activeItem === "tv" ? "page" : undefined}
           >
             <p className={getTextClasses("tv")}>TV Screen</p>
+          </Link>
+          <Link
+            to="comission"
+            className={getLinkClasses("comission")}
+            onClick={() => handleItemClick("comission")}
+            aria-current={activeItem === "comission" ? "page" : undefined}
+          >
+            <p className={getTextClasses("comission")}>Comission</p>
           </Link>
         </div>
       </div>
