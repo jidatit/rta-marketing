@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../images/rta-logo.png";
+import { useSalesCounts } from "../../SalesContext";
 
 const SideBar = () => {
   const [activeItem, setActiveItem] = useState("Sales");
+  const { withReportHistory, statusCount } = useSalesCounts();
 
   const handleItemClick = (item) => {
     setActiveItem(item);
@@ -61,9 +63,20 @@ const SideBar = () => {
             <p
               className={`w-full p-3 rounded-md font-radios hover:bg-white hover:text-blue-900 ${
                 activeItem === "commission" ? "text-blue-800" : "text-white"
-              }`}
+              } flex items-center justify-between`}
             >
               Commission
+              {statusCount > 0 && (
+                <span
+                  className={`${
+                    activeItem === "commission"
+                      ? "text-white bg-[#011c64]"
+                      : "text-[#011c64] bg-white"
+                  } w-5 h-5 flex items-center justify-center rounded-full text-sm ml-2`}
+                >
+                  {statusCount}
+                </span>
+              )}
             </p>
           </Link>
         </div>

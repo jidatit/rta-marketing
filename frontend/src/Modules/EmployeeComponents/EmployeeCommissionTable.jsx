@@ -95,19 +95,13 @@ const CommissionTable = ({
   // handlers
   const handleAccept = () => {
     if (!selectedSale) return;
-    console.log("Commission Accepted for sale:", selectedSale.saleId);
     updateReport(db, selectedSale, "accepted", "");
     // Add your actual acceptance logic here
   };
 
   const handleReject = (reason) => {
     if (!selectedSale) return;
-    console.log(
-      "Commission Rejected for sale:",
-      selectedSale.saleId,
-      "Reason:",
-      reason
-    );
+
     updateReport(db, selectedSale, "rejected", reason);
 
     // Add your actual rejection logic here
@@ -116,8 +110,6 @@ const CommissionTable = ({
   const handleCommissionModal = () => {
     setOpenCommissionModal(!openCommissionModal);
   };
-
-  console.log("sales", sales);
 
   //close of the dropdown
   const dropdownRef = useRef(null); // ADD THIS
@@ -358,23 +350,22 @@ const CommissionTable = ({
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50  disabled:cursor-not-allowed "
                                   onClick={() => {
-                                    console.log("view details");
-                                    // setOpenCommissionModal(true);
                                     handleCommissionModal();
-                                    console.log("openCM", openCommissionModal);
-                                    setOpenDropDown(false);
+                                    // setOpenDropDown(false);
                                   }}
                                 >
                                   View Details
                                 </button>
                                 <button
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50"
                                   onClick={() => {
-                                    console.log("Accepted");
                                     setSelectedSale(sale); // Store the selected sale
                                     setAcceptDialogOpen(true);
                                     setOpenDropDown(false);
                                   }}
+                                  disabled={
+                                    sale?.reportStatus?.status === "accepted"
+                                  }
                                 >
                                   Accept
                                 </button>
@@ -383,11 +374,13 @@ const CommissionTable = ({
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50  disabled:cursor-not-allowed "
                                   onClick={() => {
-                                    console.log("Rejected");
                                     setSelectedSale(sale); // Store the selected sale
                                     setRejectDialogOpen(true);
                                     setOpenDropDown(false);
                                   }}
+                                  disabled={
+                                    sale?.reportStatus?.status === "accepted"
+                                  }
                                 >
                                   Reject
                                 </button>
@@ -398,6 +391,7 @@ const CommissionTable = ({
                                     setOpenDialog={setOpenCommissionModal}
                                     saleData={sale}
                                     editMode={false}
+                                    isEmployee={true}
                                   />
                                 )}
                               </div>
@@ -422,7 +416,7 @@ const CommissionTable = ({
       {/* Accept Confirmation Modal */}
       {acceptDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-          <div className="relative w-[45%] max-w-4xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
+          <div className="relative w-[45%] max-w-xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
             <button
               onClick={() => setAcceptDialogOpen(false)}
               className="absolute text-2xl text-gray-600 top-2 right-2 hover:text-gray-800"
@@ -438,10 +432,10 @@ const CommissionTable = ({
                 Are you sure you want to accept this commission?
               </p>
 
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-2">
                 <button
                   onClick={() => setAcceptDialogOpen(false)}
-                  className="px-3 py-2 mx-4 text-white bg-red-500 rounded-lg"
+                  className="px-3 py-2  text-white bg-red-500 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -450,7 +444,7 @@ const CommissionTable = ({
                     handleAccept();
                     setAcceptDialogOpen(false);
                   }}
-                  className="px-3 py-2 mx-4 text-white bg-[#003160] rounded-lg"
+                  className="px-3 py-2  text-white bg-[#003160] rounded-lg"
                 >
                   Confirm
                 </button>
@@ -463,7 +457,7 @@ const CommissionTable = ({
       {/* Rejection Reason Modal */}
       {rejectDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
-          <div className="relative w-[45%] max-w-4xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
+          <div className="relative w-[45%] max-w-xl bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
             <button
               onClick={() => setRejectDialogOpen(false)}
               className="absolute text-2xl text-gray-600 top-2 right-2 hover:text-gray-800"
@@ -488,10 +482,10 @@ const CommissionTable = ({
                 />
               </div>
 
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-2">
                 <button
                   onClick={() => setRejectDialogOpen(false)}
-                  className="px-3 py-2 mx-4 text-white bg-red-500 rounded-lg"
+                  className="px-3 py-2  text-white bg-red-500 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -501,7 +495,7 @@ const CommissionTable = ({
                     setRejectionReason("");
                     setRejectDialogOpen(false);
                   }}
-                  className="px-3 py-2 mx-4 text-white bg-[#003160] rounded-lg"
+                  className="px-3 py-2  text-white bg-[#003160] rounded-lg"
                 >
                   Submit
                 </button>

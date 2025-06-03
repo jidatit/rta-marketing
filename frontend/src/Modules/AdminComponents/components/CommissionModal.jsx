@@ -19,6 +19,7 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  Tooltip,
 } from "@mui/material";
 import { Download, LogOut, View, X } from "lucide-react";
 
@@ -35,13 +36,14 @@ function f2(val) {
   return Number.isInteger(n) ? n.toString() : n.toFixed(2);
 }
 
-const CommissionModal = ({ saleData, openDialog, setOpenDialog, editMode }) => {
-  console.log("saleData", saleData);
-
-  console.log("saleData", saleData.documentId);
-  console.log("saleID", saleData.saleId);
+const CommissionModal = ({
+  saleData,
+  openDialog,
+  setOpenDialog,
+  editMode,
+  isEmployee = false,
+}) => {
   const editModeDisabled = !editMode; //false
-  console.log("editModeDisabled :", editModeDisabled);
   //   const [openDialog, setOpenDialog] = useState(false);
   const { currentUser } = useAuth();
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
@@ -1261,15 +1263,28 @@ const CommissionModal = ({ saleData, openDialog, setOpenDialog, editMode }) => {
         </DialogContent>
 
         <DialogActions>
-          <Button
+          {/* <Button
             variant="outlined"
             color="primary"
             startIcon={<Download />}
-            onClick={downloadReport}
+            title="Download Report"
+            disabled={saleData?.reportStatus?.status !== "accepted"}
           >
             Download Report
-          </Button>
-          {isVirtualAssistant && (
+          </Button> */}
+          <Tooltip title="Please accept the report before downloading">
+            <span>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<Download />}
+                disabled={saleData?.reportStatus?.status !== "accepted"}
+              >
+                Download Report
+              </Button>
+            </span>
+          </Tooltip>
+          {isVirtualAssistant && !isEmployee && (
             <Button
               variant="contained"
               color="primary"

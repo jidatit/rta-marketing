@@ -101,7 +101,6 @@ const EmployeeCommissionPage = () => {
                 documentId: docSnap.id,
               }));
 
-              // console.log(salesData);
               setAllSales(saleDataWithDocID);
               setFilteredClients(saleDataWithDocID); // Initially set filteredClients to all clients
             } else {

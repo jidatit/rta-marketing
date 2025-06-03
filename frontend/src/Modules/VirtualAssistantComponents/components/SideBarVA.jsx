@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../../../images/rta-logo.png";
+import { useSalesCounts } from "../../../SalesContext";
 
 const SideBarVA = () => {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState("");
+  const { withReportHistory, statusCount } = useSalesCounts();
 
   // Update the active item based on the pathname
   useEffect(() => {
@@ -29,13 +31,13 @@ const SideBarVA = () => {
       activeItem === item
         ? "bg-white shadow-lg text-blue-800"
         : "hover:bg-white hover:text-blue-900"
-    }`;
+    } `;
   };
 
   const getTextClasses = (item) => {
     return `w-full p-3 rounded-md font-radios ${
       activeItem === item ? "text-blue-800" : "text-white"
-    }`;
+    } flex items-center justify-between`;
   };
 
   return (
@@ -75,7 +77,18 @@ const SideBarVA = () => {
             onClick={() => handleItemClick("comission")}
             aria-current={activeItem === "comission" ? "page" : undefined}
           >
-            <p className={getTextClasses("comission")}>Comission</p>
+            <p className={getTextClasses("comission")}>
+              <p> Comission</p>
+              <span
+                className={`   ${
+                  activeItem === "comission"
+                    ? " text-white bg-[#011c64] "
+                    : "text-[#011c64] bg-white"
+                }  w-5 h-5 flex items-center justify-center rounded-full text-sm `}
+              >
+                {statusCount}
+              </span>
+            </p>
           </Link>
         </div>
       </div>

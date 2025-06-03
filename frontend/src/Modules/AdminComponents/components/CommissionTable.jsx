@@ -15,6 +15,7 @@ import { db } from "../../../config/firebaseConfig";
 import { useAuth } from "../../../AuthContext";
 import CommissionModal from "./CommissionModal";
 import NotesDetail from "./NotesDetail";
+import { use } from "react";
 
 const CommissionTable = ({
   sales,
@@ -32,6 +33,7 @@ const CommissionTable = ({
   const [viewNote, setviewNote] = useState(false);
   const { currentUser } = useAuth();
   const [openDropDown, setOpenDropDown] = useState(false);
+
   const [openCommissionModal, setOpenCommissionModal] = useState(false);
 
   const handleCommissionModal = () => {
@@ -40,7 +42,6 @@ const CommissionTable = ({
   const closeViewNote = () => {
     setviewNote(false);
   };
-  console.log("sales", sales);
 
   //close of the dropdown
   const dropdownRef = useRef(null); // ADD THIS
@@ -374,7 +375,6 @@ const CommissionTable = ({
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                                   onClick={() => {
-                                    console.log("view sheet");
                                     setEdit(false);
                                     handleCommissionModal();
 
@@ -389,7 +389,6 @@ const CommissionTable = ({
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left disabled:opacity-50  disabled:cursor-not-allowed "
                                   onClick={() => {
-                                    console.log("view notes");
                                     if (
                                       sale.reportStatus?.status === "rejected"
                                     ) {
@@ -405,7 +404,6 @@ const CommissionTable = ({
                                 <button
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                                   onClick={() => {
-                                    console.log("Edit Sheet");
                                     setEdit(true);
                                     handleCommissionModal();
                                   }}
