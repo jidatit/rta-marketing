@@ -328,6 +328,9 @@ const CommissionTable = ({
                             className={`inline-block w-3 h-3 rounded-full mr-2 ${
                               sale?.reportStatus?.status === "accepted"
                                 ? "bg-green-500"
+                                : sale?.reportStatus?.status === "pending" ||
+                                  !sale?.reportStatus
+                                ? "bg-yellow-300"
                                 : "bg-red-500"
                             }`}
                           ></span>

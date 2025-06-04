@@ -303,6 +303,8 @@ const CommissionTable = ({
                             className={`inline-block w-3 h-3 rounded-full mr-2 ${
                               sale?.reportStatus?.status === "accepted"
                                 ? "bg-green-500"
+                                : sale?.reportStatus?.status === "pending"
+                                ? "bg-yellow-300"
                                 : "bg-red-500"
                             }`}
                           ></span>
@@ -471,7 +473,7 @@ const CommissionTable = ({
             <div className="py-6">
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for rejection
+                  Reason for rejection (optional)
                 </label>
                 <textarea
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-[#003160] focus:border-transparent"

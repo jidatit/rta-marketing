@@ -608,6 +608,8 @@ const SalesAnalysisChart = () => {
       );
     }
 
+    console.log("conversionSeries", conversionSeries);
+
     if (salePerLeadSeries) {
       newSalePerLead = salePerLeadSeries.data.reduce(
         (sum, val) => sum + parseFloat(val || 0),

@@ -185,9 +185,16 @@ const CommissionPage = () => {
     let filtered = [...salesWithReportHistory];
 
     if (tab !== "all") {
-      filtered = filtered.filter(
-        (sale) => sale?.reportStatus?.status?.toLowerCase() === tab
-      );
+      filtered = filtered.filter((sale) => {
+        if (tab === "pending") {
+          return (
+            !sale?.reportStatus?.status ||
+            sale.reportStatus.status.toLowerCase() === tab
+          );
+        } else {
+          return sale?.reportStatus?.status?.toLowerCase() === tab;
+        }
+      });
     }
     // Apply salesperson filter
     if (selectedSalesPerson) {
@@ -200,7 +207,11 @@ const CommissionPage = () => {
     if (startDate && endDate) {
       filtered = filtered.filter((sale) => {
         const saleDate = new Date(sale.saleDate);
-        return saleDate >= startDate && saleDate <= endDate;
+        const sheetDate =
+          new Date(sale?.reportStatus?.generatedAt) ||
+          new Date(sale?.reportHistory[0]?.generatedAt);
+
+        return sheetDate >= startDate && sheetDate <= endDate;
       });
     }
 
