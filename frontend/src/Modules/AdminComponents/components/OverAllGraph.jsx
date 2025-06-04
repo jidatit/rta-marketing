@@ -355,6 +355,7 @@ const SalesAnalysisChart = () => {
     conversionRate: 0,
     costPerSale: 0,
   });
+
   const [dateFrom, setDateFrom] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
   );
@@ -450,7 +451,7 @@ const SalesAnalysisChart = () => {
     };
     fetchLeadSources();
   }, []);
-  // Add this useEffect to fetch sales persons
+
   useEffect(() => {
     const fetchSalesPersons = async () => {
       const querySnapshot = await getDocs(collection(db, "employees"));
@@ -464,9 +465,8 @@ const SalesAnalysisChart = () => {
     };
     fetchSalesPersons();
   }, []);
-  // Updated: Determine appropriate date grouping based on date range
+
   useEffect(() => {
-    // Only override grouping if not in special views
     if (!["today", "yesterday", "thisYear"].includes(timeRangeFilter)) {
       const daysDifference = Math.ceil(
         (dateTo - dateFrom) / (1000 * 60 * 60 * 24)
@@ -481,8 +481,6 @@ const SalesAnalysisChart = () => {
     }
   }, [dateFrom, dateTo, timeRangeFilter]);
 
-  // Helper function to format dates based on grouping
-  // Update the formatDate function to account for timezone offset
   const formatDate = (date, grouping) => {
     const d = new Date(date);
 
@@ -590,10 +588,6 @@ const SalesAnalysisChart = () => {
     return dates;
   };
 
-  // useEffect(() => {
-  //   const dateRange = generateDateRange(dateFrom, dateTo, dateGrouping);
-  //   console.log("Generated Date Range:", dateRange);
-  // }, [dateFrom, dateTo, dateGrouping]);
   useEffect(() => {
     if (chartData.series.length === 0) return;
 
@@ -614,6 +608,8 @@ const SalesAnalysisChart = () => {
       );
     }
 
+    console.log("conversionSeries", conversionSeries);
+
     if (salePerLeadSeries) {
       newSalePerLead = salePerLeadSeries.data.reduce(
         (sum, val) => sum + parseFloat(val || 0),
@@ -621,9 +617,12 @@ const SalesAnalysisChart = () => {
       );
     }
 
+    const conversionRate =
+      (summaryStats.totalSales / summaryStats.totalLeads) * 100;
+
     setSummaryStats((prev) => ({
       ...prev,
-      conversionRate: newConversionRate.toFixed(2),
+      conversionRate: conversionRate.toFixed(2),
       costPerSale: newSalePerLead.toFixed(2),
     }));
   }, [chartData]); // Runs when chartData changes
@@ -645,6 +644,7 @@ const SalesAnalysisChart = () => {
         }
       });
       const leadsSnapshot = await getDocs(collection(db, "employees"));
+
       // Fetch sales data
       const salesSnapshot = await getDocs(collection(db, "sales"));
 
@@ -690,10 +690,15 @@ const SalesAnalysisChart = () => {
                 const exactDate = new Date(leadTime);
                 const dateStr = formatDate(exactDate, dateGrouping);
 
+                // console.log("leadsData[dateStr]", leadsData[dateStr]);
                 // Now dateStr will contain the exact hour information
                 leadsData[dateStr] =
                   (leadsData[dateStr] || 0) + lead.leadAmount; // Changed from +1
-                totalLeads += lead.leadAmount; // Already correct
+                totalLeads += lead.leadAmount === 0 ? 1 : lead.leadAmount;
+                // console.log("leadsData", leadsData);
+                console.log("lead", lead);
+
+                // console.log("Lead amount", lead.leadAmount); // Already correct
 
                 // Add lead amount to total
                 totalLeadAmount += lead.leadAmount;
@@ -832,7 +837,6 @@ const SalesAnalysisChart = () => {
           });
         }
       });
-
       // Update summary stats
       setSummaryStats({
         totalLeads,
@@ -1131,6 +1135,44 @@ const SalesAnalysisChart = () => {
     selectedSalesPerson,
     selectedSaleType,
   ]);
+
+  useEffect(() => {
+    const fetchTotalCounts = async () => {
+      try {
+        let totalLeads = 0;
+        let totalSales = 0;
+
+        // Fetch all employees
+        const employeeSnapshot = await getDocs(collection(db, "employees"));
+        employeeSnapshot.forEach((doc) => {
+          const data = doc.data();
+          const employeeLeads = data.leads || [];
+
+          // Sum up all lead amounts
+          employeeLeads.forEach((lead) => {
+            totalLeads += lead.leadAmount || 0;
+          });
+        });
+
+        // Fetch all sales
+        const salesSnapshot = await getDocs(collection(db, "sales"));
+        salesSnapshot.forEach((doc) => {
+          const salesArray = doc.data().sales || [];
+
+          // Count each sale as one unit
+          totalSales += salesArray.length;
+        });
+
+        const conversionRate =
+          totalLeads > 0 ? ((totalSales / totalLeads) * 100).toFixed(2) : 0;
+      } catch (error) {
+        console.error("Error fetching total leads/sales:||", error);
+      }
+    };
+
+    fetchTotalCounts();
+  }, []);
+
   useEffect(() => {
     // Check if we have chart data and categories
     if (dateRange?.length > 0) {

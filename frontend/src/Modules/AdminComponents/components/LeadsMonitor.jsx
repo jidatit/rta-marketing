@@ -107,7 +107,6 @@ export const useLeadMonitoring = (
   const monitorLeads = async (isManualTrigger = false) => {
     // Prevent multiple simultaneous checks
     if (isCheckingRef.current) {
-      console.log("Check already in progress, skipping...");
       return { success: false, message: "Check already in progress" };
     }
 
@@ -202,7 +201,6 @@ export const useLeadMonitoring = (
           if (success) {
             updatedSentNotifications.push(employee.uid);
             successfulNotifications++;
-            console.log(`Notification sent successfully for ${employee.name}`);
           } else {
             console.error(`Failed to send notification for ${employee.name}`);
           }

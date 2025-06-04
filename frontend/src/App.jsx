@@ -40,6 +40,8 @@ import GraphsPage from "./Modules/AdminComponents/pages/GraphsPage.jsx";
 import SalesVAPage from "./Modules/VirtualAssistantComponents/pages/SalesPage.jsx";
 import SalesAnalyticsMain from "./Modules/AdminComponents/pages/MonthlySaleAnalytics.jsx";
 import EmployeeSalesAnalytics from "./Modules/EmployeeComponents/pages/EmployeeSalesAnalytics.jsx";
+import CommissionPage from "./Modules/AdminComponents/CommissionPage.jsx";
+import EmployeeCommissionPage from "./Modules/EmployeeComponents/CommissionPage.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -107,6 +109,16 @@ function App() {
                     }
                   />
                   <Route
+                    path="commission"
+                    element={
+                      currentUser ? (
+                        <EmployeeCommissionPage />
+                      ) : (
+                        <Navigate to="/" />
+                      )
+                    }
+                  />
+                  <Route
                     path="insuranceUpload"
                     element={
                       currentUser ? (
@@ -136,6 +148,12 @@ function App() {
                   element={<VirtualAssistantLayout />}
                 >
                   <Route
+                    path="comission"
+                    element={
+                      currentUser ? <CommissionPage /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
                     index
                     element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
                   />
@@ -152,6 +170,7 @@ function App() {
                       currentUser ? <ChangePassword /> : <Navigate to="/" />
                     }
                   />
+
                   {/* <Route
                   index
                   element={
@@ -242,6 +261,12 @@ function App() {
                     path="monthly-target"
                     element={
                       currentUser ? <MonthlyTarget /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="comission"
+                    element={
+                      currentUser ? <CommissionPage /> : <Navigate to="/" />
                     }
                   />
                 </Route>
