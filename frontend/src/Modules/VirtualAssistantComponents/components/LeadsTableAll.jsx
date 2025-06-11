@@ -237,8 +237,9 @@ const LeadsPageVA = ({
     }
 
     if (selectedLeadSource) {
+      console.log("selectedLeadSource", selectedLeadSource);
       filteredSales = filteredSales.filter((sale) =>
-        sale.leadSource.includes(selectedLeadSource)
+        sale.leadSource.includes(selectedLeadSource.trimEnd())
       );
     }
 
@@ -455,6 +456,8 @@ const LeadsPageVA = ({
     Math.ceil(filteredClients.length / rowsPerPage)
   );
 
+  console.log("currentClients", currentClients);
+
   return (
     <>
       <ConfirmationModal
@@ -485,7 +488,7 @@ const LeadsPageVA = ({
         setModalMode={setModalMode}
         initialData={modalData}
       />
-      <div className="px-4 flex items-start justify-start w-full h-full pb-8 overflow-y-auto ">
+      <div className="px-4 flex items-start justify-start w-full h-full pb-8 overflow-y-auto  ">
         <div className="flex flex-col w-full h-full gap-y-8 overflow-y-auto">
           <Filters
             leadSources={leadSources}

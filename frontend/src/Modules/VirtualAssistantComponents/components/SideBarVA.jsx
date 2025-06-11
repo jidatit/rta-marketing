@@ -27,16 +27,16 @@ const SideBarVA = () => {
   };
 
   const getLinkClasses = (item) => {
-    return `w-full transition-all duration-300 ease-in-out rounded-md ${
+    return `w-full transition-all duration-300 ease-in-out rounded-md  ${
       activeItem === item
         ? "bg-white shadow-lg text-blue-800"
-        : "hover:bg-white hover:text-blue-900"
+        : "hover:bg-white  hover:text-blue-800"
     } `;
   };
 
   const getTextClasses = (item) => {
     return `w-full p-3 rounded-md font-radios ${
-      activeItem === item ? "text-blue-800" : "text-white"
+      activeItem === item ? "text-blue-800 " : "text-white hover:text-blue-800"
     } flex items-center justify-between`;
   };
 
@@ -79,15 +79,17 @@ const SideBarVA = () => {
           >
             <p className={getTextClasses("comission")}>
               <p> Comission</p>
-              <span
-                className={`   ${
-                  activeItem === "comission"
-                    ? " text-white bg-[#011c64] "
-                    : "text-[#011c64] bg-white"
-                }  w-5 h-5 flex items-center justify-center rounded-full text-sm `}
-              >
-                {statusCount}
-              </span>
+              {statusCount > 0 && (
+                <span
+                  className={`   ${
+                    activeItem === "comission"
+                      ? " text-white bg-[#011c64] "
+                      : "text-[#011c64] bg-white"
+                  }  w-5 h-5 flex items-center justify-center rounded-full text-sm `}
+                >
+                  {statusCount}
+                </span>
+              )}
             </p>
           </Link>
         </div>

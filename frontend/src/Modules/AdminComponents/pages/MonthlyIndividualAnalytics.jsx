@@ -69,6 +69,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   const [salesStats, setSalesStats] = useState({
     totalSales: 0,
     totalSalesPrice: 0,
+    totalTrueGross: 0,
   });
   const [isOutOfSync, setIsOutOfSync] = useState(false);
   const [needsUpdate, setNeedsUpdate] = useState(false);
@@ -209,7 +210,12 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
         (acc, curr) => acc + parseFloat(curr.salesGross || 0),
         0
       );
-      return { totalSales, totalSalesPrice };
+      const totalTrueGross = sales.reduce(
+        (acc, curr) => acc + parseFloat(curr.trueGross || 0),
+        0
+      );
+
+      return { totalSales, totalSalesPrice, totalTrueGross };
     };
 
     const applyFilters = () => {
@@ -563,7 +569,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
         </div>
       </div>
 
-      <div className="flex flex-col w-full max-w-full  my-6">
+      <div className="flex flex-col w-full max-w-full  my-6 ">
         {/* Header Row */}
         <div className="flex w-full min-w-full">
           <div className="flex-1 min-w-32 text-left font-bold text-[#011c64]"></div>
@@ -572,6 +578,9 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           </div>
           <div className="w-36 md:w-48 lg:w-64 text-center font-bold text-[#011c64]">
             Sales Gross
+          </div>
+          <div className="w-36 md:w-48 lg:w-64 text-center font-bold text-[#011c64]">
+            Total True Gross
           </div>
         </div>
 
@@ -645,6 +654,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
               </div>
             )}
           </div>
+          <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1"></div>
         </div>
         <div className="flex w-full min-w-full items-center my-1">
           <div className="flex-1 min-w-32 text-left font-bold text-[#011c64] flex items-center">
@@ -666,6 +676,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
               </Tooltip>
             )}
           </div>
+
           <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
             {selectedSalesperson === "All"
               ? salesStats.totalSales.toFixed(2)
@@ -680,10 +691,17 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
               : salesStats.totalSalesPrice.toFixed(2)}
             {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
           </div>
+          <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
+            $
+            {selectedSalesperson === "All"
+              ? salesStats.totalTrueGross.toFixed(2)
+              : salesStats.totalTrueGross.toFixed(2)}
+            {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
+          </div>
         </div>
 
         {/* Gap to Target Row */}
-        <div className="flex w-full min-w-full items-center my-1">
+        <div className="flex w-full min-w-full items-center my-1 ">
           <div className="flex-1 min-w-32 text-left font-bold text-[#011c64]">
             Gap to Target
           </div>
@@ -704,6 +722,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                 : salesStats.totalSalesPrice
               ).toFixed(2)}
           </div>
+          <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1"></div>
         </div>
 
         {/* Average Row */}
@@ -723,13 +742,14 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                   ? salesStats.totalSalesPrice
                   : salesStats.totalSalesPrice;
 
-              if (!denominator || denominator === 0) {
+              if (!numerator || numerator === 0) {
                 return "0.0000";
               }
 
-              return (numerator / denominator).toFixed(4);
+              return (denominator / numerator).toFixed(4);
             })()}
           </div>
+          <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1"></div>
         </div>
       </div>
 
