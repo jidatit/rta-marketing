@@ -117,6 +117,9 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     gross: sale?.grossProfit || "",
     dateLeadReceived: null,
     saleDate: sale?.saleDate ? new Date(sale.saleDate) : null,
+    intermediateDate: sale?.saleDate ? new Date(sale.saleDate) : null,
+    saleTime: new Date().toLocaleTimeString("en-GB", { hour12: false }), // e.g., "20:02:12"
+    intermediateTime: new Date().toLocaleTimeString("en-GB", { hour12: false }),
     fundedDate: null,
     salesRep: "",
     saleType: sale?.saleType || "individual", // Default to 'individual' if no value is provided
@@ -197,6 +200,11 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
           ? new Date(sale.dateLeadReceived)
           : null, // Handle if it's missing or null
         saleDate: sale.saleDate ? new Date(sale.saleDate) : null, // Handle valid date format
+        intermediateDate: sale?.saleDate ? new Date(sale.saleDate) : null,
+        saleTime: new Date().toLocaleTimeString("en-GB", { hour12: false }), // e.g., "20:02:12"
+        intermediateTime: new Date().toLocaleTimeString("en-GB", {
+          hour12: false,
+        }),
         fundedDate: sale.fundedDate ? new Date(sale.fundedDate) : null, // Handle missing or null value
         salesRep: sale.salesRep || "", // Default to empty if missing
         saleType: sale?.saleType || "individual", // Default to 'individual' if no value is provided
@@ -370,6 +378,11 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     const formattedFormData = {
       ...formData,
       saleDate: formatDate(formData.saleDate),
+      intermediateDate: formatDate(formData.saleDate),
+      saleTime: new Date().toLocaleTimeString("en-GB", { hour12: false }), // e.g., "20:02:12"
+      intermediateTime: new Date().toLocaleTimeString("en-GB", {
+        hour12: false,
+      }),
       dateLeadReceived: formatDate(formData.dateLeadReceived),
       fundedDate: formatDate(formData.fundedDate),
       dateVehicleReceived: formatDate(formData.dateVehicleReceived),
@@ -746,7 +759,24 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </LocalizationProvider>
             </Grid>
-
+            {/* <Grid item xs={12} md={4}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Intermediate Date"
+                  value={formData.intermediateDate}
+                  onChange={(date) =>
+                    handleDateChange("intermediateDate", date)
+                  }
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: "small",
+                      variant: "outlined",
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid> */}
             <Grid item xs={12} md={4}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
