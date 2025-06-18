@@ -157,8 +157,8 @@ const CommissionReportGenerator = ({ saleData }) => {
       saleType === "wholesale"
         ? 0
         : !rateInput && rateInput !== 0
-        ? 0
-        : p(rateInput);
+          ? 0
+          : p(rateInput);
 
     const commission =
       Math.round(salesGross * (commissionRateNumber / 100) * 100) / 100;
@@ -685,9 +685,9 @@ const CommissionReportGenerator = ({ saleData }) => {
                           {editableReportData.vehicleCosts.otherCostItems.map(
                             (item, index) => (
                               <TableRow key={`other-cost-${index}`}>
-                                <TableCell className="pl-2">{`Other Cost ${
-                                  index + 1
-                                }`}</TableCell>
+                                <TableCell className="pl-2">
+                                  {item.description}
+                                </TableCell>
                                 <TableCell align="right" className="pr-2">
                                   <TextField
                                     type="text"
@@ -990,8 +990,10 @@ const CommissionReportGenerator = ({ saleData }) => {
                                 type="text"
                                 value={
                                   key === "commission"
-                                    ? editableReportData.commission.amount ?? ""
-                                    : editableReportData.dealSummary[key] ?? ""
+                                    ? (editableReportData.commission.amount ??
+                                      "")
+                                    : (editableReportData.dealSummary[key] ??
+                                      "")
                                 }
                                 readOnly={key !== "pac" || !isVirtualAssistant}
                                 onChange={
