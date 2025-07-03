@@ -237,7 +237,7 @@ const LeadsPageVA = ({
     }
 
     if (selectedLeadSource) {
-      console.log("selectedLeadSource", selectedLeadSource);
+      // console.log("selectedLeadSource", selectedLeadSource);
       filteredSales = filteredSales.filter((sale) =>
         sale.leadSource.includes(selectedLeadSource.trimEnd())
       );
@@ -456,7 +456,7 @@ const LeadsPageVA = ({
     Math.ceil(filteredClients.length / rowsPerPage)
   );
 
-  console.log("currentClients", currentClients);
+  // console.log("currentClients", currentClients);
 
   return (
     <>

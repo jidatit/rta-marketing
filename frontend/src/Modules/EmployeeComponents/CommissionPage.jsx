@@ -158,12 +158,14 @@ const EmployeeCommissionPage = () => {
     // Apply date filter
     if (startDate && endDate) {
       filtered = filtered.filter((sale) => {
+        const saleDate = new Date(sale.saleDate);
+
         const sheetDate =
           new Date(sale?.reportStatus?.generatedAt) ||
           new Date(sale?.reportHistory[0]?.generatedAt);
-        console.log("sheet Date", sheetDate);
+        // console.log("sheet Date", sheetDate);
 
-        return sheetDate >= startDate && sheetDate <= endDate;
+        return saleDate >= startDate && saleDate <= endDate;
       });
     }
 

@@ -52,7 +52,6 @@ const Filters = ({
     )
   );
 
-  console.log("leadSources", leadSources);
   return (
     <div className="w-full">
       <button

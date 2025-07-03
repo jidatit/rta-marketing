@@ -42,6 +42,7 @@ import SalesAnalyticsMain from "./Modules/AdminComponents/pages/MonthlySaleAnaly
 import EmployeeSalesAnalytics from "./Modules/EmployeeComponents/pages/EmployeeSalesAnalytics.jsx";
 import CommissionPage from "./Modules/AdminComponents/CommissionPage.jsx";
 import EmployeeCommissionPage from "./Modules/EmployeeComponents/CommissionPage.jsx";
+import DynamicCommission from "./Modules/AdminComponents/DynamicCommission.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -171,38 +172,18 @@ function App() {
                     }
                   />
 
-                  {/* <Route
-                  index
-                  element={
-                    currentUser ? (
-                      <VirtualAssistantDashboard />
-                    ) : (
-                      <Navigate to="/" />
-                    )
-                  }
-                /> */}
                   <Route
                     path="leads"
                     element={currentUser ? <LeadsPage /> : <Navigate to="/" />}
                   />
                 </Route>
                 <Route path="/AdminLayout" element={<AdminLayout />}>
-                  {/* <Route
-                  index
-                  element={
-                    currentUser ? <AdminDashboard /> : <Navigate to="/" />
-                  }
-                /> */}
                   <Route
                     index
                     // path="sales"
                     element={currentUser ? <SalesPage /> : <Navigate to="/" />}
                   />
 
-                  {/* <Route
-                  path="users"
-                  element={currentUser ? <AllUsers /> : <Navigate to="/" />}
-                /> */}
                   <Route
                     path="changePassword"
                     element={
@@ -267,6 +248,12 @@ function App() {
                     path="comission"
                     element={
                       currentUser ? <CommissionPage /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="dynamic-comission"
+                    element={
+                      currentUser ? <DynamicCommission /> : <Navigate to="/" />
                     }
                   />
                 </Route>

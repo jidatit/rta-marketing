@@ -35,7 +35,7 @@ const NotesDetail = ({ open, close, note }) => {
           <Button
             variant="contained"
             onClick={() => {
-              console.log("Download clicked");
+              // console.log("Download clicked");
               close();
             }}
           >

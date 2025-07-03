@@ -101,24 +101,23 @@ const EmployeeDashboard = () => {
   };
   const [loading, setLoading] = useState(false);
   const [loading2, setLoading2] = useState(false);
+
   const handleUpload = async () => {
     if (files.length > 0) {
       setLoading(true);
       const saleId = generateSaleId();
-      const documentURLsArray = []; // To store download URLs of all files
+      const documentURLsArray = [];
 
-      // Loop through each file and upload to Firebase
       for (const fileObj of files) {
-        const file = fileObj.file; // Extract the actual file object from the file structure
-        const uniqueFileName = `${saleId}_${file.name}`; // Create a unique filename using saleId and file name
+        const file = fileObj.file;
+        const uniqueFileName = `${saleId}_${file.name}`;
 
         const storageRef = ref(storage, `files/${uniqueFileName}`);
 
         const metadata = {
-          contentType: file.type, // Set the file's MIME type
+          contentType: file.type,
         };
 
-        // Upload file and wait for it to complete
         const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
         await new Promise((resolve, reject) => {
@@ -143,6 +142,75 @@ const EmployeeDashboard = () => {
         });
       }
 
+      const saleRefCommission = doc(db, "sales", currentUser.uid);
+      const docSnapCommission = await getDoc(saleRefCommission);
+      const allSales = docSnapCommission.exists()
+        ? docSnapCommission.data().sales || []
+        : [];
+
+      const currentMonth = new Date().toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const monthlyIndividualSales = allSales.filter((sale) => {
+        if (!sale.saleDate || sale.saleType !== "individual") return false;
+        try {
+          const d = new Date(sale.saleDate);
+          const saleMonth = d.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          });
+          return saleMonth === currentMonth;
+        } catch {
+          return false;
+        }
+      });
+
+      const specificRuleSnap = await getDoc(
+        doc(db, "userCommissionRules", currentUser.uid)
+      );
+      const globalRuleSnap = await getDoc(doc(db, "commissionRules", "global"));
+
+      const rule = specificRuleSnap.exists()
+        ? specificRuleSnap.data()
+        : globalRuleSnap.exists()
+        ? globalRuleSnap.data()
+        : {};
+
+      const minSalesCount = rule.minSalesCount || 0;
+      const minAvgSalesGross = rule.minAvgSalesGross || 0;
+      const bonusCommissionRate = rule.bonusCommissionRate || 0;
+      const baseCommissionRate = rule.baseCommissionRate || 25;
+
+      // === 🔍 Step 3: Calculate sales summary
+      // const totalSales = monthlyIndividualSales.length;
+      // const totalGross = monthlyIndividualSales.reduce(
+      //   (sum, sale) => sum + parseFloat(sale.salesGross || 0),
+      //   0
+      // );
+      // const avgGross = totalSales > 0 ? totalGross / totalSales : 0;
+      const sortedSales = [...monthlyIndividualSales].sort((a, b) => {
+        return new Date(a.saleDate) - new Date(b.saleDate);
+      });
+
+      const selectedSales = sortedSales.slice(0, minSalesCount);
+
+      const totalGross = selectedSales.reduce(
+        (sum, sale) => sum + parseFloat(sale.salesGross || 0),
+        0
+      );
+
+      const totalSales = monthlyIndividualSales.length;
+      const avgGross =
+        selectedSales.length > 0 ? totalGross / selectedSales.length : 0;
+
+      const qualifies =
+        totalSales >= minSalesCount && avgGross >= minAvgSalesGross;
+
+      const commissionRate =
+        baseCommissionRate + (qualifies ? bonusCommissionRate : 0);
+
       // Once all files are uploaded and URLs are collected
       const updatedFormData = {
         ...formData,
@@ -152,6 +220,7 @@ const EmployeeDashboard = () => {
         addedById: currentUser?.uid || "SalesPerson",
         addedByName: currentUser?.name || "SalesPerson",
         salesRep: currentUser?.name || "SalesPerson",
+        commissionRate,
       };
 
       const saleRef = doc(db, "sales", currentUser.uid);
@@ -222,18 +291,88 @@ const EmployeeDashboard = () => {
     try {
       setLoading2(true);
       const saleId = generateSaleId(); // Generate a unique sale ID
+
+      const saleRefCommission = doc(db, "sales", currentUser.uid);
+      const docSnapCommission = await getDoc(saleRefCommission);
+      const allSales = docSnapCommission.exists()
+        ? docSnapCommission.data().sales || []
+        : [];
+
+      const currentMonth = new Date().toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const monthlyIndividualSales = allSales.filter((sale) => {
+        if (!sale.saleDate || sale.saleType !== "individual") return false;
+        try {
+          const d = new Date(sale.saleDate);
+          const saleMonth = d.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          });
+          return saleMonth === currentMonth;
+        } catch {
+          return false;
+        }
+      });
+
+      const specificRuleSnap = await getDoc(
+        doc(db, "userCommissionRules", currentUser.uid)
+      );
+      const globalRuleSnap = await getDoc(doc(db, "commissionRules", "global"));
+
+      const rule = specificRuleSnap.exists()
+        ? specificRuleSnap.data()
+        : globalRuleSnap.exists()
+        ? globalRuleSnap.data()
+        : {};
+
+      const minSalesCount = rule.minSalesCount || 0;
+      const minAvgSalesGross = rule.minAvgSalesGross || 0;
+      const bonusCommissionRate = rule.bonusCommissionRate || 0;
+      const baseCommissionRate = rule.baseCommissionRate || 25;
+
+      // === 🔍 Step 3: Calculate sales summary
+      // const totalSales = monthlyIndividualSales.length;
+      // const totalGross = monthlyIndividualSales.reduce(
+      //   (sum, sale) => sum + parseFloat(sale.salesGross || 0),
+      //   0
+      // );
+      // const avgGross = totalSales > 0 ? totalGross / totalSales : 0;
+      const sortedSales = [...monthlyIndividualSales].sort((a, b) => {
+        return new Date(a.saleDate) - new Date(b.saleDate);
+      });
+
+      const selectedSales = sortedSales.slice(0, minSalesCount);
+
+      const totalGross = selectedSales.reduce(
+        (sum, sale) => sum + parseFloat(sale.salesGross || 0),
+        0
+      );
+
+      const totalSales = monthlyIndividualSales.length;
+      const avgGross =
+        selectedSales.length > 0 ? totalGross / selectedSales.length : 0;
+
+      const qualifies =
+        totalSales >= minSalesCount && avgGross >= minAvgSalesGross;
+
+      const commissionRate =
+        baseCommissionRate + (qualifies ? bonusCommissionRate : 0);
+
       const updatedFormData = {
         ...formData,
         saleId, // Add the sale ID here
         addedById: currentUser?.uid || "SalesPerson",
         addedByName: currentUser?.name || "SalesPerson",
         salesRep: currentUser?.name || "SalesPerson",
+        commissionRate,
       };
       const saleRef = doc(db, "sales", currentUser?.uid);
       const docSnap = await getDoc(saleRef);
 
       if (!docSnap.exists()) {
-        // Create a new document if it does not exist
         await setDoc(saleRef, {
           sales: [updatedFormData],
         });
@@ -243,11 +382,6 @@ const EmployeeDashboard = () => {
           sales: arrayUnion(updatedFormData),
         });
       }
-
-      // Wait for the update to complete before updating the formData state
-      // setFormData({ ...formData, grossProfit: "" });
-
-      // Reset grossProfit
       setLoading2(false);
       setFiles([]);
       setFormData({
@@ -295,12 +429,10 @@ const EmployeeDashboard = () => {
     } catch (error) {
       console.error("Error adding sale: ", error);
     } finally {
-      // setFileName("");
-      // setFileType("");
       setFiles([]);
     }
   };
-  // console.log(setShowModal);
+
   return (
     <>
       <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full ">

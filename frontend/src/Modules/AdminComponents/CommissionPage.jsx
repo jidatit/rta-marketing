@@ -211,7 +211,7 @@ const CommissionPage = () => {
           new Date(sale?.reportStatus?.generatedAt) ||
           new Date(sale?.reportHistory[0]?.generatedAt);
 
-        return sheetDate >= startDate && sheetDate <= endDate;
+        return saleDate >= startDate && saleDate <= endDate;
       });
     }
 
@@ -325,7 +325,7 @@ const CommissionPage = () => {
           </div>
           {/* tables here */}
           <CommissionTable sales={currentClients} />
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4 ">
             <div>
               <label
                 htmlFor="rows-per-page"

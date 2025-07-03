@@ -181,6 +181,10 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
     vehiclePurchasePrice: sale?.vehiclePurchasePrice || "",
     vehicleSoldPrice: sale?.vehicleSoldPrice || "",
     auction: sale?.auction || "",
+    vehicleModel: sale?.vehicleModel || "",
+    vehicleMake: sale?.vehicleMake || "",
+    VIN: sale?.VIN || "",
+    stockNumber: sale?.stockNumber || "",
   });
   useEffect(() => {
     if (sale) {
@@ -265,6 +269,10 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
         vehiclePurchasePrice: sale?.vehiclePurchasePrice || "",
         vehicleSoldPrice: sale?.vehicleSoldPrice || "",
         auction: sale?.auction || "",
+        vehicleModel: sale?.vehicleModel || "",
+        vehicleMake: sale?.vehicleMake || "",
+        VIN: sale?.VIN || "",
+        stockNumber: sale?.stockNumber || "",
 
         otherIncomeItems: sale.otherIncomeItems || [
           ...(sale.otherIncome1Amount
@@ -680,7 +688,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
               >
                 {formData.saleType === "wholesale"
                   ? "Dealership Information"
-                  : "Customer Information"}
+                  : "Customer & Car Information "}
               </Typography>
               <Divider sx={{ mb: 1 }} />
             </Grid>
@@ -712,7 +720,7 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
             {formData.saleType !== "wholesale" && (
               <Grid item xs={12} md={6}>
                 <TextField
-                  label="Lead Source"
+                  label="Lead Source "
                   fullWidth
                   size="small"
                   variant="outlined"
@@ -808,6 +816,63 @@ const SaleDetailsModal = ({ open, onClose, onSuccess, sale }) => {
                 />
               </Box>
             </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mt: 1 }}>
+                <TextField
+                  label="Vehicle Make"
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  name="vehicleMake"
+                  value={formData.vehicleMake}
+                  onChange={handleChange}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mt: 1 }}>
+                <TextField
+                  label="Vehicle Model"
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  name="vehicleModel"
+                  value={formData.vehicleModel}
+                  onChange={handleChange}
+                />
+              </Box>
+            </Grid>
+            {formData.saleType !== "wholesale" && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ mt: 1 }}>
+                    <TextField
+                      label="VIN"
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      name="VIN"
+                      value={formData.VIN}
+                      onChange={handleChange}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ mt: 1 }}>
+                    <TextField
+                      label="Stock Number"
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      name="stockNumber"
+                      value={formData.stockNumber}
+                      onChange={handleChange}
+                    />
+                  </Box>
+                </Grid>
+              </>
+            )}
+
             {formData.saleType === "wholesale" && (
               // Wholesale specific fields
               <>
