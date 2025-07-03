@@ -191,6 +191,7 @@ const DynamicCommission = () => {
             <FaPlus className="w-4 h-4" />
           </button>
         </div>
+        <h3 className="text-lg font-semibold">Global</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
             <div className="p-4">
@@ -198,7 +199,7 @@ const DynamicCommission = () => {
                 <h3 className="text-sm font-semibold text-gray-500">
                   Sales Target
                 </h3>
-                <div className="p-2 bg-blue-100 rounded-full">
+                <div className="p-2 bg-green-100 rounded-full">
                   <FaCheckDouble className="text-green-600 text-lg" />
                 </div>
               </div>
@@ -237,7 +238,7 @@ const DynamicCommission = () => {
                 <h3 className="text-sm font-semibold text-gray-500">
                   Bonus Commission
                 </h3>
-                <div className="p-2 bg-blue-100 rounded-full">
+                <div className="p-2 bg-yellow-100 rounded-full">
                   <FaChartLine className="text-yellow-600 text-lg" />
                 </div>
               </div>
