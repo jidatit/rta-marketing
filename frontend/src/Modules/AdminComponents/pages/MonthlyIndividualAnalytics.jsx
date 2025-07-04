@@ -29,6 +29,7 @@ import { toast } from "react-toastify";
 import logo from "../../../images/logo.png";
 import { useSalesData } from "../../../SalesDataContext";
 import { useAuth } from "../../../AuthContext";
+import LeaderboardChart from "../components/LeaderboardChart";
 
 const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   const { currentUser } = useAuth();
@@ -71,10 +72,23 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
     totalSalesPrice: 0,
     totalTrueGross: 0,
   });
+  const [chartData, setChartData] = useState({
+    categories: [],
+    salesCount: [],
+    totalGross: [],
+  });
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [selectedUserIndex, setSelectedUserIndex] = useState(-1);
+
   const [isOutOfSync, setIsOutOfSync] = useState(false);
   const [needsUpdate, setNeedsUpdate] = useState(false);
   // Add new state for target loading
   const [targetLoading, setTargetLoading] = useState(true);
+  console.log("currentUser", currentUser);
+
+  console.log("selectedMonth", selectedMonth);
+  console.log("selectedYear", selectedYear);
+  console.log("chartData", chartData);
 
   useEffect(() => {
     const fetchSalespeople = async () => {
@@ -109,6 +123,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   // Prepare date range for display
   const startDate = new Date(selectedYear, selectedMonth, 1);
   const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+
   const handleMonthChange = (e) => {
     // parse the zero-based month index
     const monthIndex = parseInt(e.target.value, 10);
@@ -170,6 +185,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       console.error("Error updating achieved targets:", error);
     }
   };
+
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
     const startYear = 1900;
@@ -461,6 +477,75 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       ],
     };
   };
+
+  const fetchLeaderboardData = async () => {
+    try {
+      setLeaderboardLoading(true);
+      const employeeSnap = await getDocs(collection(db, "employees"));
+      const leaderboard = [];
+
+      for (const empDoc of employeeSnap.docs) {
+        const emp = empDoc.data();
+        const uid = emp.uid;
+        const name = emp.name;
+
+        if (!uid) continue;
+
+        const salesDocSnap = await getDoc(doc(db, "sales", uid));
+        if (!salesDocSnap.exists()) continue;
+
+        const allSales = salesDocSnap.data()?.sales || [];
+
+        const filteredSales = allSales.filter((sale) => {
+          if (!sale.saleDate || sale.saleType !== "individual") return false;
+          const d = new Date(sale.saleDate);
+          return (
+            d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
+          );
+        });
+
+        const totalSales = filteredSales.length;
+        const totalGross = filteredSales.reduce(
+          (sum, sale) => sum + parseFloat(sale.salesGross || 0),
+          0
+        );
+
+        leaderboard.push({
+          uid,
+          name,
+          totalSales,
+          totalGross,
+          isCurrentUser: currentUser?.uid === uid, // Optional, just for flagging
+        });
+      }
+
+      // Sort by totalGross descending
+      const sorted = leaderboard.sort((a, b) => b.totalGross - a.totalGross);
+
+      // Find the index of current user in sorted list
+      const currentIndex = sorted.findIndex(
+        (entry) => entry.uid === currentUser?.uid
+      );
+
+      // Set chart data
+      setChartData({
+        categories: sorted.map((e) => e.name),
+        salesCount: sorted.map((e) => e.totalSales),
+        totalGross: sorted.map((e) => e.totalGross),
+      });
+
+      // Store index for chart highlighting
+      setSelectedUserIndex(currentIndex);
+      setLeaderboardLoading(false);
+    } catch (err) {
+      console.error("Failed to load leaderboard:", err);
+      setLeaderboardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, [selectedMonth, selectedYear]);
 
   return (
     <div className="flex flex-col items-center h-full w-full bg-white px-5">
@@ -757,6 +842,16 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       {allSales?.length > 0 && (
         <div className="w-full mt-2">
           <MonthlyPerformanceChart salesData={prepareChartData()} />
+        </div>
+      )}
+      {chartData && (
+        <div className="w-full mt-2">
+          <LeaderboardChart
+            chartData={chartData}
+            selectedUserIndex={selectedUserIndex}
+            date={{ selectedYear, selectedMonth }}
+            loading={leaderboardLoading}
+          />
         </div>
       )}
 

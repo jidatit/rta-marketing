@@ -178,7 +178,7 @@ const DynamicCommission = () => {
   );
 
   return (
-    <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full">
+    <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full pb-50">
       <div className="flex flex-col w-full h-full gap-y-8">
         <div className="flex flex-row items-center justify-between w-full">
           <h1 className="text-2xl font-semibold">Dynamic Commission</h1>
@@ -192,8 +192,8 @@ const DynamicCommission = () => {
           </button>
         </div>
         <h3 className="text-lg font-semibold">Global</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow ">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-gray-500">
@@ -252,7 +252,7 @@ const DynamicCommission = () => {
             <div className="h-1 w-full bg-yellow-500"></div>
           </div>
         </div>
-        <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
+        <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  pb-50 ">
           <SalesTableVA
             columns={columns}
             data={paginatedData}
@@ -332,6 +332,7 @@ const DynamicCommission = () => {
             </div>
           </div>
         </div>
+        <div className="h-32 w-full invisible"> hidden</div>
       </div>
 
       {formModal && (
