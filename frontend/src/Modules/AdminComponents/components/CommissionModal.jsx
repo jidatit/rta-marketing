@@ -166,8 +166,8 @@ const CommissionModal = ({
       saleType === "wholesale"
         ? 0
         : !rateInput && rateInput !== 0
-          ? 0
-          : p(rateInput);
+        ? 0
+        : p(rateInput);
 
     const commission =
       Math.round(salesGross * (commissionRateNumber / 100) * 100) / 100;
@@ -622,7 +622,7 @@ const CommissionModal = ({
                         { label: "MTO - License", key: "mtoLicense" },
                         { label: "Warranty Cost", key: "warrantyCost" },
                         {
-                          label: "GAP Protection Cost",
+                          label: "GAP Protection Cost ",
                           key: "gapProtectionCost",
                         },
 
@@ -855,9 +855,12 @@ const CommissionModal = ({
                             {editableReportData.customerCosts.otherIncomeItems.map(
                               (item, index) => (
                                 <TableRow key={`other-cost-${index}`}>
-                                  <TableCell className="pl-2">{`Other Income ${
+                                  <TableCell className="pl-2">
+                                    {/* {`Other Income /// ${
                                     index + 1
-                                  }`}</TableCell>
+                                  }`} */}
+                                    {item.description}
+                                  </TableCell>
                                   <TableCell align="right" className="pr-2">
                                     <TextField
                                       type="text"
@@ -992,10 +995,8 @@ const CommissionModal = ({
                                 type="text"
                                 value={
                                   key === "commission"
-                                    ? (editableReportData.commission.amount ??
-                                      "")
-                                    : (editableReportData.dealSummary[key] ??
-                                      "")
+                                    ? editableReportData.commission.amount ?? ""
+                                    : editableReportData.dealSummary[key] ?? ""
                                 }
                                 readOnly={key !== "pac" || !isVirtualAssistant}
                                 onChange={

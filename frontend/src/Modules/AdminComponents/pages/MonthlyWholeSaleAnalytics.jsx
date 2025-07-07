@@ -71,6 +71,10 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   });
   const [isOutOfSync, setIsOutOfSync] = useState(false);
   const [needsUpdate, setNeedsUpdate] = useState(false);
+  const [leadSources, setLeadSources] = useState(["All"]); // Start with "All" option
+  const [selectedLeadSource, setSelectedLeadSource] = useState("All");
+  const [timeFilter, setTimeFilter] = useState("monthly"); // 'monthly' or 'yearly'
+
   useEffect(() => {
     const fetchSalespeople = async () => {
       try {
@@ -94,6 +98,29 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
       fetchSalespeople();
     }
   }, []);
+
+  useEffect(() => {
+    const fetchLeadSources = async () => {
+      try {
+        const leadsSnapshot = await getDocs(collection(db, "leads"));
+        const sources = new Set(["All"]); // Start with "All" option
+
+        leadsSnapshot.forEach((doc) => {
+          const leadData = doc.data();
+          if (leadData.leadName) {
+            sources.add(leadData.leadName);
+          }
+        });
+
+        setLeadSources(Array.from(sources));
+      } catch (error) {
+        console.error("Error fetching lead sources:", error);
+      }
+    };
+
+    fetchLeadSources();
+  }, []);
+
   const formatDisplayDate = (date) => {
     return date.toLocaleDateString("en-US", {
       day: "numeric",
@@ -135,6 +162,14 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
     const isoMonth = `${newYear}-${String(monthNumber).padStart(2, "0")}`;
 
     setSelectedMonthFromContext(isoMonth);
+  };
+
+  const handleLeadSourceChange = (e) => {
+    setSelectedLeadSource(e.target.value);
+  };
+
+  const handleTimeFilterChange = (e) => {
+    setTimeFilter(e.target.value);
   };
 
   const updateAchievedTargets = async () => {
@@ -182,22 +217,81 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
     setSelectedSalesperson(event.target.value);
   };
 
+  // useEffect(() => {
+  //   const filterSalesByDate = (sales, month, year) => {
+  //     return sales.filter((sale) => {
+  //       const date = new Date(sale.saleDate);
+  //       return date.getMonth() === month && date.getFullYear() === year;
+  //     });
+  //   };
+
+  //   const filterSalesBySalesperson = (sales, selectedValue) => {
+  //     if (selectedValue === "All") return sales;
+
+  //     // Filter sales where the document ID matches the selected salesperson ID
+  //     return sales.filter((sale) => {
+  //       // Compare the sale's associated ID with the selected salesperson ID
+  //       return sale.userId === selectedValue;
+  //     });
+  //   };
+
+  //   const calculateSalesStats = (sales) => {
+  //     const totalSales = sales.length;
+  //     const totalSalesPrice = sales.reduce(
+  //       (acc, curr) => acc + parseFloat(curr.salesGross || 0),
+  //       0
+  //     );
+  //     const totalTrueGross = sales.reduce(
+  //       (acc, curr) => acc + parseFloat(curr.trueGross || 0),
+  //       0
+  //     );
+  //     return { totalSales, totalSalesPrice, totalTrueGross };
+  //   };
+
+  //   const applyFilters = () => {
+  //     // First filter by date
+  //     const dateFiltered = filterSalesByDate(
+  //       allSales,
+  //       selectedMonth,
+  //       selectedYear
+  //     );
+
+  //     // Then filter by salesperson
+  //     const finalFiltered = filterSalesBySalesperson(
+  //       dateFiltered,
+  //       selectedSalesperson
+  //     );
+
+  //     setFilteredSales(finalFiltered);
+
+  //     // Calculate statistics for the filtered sales
+  //     const stats = calculateSalesStats(finalFiltered);
+  //     setSalesStats(stats);
+  //   };
+
+  //   applyFilters();
+  // }, [allSales, selectedMonth, selectedYear, selectedSalesperson]);
+
   useEffect(() => {
-    const filterSalesByDate = (sales, month, year) => {
+    const filterSalesByDate = (sales, month, year, period) => {
       return sales.filter((sale) => {
         const date = new Date(sale.saleDate);
-        return date.getMonth() === month && date.getFullYear() === year;
+        if (period === "yearly") {
+          return date.getFullYear() === year;
+        } else {
+          return date.getMonth() === month && date.getFullYear() === year;
+        }
       });
     };
 
     const filterSalesBySalesperson = (sales, selectedValue) => {
       if (selectedValue === "All") return sales;
+      return sales.filter((sale) => sale.userId === selectedValue);
+    };
 
-      // Filter sales where the document ID matches the selected salesperson ID
-      return sales.filter((sale) => {
-        // Compare the sale's associated ID with the selected salesperson ID
-        return sale.userId === selectedValue;
-      });
+    const filterSalesByLeadSource = (sales, selectedSource) => {
+      if (selectedSource === "All") return sales;
+      return sales.filter((sale) => sale.leadSource === selectedSource);
     };
 
     const calculateSalesStats = (sales) => {
@@ -214,28 +308,43 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
     };
 
     const applyFilters = () => {
-      // First filter by date
+      // Step 1: Date filter based on time period
       const dateFiltered = filterSalesByDate(
         allSales,
         selectedMonth,
-        selectedYear
+        selectedYear,
+        timeFilter
       );
 
-      // Then filter by salesperson
-      const finalFiltered = filterSalesBySalesperson(
+      // Step 2: Salesperson filter
+      const salespersonFiltered = filterSalesBySalesperson(
         dateFiltered,
         selectedSalesperson
       );
 
+      // Step 3: Lead source filter
+      const finalFiltered = filterSalesByLeadSource(
+        salespersonFiltered,
+        selectedLeadSource
+      );
+
+      // Update state
       setFilteredSales(finalFiltered);
 
-      // Calculate statistics for the filtered sales
+      // Step 4: Update statistics
       const stats = calculateSalesStats(finalFiltered);
       setSalesStats(stats);
     };
 
     applyFilters();
-  }, [allSales, selectedMonth, selectedYear, selectedSalesperson]);
+  }, [
+    allSales,
+    selectedMonth,
+    selectedYear,
+    selectedSalesperson,
+    selectedLeadSource,
+    timeFilter,
+  ]);
 
   const getMonthlyTargets = async (year, month, selectedUserId = null) => {
     const monthId = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -276,35 +385,6 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
     };
   };
 
-  // useEffect(() => {
-  //   const loadTargets = async () => {
-  //     const userId = selectedSalesperson === "All" ? null : selectedSalesperson;
-  //     const {
-  //       totalTarget,
-  //       totalGrossTarget,
-  //       achievedTarget,
-  //       achievedGross,
-  //       userTarget,
-  //       userGrossTarget,
-  //     } = await getMonthlyTargets(selectedYear, selectedMonth, userId);
-
-  //     if (userId) {
-  //       setMonthlyUnitsTarget(userTarget);
-  //       setMonthlyGrossTarget(userGrossTarget);
-  //       // Use salesStats for wholesale salespersons
-  //       setTargetAchieved(salesStats.totalSales);
-  //       setGrossAchieved(salesStats.totalSalesPrice);
-  //     } else {
-  //       setMonthlyUnitsTarget(totalTarget);
-  //       setMonthlyGrossTarget(totalGrossTarget);
-  //       // Use database values if available, else salesStats for "All"
-  //       setTargetAchieved(achievedTarget ?? salesStats.totalSales);
-  //       setGrossAchieved(achievedGross ?? salesStats.totalSalesPrice);
-  //     }
-  //   };
-
-  //   loadTargets();
-  // }, [selectedMonth, selectedYear, selectedSalesperson, salesStats]); // Add salesStats here
   useEffect(() => {
     const loadTargets = async () => {
       if (isEmployee && salesData) {
@@ -490,30 +570,57 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
         </div>
 
         <div className="flex flex-col w-full md:w-auto gap-4 ">
+          <div className="flex items-center gap-4 justify-end accent-[#011c64]">
+            <h3 className="text-[#011c64] font-semibold">Select Period</h3>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                className="form-radio text-[#011c64] focus:ring-[#011c64] cursor-pointer"
+                name="timeFilter"
+                value="monthly"
+                checked={timeFilter === "monthly"}
+                onChange={() => setTimeFilter("monthly")}
+              />
+              <span className="ml-2 text-[#011c64]">Monthly</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                className="form-radio text-[#011c64] focus:ring-[#011c64] cursor-pointer"
+                name="timeFilter"
+                value="yearly"
+                checked={timeFilter === "yearly"}
+                onChange={() => setTimeFilter("yearly")}
+              />
+              <span className="ml-2 text-[#011c64]">Yearly</span>
+            </label>
+          </div>
           <div className="flex flex-col md:flex-row gap-4 justify-end pt-8  ">
-            <FormControl
-              className="min-w-full md:w-52"
-              size="small"
-              variant="outlined"
-            >
-              <InputLabel id="month-label" className="text-gray-700 bg-white">
-                Select Month
-              </InputLabel>
-              <Select
-                labelId="month-label"
-                id="month"
-                value={selectedMonth}
-                onChange={handleMonthChange}
-                label="Month"
-                className="bg-white"
+            {timeFilter === "monthly" && (
+              <FormControl
+                className="min-w-full md:w-52"
+                size="small"
+                variant="outlined"
               >
-                {months.map((month, index) => (
-                  <MenuItem key={index} value={index}>
-                    {month}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <InputLabel id="month-label" className="text-gray-700 bg-white">
+                  Select Month
+                </InputLabel>
+                <Select
+                  labelId="month-label"
+                  id="month"
+                  value={selectedMonth}
+                  onChange={handleMonthChange}
+                  label="Month"
+                  className="bg-white"
+                >
+                  {months.map((month, index) => (
+                    <MenuItem key={index} value={index}>
+                      {month}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
             <FormControl
               className="min-w-full md:w-52"
@@ -538,6 +645,27 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                 ))}
               </Select>
             </FormControl>
+
+            {/* <FormControl
+              className="min-w-full md:w-52"
+              size="small"
+              variant="outlined"
+            >
+              <InputLabel id="lead-source-label">Lead Source</InputLabel>
+              <Select
+                labelId="lead-source-label"
+                value={selectedLeadSource}
+                onChange={handleLeadSourceChange}
+                label="Lead Source"
+                className="bg-white"
+              >
+                {leadSources.map((source) => (
+                  <MenuItem key={source} value={source}>
+                    {source}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl> */}
             {!isEmployee && (
               <div className="flex items-center">
                 <span className="text-[#011c64] font-semibold mr-2">
@@ -566,7 +694,7 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
-            {startDate && endDate && (
+            {timeFilter === "monthly" && startDate && endDate && (
               <div className="flex items-center">
                 <div className="flex flex-col mr-6">
                   <span className="text-[#011c64] font-semibold">

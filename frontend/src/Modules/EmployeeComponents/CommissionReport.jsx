@@ -157,8 +157,8 @@ const CommissionReportGenerator = ({ saleData }) => {
       saleType === "wholesale"
         ? 0
         : !rateInput && rateInput !== 0
-          ? 0
-          : p(rateInput);
+        ? 0
+        : p(rateInput);
 
     const commission =
       Math.round(salesGross * (commissionRateNumber / 100) * 100) / 100;
@@ -990,10 +990,8 @@ const CommissionReportGenerator = ({ saleData }) => {
                                 type="text"
                                 value={
                                   key === "commission"
-                                    ? (editableReportData.commission.amount ??
-                                      "")
-                                    : (editableReportData.dealSummary[key] ??
-                                      "")
+                                    ? editableReportData.commission.amount ?? ""
+                                    : editableReportData.dealSummary[key] ?? ""
                                 }
                                 readOnly={key !== "pac" || !isVirtualAssistant}
                                 onChange={
