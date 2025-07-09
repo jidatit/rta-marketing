@@ -9,11 +9,19 @@ const DynamicCommissionModal = ({
   onClose,
   userId = null,
   userName = null,
+  globalRule,
+  refetch,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [unitThreshold, setUnitThreshold] = useState(0);
-  const [grossThreshold, setGrossThreshold] = useState(0);
-  const [bonusPercentage, setBonusPercentage] = useState(0);
+  const [unitThreshold, setUnitThreshold] = useState(
+    globalRule?.minSalesCount || 0
+  );
+  const [grossThreshold, setGrossThreshold] = useState(
+    globalRule?.minAvgSalesGross || 0
+  );
+  const [bonusPercentage, setBonusPercentage] = useState(
+    globalRule?.bonusCommissionRate || 0
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +45,7 @@ const DynamicCommissionModal = ({
           ? "User-specific commission rule saved!"
           : "Global commission rule saved!"
       );
+      refetch();
       onClose();
     } catch (error) {
       console.error("Error saving commission rule:", error);

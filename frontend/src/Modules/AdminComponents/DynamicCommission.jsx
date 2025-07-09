@@ -29,9 +29,17 @@ const DynamicCommission = () => {
   const [customRuleUserName, setCustomRuleUserName] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [specificRules, setSpecificRules] = useState({});
+  const [refetch, setrefecth] = useState(false);
+
+  const refetchhanlder = () => {
+    setrefecth(!refetch);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+
       try {
         const employeeSnap = await getDocs(collection(db, "employees"));
         const globalRuleSnap = await getDoc(
@@ -48,6 +56,8 @@ const DynamicCommission = () => {
         specificRulesSnap.forEach((doc) => {
           specificRules[doc.id] = doc.data();
         });
+
+        setSpecificRules(specificRules);
 
         const data = await Promise.all(
           employeeSnap.docs.map(async (empDoc) => {
@@ -122,7 +132,7 @@ const DynamicCommission = () => {
     };
 
     fetchData();
-  }, []);
+  }, [refetch]);
 
   const columns = [
     { key: "name", label: "Salesperson" },
@@ -182,14 +192,16 @@ const DynamicCommission = () => {
       <div className="flex flex-col w-full h-full gap-y-8">
         <div className="flex flex-row items-center justify-between w-full">
           <h1 className="text-2xl font-semibold">Dynamic Commission</h1>
-          <button
-            type="button"
-            className="flex flex-row items-center px-10 py-2 text-lg text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
-            onClick={() => setFormModal(true)}
-          >
-            Add Global Commission
-            <FaPlus className="w-4 h-4" />
-          </button>
+          {globalRule && (
+            <button
+              type="button"
+              className="flex flex-row items-center px-10 py-2 text-lg text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
+              onClick={() => setFormModal(true)}
+            >
+              Add Global Commission
+              <FaPlus className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <h3 className="text-lg font-semibold">Global</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
@@ -336,13 +348,19 @@ const DynamicCommission = () => {
       </div>
 
       {formModal && (
-        <DynamicCommissionModal onClose={() => setFormModal(false)} />
+        <DynamicCommissionModal
+          onClose={() => setFormModal(false)}
+          globalRule={globalRule}
+          refetch={refetchhanlder}
+        />
       )}
       {customRuleUserId && (
         <DynamicCommissionModal
           userId={customRuleUserId}
           userName={customRuleUserName}
           onClose={() => setCustomRuleUserId(null)}
+          globalRule={specificRules[customRuleUserId] || globalRule}
+          refetch={refetchhanlder}
         />
       )}
     </div>

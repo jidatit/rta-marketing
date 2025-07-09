@@ -87,9 +87,6 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
   const [needsUpdate, setNeedsUpdate] = useState(false);
   const isEmployeeDashbaord = currentUser.userType === "Employee" || false;
 
-  console.log("lead", selectedLeadSource);
-  console.log("timeFilter", timeFilter);
-
   // Add new state for target loading
   const [targetLoading, setTargetLoading] = useState(true);
 
@@ -513,7 +510,10 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
         return (
           saleDate.getMonth() === index &&
           saleDate.getFullYear() === selectedYear &&
-          (selectedSalesperson === "All" || sale.userId === selectedSalesperson)
+          (selectedSalesperson === "All" ||
+            sale.userId === selectedSalesperson) &&
+          (selectedLeadSource === "All" ||
+            sale.leadSource === selectedLeadSource)
         );
       });
 
@@ -574,12 +574,29 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
 
         const allSales = salesDocSnap.data()?.sales || [];
 
+        // const filteredSales = allSales.filter((sale) => {
+        //   if (!sale.saleDate || sale.saleType !== "individual") return false;
+        //   const d = new Date(sale.saleDate);
+        //   return (
+        //     d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
+        //   );
+        // });
         const filteredSales = allSales.filter((sale) => {
           if (!sale.saleDate || sale.saleType !== "individual") return false;
+
           const d = new Date(sale.saleDate);
-          return (
-            d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
-          );
+
+          // Apply time filter
+          const timeMatch =
+            d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+
+          // Apply lead source filter
+          const leadSourceMatch =
+            selectedLeadSource === "All" ||
+            (sale.leadSource || "").toLowerCase() ===
+              selectedLeadSource.toLowerCase();
+
+          return timeMatch && leadSourceMatch;
         });
 
         const totalSales = filteredSales.length;
@@ -623,7 +640,7 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
 
   useEffect(() => {
     fetchLeaderboardData();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedLeadSource]);
 
   return (
     <div className="flex flex-col items-center h-full w-full bg-white px-5">
