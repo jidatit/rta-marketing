@@ -62,7 +62,7 @@ const DynamicCommissionModal = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1024px] mx-auto "
+        className="relative w-full max-w-[700px] mx-auto "
       >
         <div className="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none pt-[90px] pb-[70px] pl-[103px] pr-[135px] z-10">
           {/* Header */}
@@ -83,7 +83,7 @@ const DynamicCommissionModal = ({
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-2xl mb-2">Units Sold</label>
+                <label className="block text-xl mb-2">Units Sold</label>
                 <input
                   type="number"
                   className="w-full p-3 border rounded-lg h-[57px] bg-white text-gray-600"
@@ -93,7 +93,7 @@ const DynamicCommissionModal = ({
                 />
               </div>
               <div>
-                <label className="block text-2xl mb-2">Gross Amount</label>
+                <label className="block text-xl mb-2">Gross Amount ($)</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -110,7 +110,9 @@ const DynamicCommissionModal = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-2xl mb-2">Bonus comission</label>
+                <label className="block text-xl mb-2">
+                  Bonus comission (%)
+                </label>
                 <div className="relative">
                   <input
                     type="number"

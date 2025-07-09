@@ -116,7 +116,9 @@ const DynamicCommission = () => {
               uid,
               sales: `${minSalesCount}`,
               commissionRate: `${commissionRate}%`,
-              avgGross: `$${avgGross}/$${minAvgSalesGross}`,
+              avgGross: `$${avgGross.toFixed(2)}/$${minAvgSalesGross.toFixed(
+                2
+              )}`,
               rule,
               qualifies: qualifies ? "target met" : "target pending",
             };
