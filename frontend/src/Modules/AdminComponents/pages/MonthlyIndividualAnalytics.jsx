@@ -972,10 +972,10 @@ const MonthlyIndividualAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                   : salesStats.totalSalesPrice;
 
               if (!numerator || numerator === 0) {
-                return "0.0000";
+                return "0.00";
               }
 
-              return (denominator / numerator).toFixed(4);
+              return (denominator / numerator).toFixed(2);
             })()}
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1"></div>

@@ -424,7 +424,12 @@ const LeadsPageVA = ({
     {
       key: "amount",
       label: "Lead Amount",
-      render: (value) => `$${value.toLocaleString()}`,
+      // render: (value) => `$${value.toLocaleString()}`,
+      render: (value) =>
+        `$${Number(value).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
     },
     {
       key: "actions",

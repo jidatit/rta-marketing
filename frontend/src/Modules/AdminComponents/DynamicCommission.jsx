@@ -239,7 +239,7 @@ const DynamicCommission = () => {
               </div>
               <div className="flex items-end">
                 <span className="text-2xl font-bold text-gray-800">
-                  {globalRule?.minAvgSalesGross || 0}
+                  {globalRule?.minAvgSalesGross.toFixed(2) || 0}
                 </span>
                 <span className="text-xs text-gray-500 ml-2 mb-1">$</span>
               </div>

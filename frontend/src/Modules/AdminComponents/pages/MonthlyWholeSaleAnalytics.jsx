@@ -818,22 +818,22 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           </div>
           <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
             {selectedSalesperson === "All"
-              ? salesStats.totalSales
-              : salesStats.totalSales}
+              ? salesStats.totalSales.toFixed(2)
+              : salesStats.totalSales.toFixed(2)}
             {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
           </div>
           <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
             $
             {selectedSalesperson === "All"
-              ? salesStats.totalSalesPrice
-              : salesStats.totalSalesPrice}
+              ? salesStats.totalSalesPrice.toFixed(2)
+              : salesStats.totalSalesPrice.toFixed(2)}
             {isOutOfSync && <span className="text-white-300 ml-1">*</span>}
           </div>
           <div className="w-36 md:w-48 lg:w-64 text-white font-bold bg-[#011c64] text-center p-1 border border-gray-300">
             $
             {selectedSalesperson === "All"
-              ? salesStats.totalTrueGross
-              : salesStats.totalTrueGross}
+              ? salesStats.totalTrueGross.toFixed(2)
+              : salesStats.totalTrueGross.toFixed(2)}
           </div>
         </div>
 
@@ -844,13 +844,13 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-green-100 text-center p-1 border border-gray-300 font-bold">
             {(selectedSalesperson === "All"
-              ? salesStats.totalSales
+              ? salesStats.totalSales.toFixed(2)
               : salesStats.totalSales) > monthlyUnitsTarget
               ? "Target Met"
               : monthlyUnitsTarget -
                   (selectedSalesperson === "All"
-                    ? salesStats.totalSales
-                    : salesStats.totalSales) || "N/A"}
+                    ? salesStats.totalSales.toFixed(2)
+                    : salesStats.totalSales.toFixed(2)) || "N/A"}
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-red-50 text-center p-1 border border-gray-300 font-bold">
             {monthlyGrossTarget -
@@ -890,10 +890,10 @@ const MonthlyWholeSaleAnalytics = ({ allSales, setAllSales, isEmployee }) => {
                   : salesStats.totalSalesPrice;
 
               if (!numerator || numerator === 0) {
-                return "0.0000";
+                return "0.00";
               }
 
-              return (denominator / numerator).toFixed(4);
+              return (denominator / numerator).toFixed(2);
             })()}
           </div>
           <div className="w-36 md:w-48 lg:w-64 bg-white text-[#011c64] font-bold text-center p-1"></div>
