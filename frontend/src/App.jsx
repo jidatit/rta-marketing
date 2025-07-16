@@ -43,6 +43,7 @@ import EmployeeSalesAnalytics from "./Modules/EmployeeComponents/pages/EmployeeS
 import CommissionPage from "./Modules/AdminComponents/CommissionPage.jsx";
 import EmployeeCommissionPage from "./Modules/EmployeeComponents/CommissionPage.jsx";
 import DynamicCommission from "./Modules/AdminComponents/DynamicCommission.jsx";
+import PublicAPILeads from "./Modules/AdminComponents/pages/PublicAPILeads.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -254,6 +255,12 @@ function App() {
                     path="dynamic-comission"
                     element={
                       currentUser ? <DynamicCommission /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="api-leads"
+                    element={
+                      currentUser ? <PublicAPILeads /> : <Navigate to="/" />
                     }
                   />
                 </Route>

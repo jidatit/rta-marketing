@@ -26,7 +26,7 @@ const HeaderComponent = ({
       className={`flex justify-between items-start bg-white px-6  mt-6     ${className}`}
     >
       <h2 className="text-2xl font-bold text-gray-900">
-        {showButton ? title : `${title} sales`}
+        {showButton ? title : `${title} `}
       </h2>
 
       {showButton && (

@@ -60,6 +60,11 @@ const AdminSidebar = () => {
       route: "dynamic-comission",
       matcher: (route) => route === "/AdminLayout/dynamic-comission",
     },
+    {
+      name: "Public Api Leads",
+      route: "api-leads",
+      matcher: (route) => route === "/AdminLayout/api-leads",
+    },
   ];
 
   // Update active item whenever location changes

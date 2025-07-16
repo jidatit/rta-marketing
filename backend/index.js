@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const cors = require("cors");
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const { swaggerOptions } = require("./config/SwaggerOptions");
 
 require("dotenv").config();
 
@@ -25,148 +26,13 @@ admin.initializeApp({
 const db = admin.firestore();
 const auth = admin.auth();
 
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Leads API",
-      // version: "1.0.0",
-      description: "API for Posting leads in the RTA marketing",
-    },
-    servers: [
-      {
-        url: `http://localhost:${process.env.PORT || 5000}`,
-        description: "Local development server",
-      },
-      {
-        url: "https://your-production-url.com",
-        description: "Production server",
-      },
-    ],
-    components: {
-      schemas: {
-        Lead: {
-          type: "object",
-          properties: {
-            leadAmount: {
-              type: "number",
-              description: "The monetary amount associated with the lead",
-              example: 50000,
-            },
-            leadCost: {
-              type: "number",
-              description: "The cost incurred to acquire this lead",
-              example: 500,
-            },
-            leadSource: {
-              type: "string",
-              description: "The source from which the lead was acquired",
-              example: "Website Form",
-              enum: [
-                "Website Form",
-                "Social Media",
-                "Referral",
-                "Cold Call",
-                "Other",
-              ],
-            },
-            receivedDate: {
-              type: "string",
-              format: "date-time",
-              description: "The date when the lead was received",
-              example: "2023-05-15T10:00:00Z",
-            },
-          },
-          required: ["leadAmount", "leadCost", "leadSource", "receivedDate"],
-          example: {
-            leadAmount: 50000,
-            leadCost: 500,
-            leadSource: "Website Form",
-            receivedDate: "2023-05-15T10:00:00Z",
-          },
-        },
-        ApiResponse: {
-          type: "object",
-          properties: {
-            success: {
-              type: "boolean",
-              description: "Indicates if the request was successful",
-              example: true,
-            },
-            message: {
-              type: "string",
-              description: "A message describing the result",
-              example: "Lead created successfully",
-            },
-            id: {
-              type: "string",
-              description: "The ID of the created lead",
-              example: "abc123def456",
-            },
-          },
-          required: ["success", "message"],
-          example: {
-            success: true,
-            message: "Lead created successfully",
-            id: "abc123def456",
-          },
-        },
-        ErrorResponse: {
-          type: "object",
-          properties: {
-            success: {
-              type: "boolean",
-              example: false,
-            },
-            message: {
-              type: "string",
-              example: "Error creating lead",
-            },
-          },
-          example: {
-            success: false,
-            message: "Error creating lead",
-          },
-        },
-      },
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-          description:
-            'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"',
-        },
-      },
-      examples: {
-        LeadExample: {
-          value: {
-            leadAmount: 50000,
-            leadCost: 500,
-            leadSource: "Website Form",
-            receivedDate: "2023-05-15T10:00:00Z",
-          },
-        },
-      },
-    },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
-  },
-  apis: ["./index.js"],
-};
-
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 const app = express();
-app.use(cors({ origin: process.env.CORS_ORIGIN }));
+const publicCors = cors(); // allows all origins
+
 app.use(bodyParser.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// app.get("/", (req, res) => {
-//   return res.send("RTA Backend.please head to /api-docs for more details");
-// });
 app.get("/", (req, res) => {
   res.send(`
     <html>
@@ -263,7 +129,16 @@ app.get("/", (req, res) => {
  *               type: string
  *               example: "Error creating lead"
  */
-app.post("/leads", async (req, res) => {
+app.post("/leads", publicCors, async (req, res) => {
+  const { appid } = req.query; // Get API key from query string
+
+  const expectedKey = process.env.PUBLIC_LEAD_API_KEY;
+
+  if (appid !== expectedKey) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: Invalid or Missing API Key" });
+  }
   const { leadAmount, leadCost, leadSource, receivedDate } = req.body;
 
   if (!leadAmount || !leadCost || !leadSource || !receivedDate) {
@@ -288,6 +163,8 @@ app.post("/leads", async (req, res) => {
     return res.status(500).send("Error creating lead");
   }
 });
+
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 
 app.post("/disableUser", async (req, res) => {
   const { uid } = req.body;
