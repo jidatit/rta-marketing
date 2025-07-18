@@ -14,6 +14,7 @@ import {
 import DynamicCommissionModal from "./components/DynamicCommissionModal";
 import SalesTableVA from "../../shared/VirtualAssistantComponents/TableComponent";
 import { db } from "../../config/firebaseConfig";
+import ViewSalesModel from "./components/ViewSalesModel";
 
 const currentMonth = new Date().toLocaleString("default", {
   month: "long",
@@ -30,6 +31,7 @@ const DynamicCommission = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [specificRules, setSpecificRules] = useState({});
+  const [viewSalesId, setviewSalesId] = useState(null);
   const [refetch, setrefecth] = useState(false);
 
   const refetchhanlder = () => {
@@ -120,7 +122,7 @@ const DynamicCommission = () => {
                 2
               )}`,
               rule,
-              qualifies: qualifies ? "target met" : "target pending",
+              qualifies: qualifies ? "initial target met" : "target pending",
             };
           })
         );
@@ -138,16 +140,16 @@ const DynamicCommission = () => {
 
   const columns = [
     { key: "name", label: "Salesperson" },
-    { key: "sales", label: "Sales Target" },
+    { key: "sales", label: "Target" },
     { key: "avgGross", label: "Average Gross/Target " },
-    { key: "commissionRate", label: "Current Commission Rate" },
+    { key: "commissionRate", label: "Commission Rate" },
     {
       key: "qualifies",
       label: "qualifies",
       render: (_, row) => (
         <span
           className={`px-3 py-2 rounded-lg text-xs capitalize ${
-            row.qualifies === "target met"
+            row.qualifies === "initial target met"
               ? "bg-green-50 text-green-500"
               : "bg-red-50 text-red-500"
           }`}
@@ -160,15 +162,26 @@ const DynamicCommission = () => {
       key: "actions",
       label: "Actions",
       render: (_, row) => (
-        <button
-          onClick={() => {
-            setCustomRuleUserId(row?.uid || null);
-            setCustomRuleUserName(row?.name || null);
-          }}
-          className="px-4 py-2 text-white bg-[#003160] rounded-lg"
-        >
-          Update Commission
-        </button>
+        <div className="flex items-center justify-center gap-3 text-xs">
+          <button
+            onClick={() => {
+              setviewSalesId(row?.uid || null);
+            }}
+            className="px-4 py-2 text-white bg-[#003160] rounded-lg"
+          >
+            View sales{" "}
+          </button>
+
+          <button
+            onClick={() => {
+              setCustomRuleUserId(row?.uid || null);
+              setCustomRuleUserName(row?.name || null);
+            }}
+            className="px-4 py-2 text-white bg-[#003160] rounded-lg"
+          >
+            Update Commission
+          </button>
+        </div>
       ),
     },
   ];
@@ -191,21 +204,27 @@ const DynamicCommission = () => {
 
   return (
     <div className="flex items-start justify-start w-full px-12 py-8 overflow-y-auto h-full pb-50">
-      <div className="flex flex-col w-full h-full gap-y-8">
+      <div className="flex flex-col w-full h-full gap-y-4">
         <div className="flex flex-row items-center justify-between w-full">
-          <h1 className="text-2xl font-semibold">Dynamic Commission</h1>
-          {globalRule && (
-            <button
-              type="button"
-              className="flex flex-row items-center px-10 py-2 text-lg text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
-              onClick={() => setFormModal(true)}
-            >
-              Add Global Commission
-              <FaPlus className="w-4 h-4" />
-            </button>
-          )}
+          <h1 className="text-2xl font-semibold my-4">Dynamic Commission</h1>
+          <button
+            type="button"
+            className="flex flex-row items-center px-10 py-2 text-lg text-white bg-[#003160] rounded-full cursor-pointer gap-x-3 hover:bg-blue-900 transition-all ease-in-out duration-300"
+            onClick={() => setFormModal(true)}
+          >
+            Add Global Commission
+            <FaPlus className="w-4 h-4" />
+          </button>
         </div>
-        <h3 className="text-lg font-semibold">Global</h3>
+        <div className="flex item justify-start items-center  -mb-[10px] gap-2">
+          <h3 className="text-lg font-semibold ">Global</h3>
+          <button
+            onClick={() => setFormModal(true)}
+            className=" flex item justify-center text-sm text-[#003160] font-bold"
+          >
+            {"View All >>"}
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
           <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-shadow ">
             <div className="p-4">
@@ -219,7 +238,7 @@ const DynamicCommission = () => {
               </div>
               <div className="flex items-end">
                 <span className="text-2xl font-bold text-gray-800">
-                  {globalRule?.minSalesCount || 0}
+                  {globalRule?.rules[0]?.minSalesCount || 0}
                 </span>
                 <span className="text-xs text-gray-500 ml-2 mb-1">sales</span>
               </div>
@@ -239,7 +258,7 @@ const DynamicCommission = () => {
               </div>
               <div className="flex items-end">
                 <span className="text-2xl font-bold text-gray-800">
-                  {globalRule?.minAvgSalesGross.toFixed(2) || 0}
+                  {globalRule?.rules[0]?.minAvgSalesGross.toFixed(2) || 0}
                 </span>
                 <span className="text-xs text-gray-500 ml-2 mb-1">$</span>
               </div>
@@ -258,7 +277,7 @@ const DynamicCommission = () => {
               </div>
               <div className="flex items-end">
                 <span className="text-2xl font-bold text-gray-800">
-                  {globalRule?.bonusCommissionRate || 0}
+                  {globalRule?.rules[0]?.bonusCommissionRate || 0}
                 </span>
                 <span className="text-xs text-gray-500 ml-2 mb-1">%</span>
               </div>
@@ -363,6 +382,12 @@ const DynamicCommission = () => {
           onClose={() => setCustomRuleUserId(null)}
           globalRule={specificRules[customRuleUserId] || globalRule}
           refetch={refetchhanlder}
+        />
+      )}
+      {viewSalesId && (
+        <ViewSalesModel
+          onClose={() => setviewSalesId(null)}
+          userId={viewSalesId}
         />
       )}
     </div>

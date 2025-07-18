@@ -172,7 +172,7 @@ const SaleForm2 = ({
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
               <h1 className="w-full text-2xl font-bold text-center text-black font-radios">
-                Add a New Sale ..2
+                Add a New Sale 2
               </h1>
               <button
                 className="float-right ml-auto -mt-1.5 font-semibold leading-none text-black border-0 outline-none focus:outline-none"
