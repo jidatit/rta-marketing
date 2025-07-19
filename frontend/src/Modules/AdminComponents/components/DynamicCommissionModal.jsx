@@ -181,11 +181,26 @@ const DynamicCommissionModal = ({
   });
 
   const handleAddRule = () => {
-    if (!newRule.minSalesCount || !newRule.minAvgSalesGross) {
+    // if (!newRule.minSalesCount || !newRule.minAvgSalesGross) {
+    //   toast.error("Please fill all required fields");
+    //   return;
+    // }
+    const { minSalesCount, minAvgSalesGross, bonusCommissionRate } = newRule;
+
+    if (
+      minSalesCount === null ||
+      minSalesCount === undefined ||
+      Number.isNaN(minSalesCount) ||
+      minAvgSalesGross === null ||
+      minAvgSalesGross === undefined ||
+      Number.isNaN(minAvgSalesGross) ||
+      bonusCommissionRate === null ||
+      bonusCommissionRate === undefined ||
+      Number.isNaN(bonusCommissionRate)
+    ) {
       toast.error("Please fill all required fields");
       return;
     }
-
     setRules([...rules, { ...newRule, id: uuidv4() }]);
     setNewRule({
       minSalesCount: 0,
@@ -298,7 +313,7 @@ const DynamicCommissionModal = ({
                     onChange={(e) =>
                       setNewRule({
                         ...newRule,
-                        minSalesCount: parseInt(e.target.value) || 0,
+                        minSalesCount: parseInt(e.target.value),
                       })
                     }
                     placeholder="No of Sales"
@@ -313,7 +328,7 @@ const DynamicCommissionModal = ({
                     onChange={(e) =>
                       setNewRule({
                         ...newRule,
-                        minAvgSalesGross: parseFloat(e.target.value) || 0,
+                        minAvgSalesGross: parseFloat(e.target.value),
                       })
                     }
                     placeholder="Enter Gross amount"
@@ -330,7 +345,7 @@ const DynamicCommissionModal = ({
                     onChange={(e) =>
                       setNewRule({
                         ...newRule,
-                        bonusCommissionRate: parseFloat(e.target.value) || 0,
+                        bonusCommissionRate: parseFloat(e.target.value),
                       })
                     }
                     placeholder="Enter Bonus %"
