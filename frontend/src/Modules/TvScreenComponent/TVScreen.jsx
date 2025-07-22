@@ -515,7 +515,11 @@ const TVScreen = () => {
             src="icon-1.png"
           />
           <InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
-          <InfoCard title="Conversion Rate" value="21%" src="icon-4.png" />
+          <InfoCard
+            title="Conversion Rate"
+            value={`${((totalSales / totalLeadsCount) * 100).toFixed(2)}%`}
+            src="icon-4.png"
+          />
         </div>
 
         {/* People Grid */}
