@@ -203,6 +203,7 @@ const TVScreen = () => {
 
               // Filter sales by current month and year
               filteredSales = data.sales.filter((sale) => {
+                if (sale.saleType === "wholesale") return false;
                 if (!sale.intermediateDate) return false;
                 const saleDate = new Date(sale.intermediateDate);
                 return (
