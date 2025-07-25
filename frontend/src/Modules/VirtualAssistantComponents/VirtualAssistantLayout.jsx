@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router";
+import { Navigate, Outlet, useNavigate } from "react-router";
 import Navbar from "../UIComponents/Navbar";
 
 import { useAuth } from "../../AuthContext";
@@ -8,6 +8,26 @@ const VirtualAssistantLayout = () => {
   const navigate = useNavigate();
 
   const { isEmailVerified } = useAuth();
+
+  const { currentUser } = useAuth();
+
+  const getDashboardPath = (userType) => {
+    switch (userType) {
+      case "Employee":
+        return "/EmployeeLayout";
+      case "Virtual Assistant":
+        return "/VirtualAssistantLayout";
+      case "Admin":
+        return "/AdminLayout";
+      default:
+        return "/";
+    }
+  };
+
+  if (currentUser && currentUser.userType !== "Virtual Assistant") {
+    const path = getDashboardPath(currentUser.userType);
+    return <Navigate to={path} />;
+  }
   return (
     <>
       {isEmailVerified ? (
