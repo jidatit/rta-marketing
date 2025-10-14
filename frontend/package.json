@@ -43,6 +43,7 @@
     "axios": "^1.6.7",
     "bcryptjs": "^2.4.3",
     "concurrently": "^8.2.1",
+    "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "email-js": "^2.0.3",

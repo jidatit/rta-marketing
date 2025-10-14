@@ -1,21 +1,27 @@
 const firestoreService = require("../services/firestoreService");
 jest.mock("../config/firebaseAdmin", () => ({
   db: {
-    collection: () => ({
-      doc: () => ({
-        set: jest.fn().mockResolvedValue(),
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
         id: "test-id",
-      }),
-      where: () => ({
+        set: jest.fn().mockResolvedValue(),
+        collection: jest.fn(() => ({
+          doc: jest.fn(() => ({
+            id: "nested-id",
+            set: jest.fn().mockResolvedValue(),
+          })),
+        })),
+      })),
+      where: jest.fn(() => ({
         get: jest.fn().mockResolvedValue({
           docs: [{ id: "test-id", data: () => ({ syncStatus: "PENDING" }) }],
         }),
-      }),
-    }),
-    batch: jest.fn().mockReturnValue({
+      })),
+    })),
+    batch: jest.fn(() => ({
       set: jest.fn(),
       commit: jest.fn().mockResolvedValue(),
-    }),
+    })),
   },
 }));
 

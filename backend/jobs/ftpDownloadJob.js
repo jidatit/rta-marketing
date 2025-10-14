@@ -14,6 +14,7 @@ async function downloadWithRetry() {
       await ftpService.connectToFTP();
       const fileName = process.env.FTP_FILE_NAME;
       const { buffer, metadata } = await ftpService.downloadFile(fileName);
+      console.log("Downloaded file from FTP:", metadata);
 
       // Generate unique storage path
       const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD

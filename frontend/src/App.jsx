@@ -44,6 +44,7 @@ import CommissionPage from "./Modules/AdminComponents/CommissionPage.jsx";
 import EmployeeCommissionPage from "./Modules/EmployeeComponents/CommissionPage.jsx";
 import DynamicCommission from "./Modules/AdminComponents/DynamicCommission.jsx";
 import PublicAPILeads from "./Modules/AdminComponents/pages/PublicAPILeads.jsx";
+import Inventory from "./Modules/AdminComponents/pages/Inventory.jsx";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-screen loading-spinner">
@@ -261,6 +262,12 @@ function App() {
                     path="api-leads"
                     element={
                       currentUser ? <PublicAPILeads /> : <Navigate to="/" />
+                    }
+                  />
+                  <Route
+                    path="inventory"
+                    element={
+                      currentUser ? <Inventory /> : <Navigate to="/" />
                     }
                   />
                 </Route>

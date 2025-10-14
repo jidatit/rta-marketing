@@ -1,30 +1,32 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const admin = require("firebase-admin");
+const { admin, db, auth } = require("./config/firebaseAdmin");
 const cors = require("cors");
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-const { swaggerOptions } = require("./config/SwaggerOptions");
+const swaggerOptions = require("./config/SwaggerOptions");
+const firestoreService = require("./services/firestoreService");
+const inventoryScheduler = require("./schedulers/inventoryScheduler");
 
 require("dotenv").config();
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    type: process.env.type,
-    project_id: process.env.project_id,
-    private_key_id: process.env.private_key_id,
-    private_key: process.env.private_key.replace(/\\n/g, "\n"),
-    client_email: process.env.client_email,
-    client_id: process.env.client_id,
-    auth_uri: process.env.auth_uri,
-    token_uri: process.env.token_uri,
-    auth_provider_x509_cert_url: process.env.auth_provider_x509_cert_url,
-    client_x509_cert_url: process.env.client_x509_cert_url,
-    universe_domain: process.env.universe_domain,
-  }),
-});
-const db = admin.firestore();
-const auth = admin.auth();
+// admin.initializeApp({
+//   credential: admin.credential.cert({
+//     type: process.env.type,
+//     project_id: process.env.project_id,
+//     private_key_id: process.env.private_key_id,
+//     private_key: process.env.private_key.replace(/\\n/g, "\n"),
+//     client_email: process.env.client_email,
+//     client_id: process.env.client_id,
+//     auth_uri: process.env.auth_uri,
+//     token_uri: process.env.token_uri,
+//     auth_provider_x509_cert_url: process.env.auth_provider_x509_cert_url,
+//     client_x509_cert_url: process.env.client_x509_cert_url,
+//     universe_domain: process.env.universe_domain,
+//   }),
+// });
+// const db = admin.firestore();
+// const auth = admin.auth();
 
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
 const app = express();
@@ -243,6 +245,52 @@ app.post("/deleteUser", async (req, res) => {
   }
 });
 
+// // Manual trigger endpoint for FTP download
+app.post("/trigger-ftp-download", async (req, res) => {
+  try {
+    console.log("reqesute comes");
+    const { token } = req.body;
+    if (token !== process.env.API_SECRET_TOKEN) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // Log manual trigger to Firestore
+    const triggerId = await firestoreService.createDownloadLog({
+      downloadId: "", // Will be set by Firestore
+      fileName: process.env.FTP_FILE_NAME,
+      downloadUrl: null,
+      storagePath: null,
+      fileSize: 0,
+      downloadTimestamp: new Date().toISOString(),
+      syncStatus: "PENDING",
+      ftpLastModified: null,
+      retryCount: 0,
+      error: null,
+      triggerType: "MANUAL",
+    });
+
+    // Fork FTP download job
+    const job = fork("jobs/ftpDownloadJob.js");
+    job.on("exit", (code) => {
+      console.log(
+        `${new Date().toISOString()} - Manual FTP download job exited with code ${code}`
+      );
+    });
+
+    res.status(200).json({ message: "FTP download triggered", triggerId });
+  } catch (error) {
+    console.error(
+      `${new Date().toISOString()} - Manual trigger failed: ${error.message}`
+    );
+    res.status(500).json({
+      error: "Failed to trigger FTP download",
+      details: error.message,
+    });
+  }
+});
+
+// Start cron scheduler
+inventoryScheduler.start();
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
