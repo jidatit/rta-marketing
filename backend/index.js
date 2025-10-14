@@ -253,24 +253,58 @@ app.post("/trigger-ftp-download", async (req, res) => {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    // Fork FTP download job
+    // Fork FTP download job and wait for completion
     const job = fork("jobs/ftpDownloadJob.js", [], {
       env: { ...process.env, TRIGGER_TYPE: "MANUAL" },
     });
+
+    job.on("message", (message) => {
+      // Handle messages from the child process
+      if (message.status === "success") {
+        res.status(200).json({
+          status: "success",
+          message: "FTP download completed successfully",
+          downloadUrl: message.downloadUrl,
+        });
+      } else if (message.status === "error") {
+        res.status(500).json({
+          status: "error",
+          error: message.error || "FTP download failed",
+        });
+      }
+    });
+
     job.on("exit", (code) => {
       console.log(
         `${new Date().toISOString()} - Manual FTP download job exited with code ${code}`
       );
+      if (!res.headersSent) {
+        // Fallback in case the job exits without sending a message
+        res.status(500).json({
+          status: "error",
+          error: `FTP download job exited unexpectedly with code ${code}`,
+        });
+      }
     });
 
-    res.status(200).json({ message: "FTP download triggered" });
+    job.on("error", (error) => {
+      console.error(
+        `${new Date().toISOString()} - Manual trigger failed: ${error.message}`
+      );
+      if (!res.headersSent) {
+        res.status(500).json({
+          status: "error",
+          error: `Failed to trigger FTP download: ${error.message}`,
+        });
+      }
+    });
   } catch (error) {
     console.error(
       `${new Date().toISOString()} - Manual trigger failed: ${error.message}`
     );
     res.status(500).json({
-      error: "Failed to trigger FTP download",
-      details: error.message,
+      status: "error",
+      error: `Failed to trigger FTP download: ${error.message}`,
     });
   }
 });

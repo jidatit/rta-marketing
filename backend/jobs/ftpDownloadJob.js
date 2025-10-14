@@ -2,6 +2,17 @@ const ftpService = require("../services/ftpService");
 const storageService = require("../services/storageService");
 const firestoreService = require("../services/firestoreService");
 
+process.on("uncaughtException", (error) => {
+  console.error(
+    `${new Date().toISOString()} - Uncaught exception: ${error.message}`
+  );
+  process.send({
+    status: "error",
+    error: error.message,
+  });
+  process.exit(1);
+});
+
 (async () => {
   try {
     // Connect to FTP server
@@ -35,6 +46,13 @@ const firestoreService = require("../services/firestoreService");
       `${new Date().toISOString()} - Created/updated download log: latest_inventory`
     );
 
+    // Send success message to parent process
+    process.send({
+      status: "success",
+      message: "FTP download completed successfully",
+      downloadUrl,
+    });
+
     // Disconnect from FTP
     await ftpService.disconnect();
     process.exit(0);
@@ -59,6 +77,12 @@ const firestoreService = require("../services/firestoreService");
       },
       true
     );
+
+    // Send error message to parent process
+    process.send({
+      status: "error",
+      error: error.message,
+    });
 
     await ftpService.disconnect();
     process.exit(1);
