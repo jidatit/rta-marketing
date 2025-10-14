@@ -1,6 +1,7 @@
 const ftp = require("basic-ftp");
 const { validateEnv } = require("../utils/envValidator");
 const { Writable } = require("stream");
+require("dotenv").config();
 
 // Required environment variables
 const REQUIRED_ENV = [

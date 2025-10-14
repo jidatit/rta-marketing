@@ -5,8 +5,8 @@ const cors = require("cors");
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("./config/SwaggerOptions");
-const firestoreService = require("./services/firestoreService");
 const inventoryScheduler = require("./schedulers/inventoryScheduler");
+const { fork } = require("child_process");
 
 require("dotenv").config();
 
@@ -245,39 +245,25 @@ app.post("/deleteUser", async (req, res) => {
   }
 });
 
-// // Manual trigger endpoint for FTP download
+// Manual trigger endpoint for FTP download
 app.post("/trigger-ftp-download", async (req, res) => {
   try {
-    console.log("reqesute comes");
     const { token } = req.body;
     if (token !== process.env.API_SECRET_TOKEN) {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    // Log manual trigger to Firestore
-    const triggerId = await firestoreService.createDownloadLog({
-      downloadId: "", // Will be set by Firestore
-      fileName: process.env.FTP_FILE_NAME,
-      downloadUrl: null,
-      storagePath: null,
-      fileSize: 0,
-      downloadTimestamp: new Date().toISOString(),
-      syncStatus: "PENDING",
-      ftpLastModified: null,
-      retryCount: 0,
-      error: null,
-      triggerType: "MANUAL",
-    });
-
     // Fork FTP download job
-    const job = fork("jobs/ftpDownloadJob.js");
+    const job = fork("jobs/ftpDownloadJob.js", [], {
+      env: { ...process.env, TRIGGER_TYPE: "MANUAL" },
+    });
     job.on("exit", (code) => {
       console.log(
         `${new Date().toISOString()} - Manual FTP download job exited with code ${code}`
       );
     });
 
-    res.status(200).json({ message: "FTP download triggered", triggerId });
+    res.status(200).json({ message: "FTP download triggered" });
   } catch (error) {
     console.error(
       `${new Date().toISOString()} - Manual trigger failed: ${error.message}`

@@ -1,61 +1,41 @@
 const { storage } = require("../config/firebaseAdmin");
 const { validateEnv } = require("../utils/envValidator");
+require("dotenv").config();
 
 // Required environment variables
-const REQUIRED_ENV = ["FIREBASE_STORAGE_BUCKET"];
+const REQUIRED_ENV = ["FIREBASE_STORAGE_BUCKET", "STORAGE_PATH"];
 
 class StorageService {
   constructor() {
     validateEnv(REQUIRED_ENV);
-    this.bucket = storage.bucket();
+    this.bucket = storage.bucket(process.env.FIREBASE_STORAGE_BUCKET);
   }
 
-  // Upload file to Firebase Storage
-  async uploadFile(buffer, fileName, metadata = {}) {
+  // Upload file to Firebase Storage and return download URL
+  async uploadFile(buffer, destination, metadata = {}) {
     try {
-      const file = this.bucket.file(fileName);
+      const file = this.bucket.file(destination);
+
       await file.save(buffer, {
-        metadata: { metadata },
-        contentType: "text/csv",
+        metadata: {
+          contentType: "text/csv",
+          ...metadata,
+        },
+        resumable: false,
       });
-      const [url] = await file.getSignedUrl({
-        action: "read",
-        expires: "12-31-2099", // Long-lived URL for simplicity
-      });
+
+      // Make file publicly accessible (optional — remove if you don’t want this)
+      await file.makePublic();
+
+      const downloadUrl = `https://storage.googleapis.com/${process.env.FIREBASE_STORAGE_BUCKET}/${destination}`;
+
       console.log(
-        `${new Date().toISOString()} - Uploaded file to Storage: ${fileName}`
+        `${new Date().toISOString()} - Uploaded file to Storage: ${destination}`
       );
-      return { storagePath: fileName, downloadUrl: url };
+
+      return downloadUrl;
     } catch (error) {
       throw new Error(`Storage upload failed: ${error.message}`);
-    }
-  }
-
-  // Get download URL for a file
-  async getDownloadUrl(storagePath) {
-    try {
-      const file = this.bucket.file(storagePath);
-      const [url] = await file.getSignedUrl({
-        action: "read",
-        expires: "12-31-2099",
-      });
-      return url;
-    } catch (error) {
-      throw new Error(`Failed to get download URL: ${error.message}`);
-    }
-  }
-
-  // Delete file from Storage
-  async deleteFile(storagePath) {
-    try {
-      await this.bucket.file(storagePath).delete();
-      console.log(
-        `${new Date().toISOString()} - Deleted file from Storage: ${storagePath}`
-      );
-    } catch (error) {
-      console.error(
-        `${new Date().toISOString()} - Storage delete failed: ${error.message}`
-      );
     }
   }
 }

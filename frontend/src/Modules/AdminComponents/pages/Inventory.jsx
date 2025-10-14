@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { parse } from 'csv-parse/browser/esm';
+import { db } from '../../../config/firebaseConfig';
+import { doc, onSnapshot } from 'firebase/firestore';
 import {
     Table,
     TableBody,
@@ -10,60 +11,42 @@ import {
     TableRow,
     Paper,
     Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
     Box,
-    TextField,
     Typography,
-    Chip,
-    IconButton,
-    Tooltip,
-    Alert,
+    Grid,
     CircularProgress,
+    Alert,
 } from '@mui/material';
-import { db } from '../../../config/firebaseConfig';
-import { FaEye, FaDownload } from "react-icons/fa";
-import { IoClose } from "react-icons/io5";
+import { MdDownload, MdRefresh } from 'react-icons/md';
 
-const Inventory = () => {
-    const [logs, setLogs] = useState([]);
+const AdminDownloadLogs = () => {
+    const [log, setLog] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewOpen, setViewOpen] = useState(false);
     const [csvData, setCsvData] = useState([]);
     const [csvHeaders, setCsvHeaders] = useState([]);
-    const [selectedLog, setSelectedLog] = useState(null);
-    const [downloadDateFilter, setDownloadDateFilter] = useState('');
-    const [ftpModifiedFilter, setFtpModifiedFilter] = useState('');
+    const [loadingCsv, setLoadingCsv] = useState(false);
+    const [triggeringJob, setTriggeringJob] = useState(false);
+    const apiUrl = import.meta.env.VITE_BLOCK_USER_API;
 
-    // Fetch PENDING logs with filters
+    // Fetch latest_inventory document
     useEffect(() => {
         setLoading(true);
-        let q = query(
-            collection(db, 'ftp_download_logs'),
-            where("syncStatus", "in", ["PENDING", "PARSED"]), // ✅ include both statuses
-            orderBy('downloadTimestamp', 'desc')
-        );
-
-        if (downloadDateFilter) {
-            const start = new Date(downloadDateFilter).toISOString().split('T')[0] + 'T00:00:00.000Z';
-            const end = new Date(downloadDateFilter).toISOString().split('T')[0] + 'T23:59:59.999Z';
-            q = query(q, where('downloadTimestamp', '>=', start), where('downloadTimestamp', '<=', end));
-        }
-        if (ftpModifiedFilter) {
-            const start = new Date(ftpModifiedFilter).toISOString().split('T')[0] + 'T00:00:00.000Z';
-            const end = new Date(ftpModifiedFilter).toISOString().split('T')[0] + 'T23:59:59.999Z';
-            q = query(q, where('ftpLastModified', '>=', start), where('ftpLastModified', '<=', end));
-        }
-
+        const logRef = doc(db, 'ftp_download_logs', 'latest_inventory');
         const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-                setLogs(data);
+            logRef,
+            (docSnap) => {
+                if (docSnap.exists()) {
+                    const logData = { id: docSnap.id, ...docSnap.data() };
+                    setLog(logData);
+                    // Auto-load CSV when log data is available
+                    loadCsvData(logData);
+                } else {
+                    setLog(null);
+                    setCsvData([]);
+                    setCsvHeaders([]);
+                }
                 setLoading(false);
-                setError(null);
             },
             (err) => {
                 setError(err.message);
@@ -72,325 +55,219 @@ const Inventory = () => {
         );
 
         return () => unsubscribe();
-    }, [downloadDateFilter, ftpModifiedFilter]);
+    }, []);
 
-    const handleView = async (log) => {
+    // Load CSV data
+    const loadCsvData = async (logData) => {
+        if (!logData?.downloadUrl) return;
+
+        setLoadingCsv(true);
+        setError(null);
+
         try {
-            const response = await fetch(log.downloadUrl);
+            const response = await fetch(logData.downloadUrl);
             const text = await response.text();
+
             parse(text, { columns: true, skip_empty_lines: true, trim: true }, (err, records) => {
                 if (err) throw new Error(`Failed to parse CSV: ${err.message}`);
-                setCsvHeaders(Object.keys(records[0] || {}));
-                setCsvData(records);
-                setSelectedLog(log);
-                setViewOpen(true);
+                if (records && records.length > 0) {
+                    setCsvHeaders(Object.keys(records[0]));
+                    setCsvData(records);
+                } else {
+                    setCsvHeaders([]);
+                    setCsvData([]);
+                }
+                setLoadingCsv(false);
             });
         } catch (err) {
             setError(err.message);
+            setLoadingCsv(false);
         }
     };
 
-    const handleDownload = (downloadUrl, fileName) => {
+    // Handle Download
+    const handleDownload = () => {
+        if (!log?.downloadUrl?.downloadUrl) return;
         const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
+        link.href = log.downloadUrl.downloadUrl;
+        link.download = log.fileName || 'inventory.csv';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
-    const clearFilters = () => {
-        setDownloadDateFilter('');
-        setFtpModifiedFilter('');
+    // Handle Manual Trigger
+    const handleManualTrigger = async () => {
+        setTriggeringJob(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${apiUrl}/trigger-ftp-download`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: import.meta.env.VITE_APP_API_SECRET_TOKEN, // Make sure to set this in your .env
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to trigger FTP download');
+            }
+
+            // Wait 3 seconds then refetch from Firebase
+            setTimeout(() => {
+                setTriggeringJob(false);
+                // Firebase listener will automatically update when the document changes
+            }, 10000);
+
+        } catch (err) {
+            setError(err.message);
+            setTriggeringJob(false);
+        }
     };
 
     return (
-        <Box sx={{ p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
-            {/* Header Section */}
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" sx={{ color: '#003160', fontWeight: 600, mb: 1 }}>
-                    Pending FTP Download Logs
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                    View and manage pending FTP download logs
-                </Typography>
-            </Box>
-
-            {/* Error Alert */}
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-                    {error}
-                </Alert>
-            )}
-
-            {/* Filters Section */}
-            <Paper sx={{ p: 2, mb: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <TextField
-                        label="Download Date"
-                        type="date"
-                        size="small"
-                        value={downloadDateFilter}
-                        onChange={(e) => setDownloadDateFilter(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ minWidth: 200 }}
-                    />
-                    <TextField
-                        label="FTP Last Modified"
-                        type="date"
-                        size="small"
-                        value={ftpModifiedFilter}
-                        onChange={(e) => setFtpModifiedFilter(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ minWidth: 200 }}
-                    />
-                    {(downloadDateFilter || ftpModifiedFilter) && (
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={clearFilters}
-                            sx={{
-                                color: '#003160',
-                                borderColor: '#003160',
-                                '&:hover': { borderColor: '#003160', bgcolor: '#f0f4f8' }
-                            }}
-                        >
-                            Clear Filters
-                        </Button>
-                    )}
-                    <Box sx={{ ml: 'auto' }}>
-                        <Chip
-                            label={`${logs.length} Records`}
-                            sx={{ bgcolor: '#003160', color: 'white', fontWeight: 500 }}
-                        />
-                    </Box>
-                </Box>
-            </Paper>
-
-            {/* Main Table */}
-            <Paper elevation={2} sx={{ overflow: 'hidden' }}>
-                <TableContainer sx={{ maxHeight: 600 }}>
-                    <Table stickyHeader>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell
-                                    sx={{
-                                        bgcolor: '#003160',
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        width: '25%'
-                                    }}
-                                >
-                                    Download Timestamp
-                                </TableCell>
-                                <TableCell
-                                    sx={{
-                                        bgcolor: '#003160',
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        width: '25%'
-                                    }}
-                                >
-                                    FTP Last Modified
-                                </TableCell>
-                                <TableCell
-                                    sx={{
-                                        bgcolor: '#003160',
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        width: '15%'
-                                    }}
-                                >
-                                    Status
-                                </TableCell>
-                                <TableCell
-                                    sx={{
-                                        bgcolor: '#003160',
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        width: '35%',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                                        <CircularProgress sx={{ color: '#003160' }} />
-                                        <Typography sx={{ mt: 2, color: '#666' }}>
-                                            Loading logs...
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-                            ) : logs.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                                        <Typography sx={{ color: '#666' }}>
-                                            No pending logs found
-                                        </Typography>
-                                        {(downloadDateFilter || ftpModifiedFilter) && (
-                                            <Typography variant="body2" sx={{ color: '#999', mt: 1 }}>
-                                                Try adjusting your filters
-                                            </Typography>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                logs.map((log, index) => (
-                                    <TableRow
-                                        key={log.id}
-                                        sx={{
-                                            '&:hover': { bgcolor: '#f8f9fa' },
-                                            bgcolor: index % 2 === 0 ? 'white' : '#fafafa'
-                                        }}
-                                    >
-                                        <TableCell sx={{ fontSize: '0.875rem' }}>
-                                            {new Date(log.downloadTimestamp).toLocaleString('en-US', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                        </TableCell>
-                                        <TableCell sx={{ fontSize: '0.875rem' }}>
-                                            {new Date(log.ftpLastModified).toLocaleString('en-US', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                label={log.syncStatus}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: '#fff3e0',
-                                                    color: '#e65100',
-                                                    fontWeight: 500,
-                                                    fontSize: '0.75rem'
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Tooltip title="View CSV">
-                                                <IconButton
-                                                    onClick={() => handleView(log)}
-                                                    size="small"
-                                                    sx={{
-                                                        color: '#003160',
-                                                        mr: 1,
-                                                        '&:hover': { bgcolor: '#e3f2fd' }
-                                                    }}
-                                                >
-                                                    <FaEye fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Download CSV">
-                                                <IconButton
-                                                    onClick={() => handleDownload(log.downloadUrl, log.fileName)}
-                                                    size="small"
-                                                    sx={{
-                                                        color: '#003160',
-                                                        '&:hover': { bgcolor: '#e3f2fd' }
-                                                    }}
-                                                >
-                                                    <FaDownload fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Paper>
-
-            {/* CSV View Dialog */}
-            <Dialog
-                open={viewOpen}
-                onClose={() => setViewOpen(false)}
-                maxWidth="lg"
-                fullWidth
-                PaperProps={{ sx: { height: '80vh' } }}
-            >
-                <DialogTitle
-                    sx={{
-                        bgcolor: '#003160',
-                        color: 'white',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        py: 2
-                    }}
-                >
-                    <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                        CSV Content: {selectedLog?.fileName}
+        <div className="flex flex-col gap-y-8 w-full h-full">
+            <Box sx={{ p: 3 }}>
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
+                        Inventory Management
                     </Typography>
-                    <IconButton
-                        onClick={() => setViewOpen(false)}
-                        sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
-                    >
-                        <IoClose />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
-                    <TableContainer sx={{ maxHeight: 'calc(80vh - 64px)' }}>
-                        <Table stickyHeader size="small">
-                            <TableHead>
-                                <TableRow>
-                                    {csvHeaders.map((header) => (
-                                        <TableCell
-                                            key={header}
-                                            sx={{
-                                                bgcolor: '#f5f5f5',
-                                                fontWeight: 600,
-                                                color: '#003160',
-                                                whiteSpace: 'nowrap',
-                                                borderBottom: '2px solid #003160'
-                                            }}
-                                        >
-                                            {header}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {csvData.map((row, index) => (
-                                    <TableRow
-                                        key={index}
+
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    {/* Header Info & Actions */}
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                        <Grid container spacing={3} alignItems="center">
+                            <Grid item xs={12} md={4}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    Latest System Fetch
+                                </Typography>
+                                <Typography variant="h6">
+                                    {loading ? (
+                                        'Loading...'
+                                    ) : log?.downloadTimestamp ? (
+                                        new Date(log.downloadTimestamp).toLocaleString()
+                                    ) : (
+                                        'No data'
+                                    )}
+                                </Typography>
+                            </Grid>
+
+                            <Grid item xs={12} md={4}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    FTP Last Modified
+                                </Typography>
+                                <Typography variant="h6">
+                                    {loading ? (
+                                        'Loading...'
+                                    ) : log?.ftpLastModified ? (
+                                        new Date(log.ftpLastModified).toLocaleString()
+                                    ) : (
+                                        'No data'
+                                    )}
+                                </Typography>
+                            </Grid>
+
+                            <Grid item xs={12} md={4}>
+                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<MdRefresh />}
+                                        onClick={handleManualTrigger}
+                                        disabled={triggeringJob}
                                         sx={{
-                                            '&:hover': { bgcolor: '#f8f9fa' },
-                                            bgcolor: index % 2 === 0 ? 'white' : '#fafafa'
+                                            backgroundColor: '#003160',
+                                            '&:hover': { backgroundColor: '#00254d' }
                                         }}
                                     >
+                                        {triggeringJob ? 'Refreshing...' : 'Refresh'}
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<MdDownload />}
+                                        onClick={handleDownload}
+                                        disabled={!log?.downloadUrl}
+                                    >
+                                        Download CSV
+                                    </Button>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </Paper>
+
+                    {/* CSV Data Table */}
+                    {loading || loadingCsv ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : csvData.length === 0 ? (
+                        <Paper sx={{ p: 3 }}>
+                            <Typography variant="body1" color="text.secondary" textAlign="center">
+                                No inventory data available
+                            </Typography>
+                        </Paper>
+                    ) : (
+                        <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 350px)' }}>
+                            <Table stickyHeader>
+                                <TableHead>
+                                    <TableRow>
                                         {csvHeaders.map((header) => (
                                             <TableCell
                                                 key={header}
                                                 sx={{
-                                                    fontSize: '0.813rem',
+                                                    backgroundColor: '#003160',
+                                                    color: 'white',
+                                                    fontWeight: 600,
                                                     whiteSpace: 'nowrap'
                                                 }}
                                             >
-                                                {row[header]}
+                                                {header}
                                             </TableCell>
                                         ))}
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </DialogContent>
-            </Dialog>
-        </Box>
+                                </TableHead>
+                                <TableBody>
+                                    {csvData.map((row, index) => (
+                                        <TableRow
+                                            key={index}
+                                            sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
+                                        >
+                                            {csvHeaders.map((header) => (
+                                                <TableCell
+                                                    key={header}
+                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    {row[header]}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+
+                    {csvData.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Total Records: {csvData.length}
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+            </Box>
+        </div>
+
     );
 };
 
-export default Inventory;
+export default AdminDownloadLogs;
