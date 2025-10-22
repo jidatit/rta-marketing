@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { auth, db } from "../../config/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { useAuth } from "../../AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../../images/rta-logo.png";
-
+import { Eye, EyeOff } from "lucide-react";
 const SignInPage = () => {
   const [email, setEmail] = useState("");
-  const { currentUser } = useAuth();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // State to manage loading
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const handleForgotPassword = (e) => {
     e.preventDefault(); // Prevent form submission when clicking forgot password
@@ -94,14 +93,27 @@ const SignInPage = () => {
                 className="w-full p-4 border-gray-300 rounded-md border-1 placeholder:text-gray-500"
                 placeholder="Email"
               />
-              <input
-                type="password"
-                name="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-4 border-gray-300 rounded-md border-1 placeholder:text-gray-500"
-                placeholder="Password"
-              />
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-md placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 outline-none pr-12"
+                  placeholder="Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <div className="flex flex-col items-center justify-center w-full gap-y-5">
                 <div className="flex flex-col items-end justify-end w-full">
                   <button

@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../images/rta-logo.png";
+import { Eye, EyeOff } from "lucide-react";
 
 const SignUpPage = () => {
   const [selected, setSelected] = useState("SignUp As");
@@ -18,6 +19,8 @@ const SignUpPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const options = [
@@ -183,22 +186,48 @@ const SignUpPage = () => {
                 className="w-full p-4 border-gray-300 rounded-md border-1 placeholder:text-gray-500"
                 placeholder="Email"
               />
-              <input
-                type="password"
-                name="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-4 border-gray-300 rounded-md border-1 placeholder:text-gray-500"
-                placeholder="Password"
-              />
-              <input
-                type="password"
-                name="ConfirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-4 border-gray-300 rounded-md border-1 placeholder:text-gray-500"
-                placeholder="Confirm Password"
-              />
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-md placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 outline-none pr-12"
+                  placeholder="Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+              <div className="relative w-full">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="ConfirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-md placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 outline-none pr-12"
+                  placeholder="Confirm Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <div className="flex flex-col items-center justify-center w-full gap-y-5">
                 <input
                   type="submit" // Use type="submit" for the button

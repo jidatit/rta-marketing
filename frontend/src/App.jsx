@@ -266,9 +266,7 @@ function App() {
                   />
                   <Route
                     path="inventory"
-                    element={
-                      currentUser ? <Inventory /> : <Navigate to="/" />
-                    }
+                    element={currentUser ? <Inventory /> : <Navigate to="/" />}
                   />
                 </Route>
                 <Route path="/tv" element={<TVScreen />} />
