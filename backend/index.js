@@ -7,7 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("./config/SwaggerOptions");
 const inventoryScheduler = require("./schedulers/inventoryScheduler");
 const { fork } = require("child_process");
-
+const puppeteer = require("puppeteer");
 require("dotenv").config();
 
 // admin.initializeApp({
@@ -308,6 +308,111 @@ app.post("/trigger-ftp-download", async (req, res) => {
     });
   }
 });
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function scrapeFilters() {
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
+
+  await page.goto("https://www.humberviewvw.com/en", {
+    waitUntil: "networkidle2",
+  });
+
+  // Wait for the make dropdown
+  await page.waitForSelector('[data-dropdown-type="makeId"]');
+
+  // Click to open make dropdown
+  await page.click('[data-dropdown-type="makeId"] .dropdown__label');
+  await delay(1000); // Wait for dropdown to open
+
+  // Scrape all makes
+  const makes = await page.evaluate(() => {
+    return Array.from(
+      document.querySelectorAll(
+        '[data-dropdown-type="makeId"] .dropdown__options li'
+      )
+    ).map((el) => ({
+      name: el.innerText.trim(),
+      id: el.getAttribute("data-value"),
+    }));
+  });
+
+  console.log("Scraped Makes:", makes);
+
+  const result = {};
+
+  for (const make of makes) {
+    console.log(`\nFetching models for: ${make.name} (ID: ${make.id})`);
+
+    try {
+      // Open make dropdown if closed
+      const isMakeDropdownOpen = await page.evaluate(() => {
+        const dropdown = document.querySelector(
+          '[data-dropdown-type="makeId"] .dropdown__options'
+        );
+        return dropdown && dropdown.classList.contains("active");
+      });
+
+      if (!isMakeDropdownOpen) {
+        await page.click('[data-dropdown-type="makeId"] .dropdown__label');
+        await delay(500);
+      }
+
+      // Click the specific make
+      await page.evaluate((makeId) => {
+        const makeOption = document.querySelector(
+          `[data-dropdown-type="makeId"] .dropdown__options li[data-value="${makeId}"]`
+        );
+        if (makeOption) makeOption.click();
+      }, make.id);
+
+      console.log(`Clicked on ${make.name}, waiting for models to load...`);
+
+      // Wait for model dropdown to populate with data
+      await page.waitForFunction(
+        () => {
+          const modelDropdown = document.querySelector(
+            '[data-dropdown-type="modelId"]'
+          );
+          const modelOptions = modelDropdown?.querySelectorAll(
+            "ul.dropdown__options li"
+          );
+          return modelOptions && modelOptions.length > 0;
+        },
+        { timeout: 10000 }
+      );
+
+      await delay(1000); // Extra wait for stability
+
+      // Scrape models from the model dropdown
+      const models = await page.evaluate(() => {
+        const modelOptions = document.querySelectorAll(
+          '[data-dropdown-type="modelId"] ul.dropdown__options li'
+        );
+        return Array.from(modelOptions).map((el) => ({
+          name: el.innerText.trim(),
+          id: el.getAttribute("data-value"),
+        }));
+      });
+
+      result[make.name] = models;
+      console.log(`✓ Fetched ${models.length} models for ${make.name}`);
+      console.log("Models:", models.map((m) => m.name).join(", "));
+    } catch (err) {
+      console.error(`✗ Failed for ${make.name}:`, err.message);
+      result[make.name] = [];
+    }
+  }
+
+  console.log("\n=== Final Result ===");
+  console.log(JSON.stringify(result, null, 2));
+
+  await browser.close();
+  return result;
+}
+
+scrapeFilters().catch(console.error);
 
 // Start cron scheduler
 inventoryScheduler.start();
