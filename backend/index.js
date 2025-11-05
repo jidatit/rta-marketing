@@ -6,6 +6,7 @@ const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("./config/SwaggerOptions");
 const inventoryScheduler = require("./schedulers/inventoryScheduler");
+const scrapeRoutes = require("./routes/scrape.routes");
 const { fork } = require("child_process");
 
 require("dotenv").config();
@@ -309,6 +310,7 @@ app.post("/trigger-ftp-download", async (req, res) => {
   }
 });
 
+app.use("/api/scrape", scrapeRoutes);
 // Start cron scheduler
 inventoryScheduler.start();
 const port = process.env.PORT || 5000;
