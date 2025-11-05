@@ -8,7 +8,7 @@ const logAsync = async (level, message, data = {}) => {
       level,
       message,
       data,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      // timestamp:serverTimestamp(),
     })
     .catch(() => {}); // Silent fail
 };
