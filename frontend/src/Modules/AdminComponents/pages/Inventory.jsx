@@ -75,6 +75,29 @@ const Inventory = () => {
         return () => unsubscribe();
     }, []);
 
+    //FORMAT NUMBERS IN CSV
+    // Format numeric columns cleanly
+    const formatValue = (header, value) => {
+        if (value == null || value === '') return '-';
+
+        // Columns you want to format to 2 decimals
+        const numericFields = ['COSTS', 'PURCHASEPRICE', 'TOTALINVESTED'];
+
+        if (numericFields.includes(header)) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return value;
+            return num.toFixed(2);
+        }
+
+        if (header === 'ODOMETER') {
+            const num = parseFloat(value);
+            if (isNaN(num)) return value;
+            return num.toLocaleString();
+        }
+
+        return value;
+    };
+
     // Load CSV data
     const loadCsvData = async (logData) => {
         if (!logData?.downloadUrl) return;
@@ -422,7 +445,9 @@ const Inventory = () => {
                                                             </IconButton>
                                                         </>
                                                     ) : header === 'ODOMETER' && row[header] ? (
-                                                        parseFloat(row[header]).toLocaleString()
+                                                        // parseFloat(row[header]).toLocaleString()
+                                                        formatValue(header, row[header])
+
                                                     ) : (
                                                         row[header] || '-'
                                                     )}
