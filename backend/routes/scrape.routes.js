@@ -2,8 +2,6 @@
 const express = require("express");
 const { buildUrls } = require("../services/url-builder.service");
 const { getBrowser, scrapeSite } = require("../services/scraper.service");
-const autotraderConfig = require("../config/sites/autotrader");
-const humberviewConfig = require("../config/sites/humberview");
 const { logAsync } = require("../utils/logger");
 
 const router = express.Router();
@@ -15,19 +13,23 @@ router.post("/run", async (req, res) => {
   await getBrowser();
   const urls = buildUrls(filters);
 
-  const [atCars, hvCars] = await Promise.all([
-    scrapeSite(urls.autotrader, autotraderConfig, "AutoTrader"),
-    scrapeSite(urls.humberview, humberviewConfig, "HumberviewVW"),
-  ]);
+  const results = {};
+
+  if (urls.autotrader) {
+    results.autotrader = await scrapeSite(urls.autotrader, "AutoTrader");
+  }
 
   logAsync("info", "Scrape job completed", {
     filters,
-    totalDuration: Date.now() - start,
-    autotrader: Array.isArray(atCars) ? atCars.length : 0,
-    humberview: Array.isArray(hvCars) ? hvCars.length : 0,
+    duration: Date.now() - start,
+    sites: Object.keys(results),
   });
 
-  res.json({ autotrader: atCars, humberview: hvCars, filters });
+  res.json({
+    results,
+    urls,
+    filters,
+  });
 });
 
 module.exports = router;

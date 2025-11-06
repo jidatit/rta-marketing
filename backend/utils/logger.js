@@ -1,6 +1,6 @@
 // utils/logger.js
 
-const { logsRef } = require("../config/firebaseAdmin");
+const { logsRef, admin } = require("../config/firebaseAdmin");
 
 const logAsync = async (level, message, data = {}) => {
   logsRef
@@ -8,7 +8,7 @@ const logAsync = async (level, message, data = {}) => {
       level,
       message,
       data,
-      // timestamp:serverTimestamp(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(), // ✅ server-side timestamp
     })
     .catch(() => {}); // Silent fail
 };

@@ -1,53 +1,49 @@
 // services/scraper.service.js
 const puppeteer = require("puppeteer");
+const { scrapeAutoTrader } = require("./scrapers/autotrader.scraper");
+// const { scrapeHumberview } = require("../scrapers/humberview.scraper");
 const { logAsync } = require("../utils/logger");
-const { delay } = require("../utils/delay");
 
 let browser = null;
 
 const getBrowser = async () => {
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: false,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
     });
   }
   return browser;
 };
 
-const scrapeSite = async (url, config, siteName) => {
-  const start = Date.now();
+const scrapeSite = async (url, siteName) => {
   const page = await browser.newPage();
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
   );
 
   try {
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-    await page.waitForSelector(config.selectors.item, { timeout: 10000 });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
-    const cars = await page.evaluate((sel) => {
-      return Array.from(document.querySelectorAll(sel.item)).map((el) => ({
-        title: el.querySelector(sel.title)?.innerText?.trim() || "",
-        price: el.querySelector(sel.price)?.innerText?.trim() || "",
-        year: el.querySelector(sel.year)?.innerText?.trim() || "",
-        mileage: el.querySelector(sel.mileage)?.innerText?.trim() || "",
-        link: el.querySelector(sel.link)?.getAttribute("href") || "",
-      }));
-    }, config.selectors);
+    let result;
+    if (siteName === "AutoTrader") {
+      result = await scrapeAutoTrader(page, url);
+    } else if (siteName === "HumberviewVW") {
+      // result = await scrapeHumberview(page);
+    }
 
-    logAsync("info", `${siteName}: ${cars.length} cars scraped`, {
-      url,
-      duration: Date.now() - start,
-      count: cars.length,
-    });
-    return cars;
+    return result; // Always return { cars, total, serverError }
   } catch (err) {
-    logAsync("error", `${siteName} failed`, {
-      url,
-      error: err.message,
-    });
-    return { error: "Failed to load" };
+    logAsync("error", `${siteName} page failed`, { url, error: err.message });
+    return {
+      cars: [],
+      total: 0,
+      serverError: "Failed to load page: " + err.message,
+    };
   } finally {
     await page.close();
   }

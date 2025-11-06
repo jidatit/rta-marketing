@@ -11,7 +11,7 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"make\": \"Acura\",\n  \"model\": \"RDX\",\n  \"year\": 2022,\n  \"minPrice\": 0,\n  \"maxPrice\": 100000,\n  \"postal\": \"A1A1A1\",\n  \"radius\": 100\n}"
+          "raw": "{\n  \"make\": \"Acura\",\n  \"model\": \"RDX\",\n  \"yearMin\": 2020,\n  \"yearMax\": 2025,\n  \"minPrice\": 0,\n  \"maxPrice\": 100000,\n  \"postal\": \"A1A1A1\",\n  \"radius\": 100,\n  \"keyword\": \"awd\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/scrape/run",
