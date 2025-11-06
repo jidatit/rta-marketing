@@ -10,39 +10,33 @@ const scrapeAutoTrader = async (page, baseUrl) => {
     });
 
     // -------------------------------------------------
-    // 1. Page is already at the right URL + UA + viewport
+    // 1. Wait for at least one card (same as before)
     // -------------------------------------------------
-
-    // Wait until at least one card appears (max ~9 s total)
     await page
       .waitForSelector(".result-item.enhanced", { timeout: 30_000 })
-      .catch(() => {}); // ignore – retry loop will handle missing cards
+      .catch(() => {});
 
     // -------------------------------------------------
-    // 2. DOM extraction (runs completely in the browser)
+    // 2. DOM extraction + retry loop (unchanged)
     // -------------------------------------------------
     const cars = await page.evaluate((baseUrl) => {
-      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
       const out = [];
 
-      // ---- tiny retry in case a lazy-load sneaks in ----
       let attempts = 0;
       const maxAttempts = 4;
+
       while (attempts < maxAttempts) {
         const cards = document.querySelectorAll(".result-item.enhanced");
         if (cards.length) {
           cards.forEach((card) => {
             const adId =
               card.querySelector("[data-adid]")?.dataset.adid ?? null;
-
             const title =
               card
                 .querySelector(".result-title, .title-with-trim")
                 ?.innerText.trim() ?? "";
-
             const price =
               card.querySelector(".price-amount")?.innerText.trim() ?? "";
-
             const img = card.querySelector(".main-photo img")?.src ?? "";
 
             const rawLink =
@@ -61,7 +55,6 @@ const scrapeAutoTrader = async (page, baseUrl) => {
 
             const odometer =
               card.querySelector(".odometer-proximity")?.innerText.trim() ?? "";
-
             const dealer =
               card.querySelector(".seller-name")?.innerText.trim() ?? "";
 
@@ -81,12 +74,13 @@ const scrapeAutoTrader = async (page, baseUrl) => {
               isUsed,
             });
           });
-          break; // got data → exit retry
+          break;
         }
-        // wait a bit for lazy load
+
+        // sync delay inside page context
         const syncDelay = (ms) => {
           const start = Date.now();
-          while (Date.now() - start < ms) {} // block
+          while (Date.now() - start < ms) {}
         };
         syncDelay(800);
         attempts++;
@@ -94,6 +88,24 @@ const scrapeAutoTrader = async (page, baseUrl) => {
       return out;
     }, baseUrl);
 
+    // -------------------------------------------------
+    // 3. FINAL ZERO-CHECK: Only if title says "0"
+    // -------------------------------------------------
+    const titleCount = await page.evaluate(() => {
+      const el = document.querySelector("#titleCount");
+      return el ? el.textContent.trim() : null;
+    });
+
+    if (titleCount === "0") {
+      await logAsync("info", "Zero results confirmed via title count", {
+        url: page.url(),
+      });
+      return { cars: [], total: 0, serverError: null };
+    }
+
+    // -------------------------------------------------
+    // 4. Return scraped data
+    // -------------------------------------------------
     result.cars = cars;
     result.total = cars.length;
 
