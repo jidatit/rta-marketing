@@ -444,13 +444,10 @@ const Inventory = () => {
                                                                 <MdVisibility />
                                                             </IconButton>
                                                         </>
-                                                    ) : header === 'ODOMETER' && row[header] ? (
-                                                        // parseFloat(row[header]).toLocaleString()
-                                                        formatValue(header, row[header])
-
                                                     ) : (
-                                                        row[header] || '-'
+                                                        formatValue(header, row[header])
                                                     )}
+
                                                 </TableCell>
                                             ))}
                                         </TableRow>
