@@ -18,7 +18,9 @@ router.post("/run", async (req, res) => {
   if (urls.autotrader) {
     results.autotrader = await scrapeSite(urls.autotrader, "AutoTrader");
   }
-
+  if (urls.humberview) {
+    results.humberview = await scrapeSite(urls.humberview, "HumberviewVW"); // <-- NEW
+  }
   logAsync("info", "Scrape job completed", {
     filters,
     duration: Date.now() - start,

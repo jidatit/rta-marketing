@@ -1,6 +1,8 @@
 // services/scraper.service.js
 const puppeteer = require("puppeteer");
 const { scrapeAutoTrader } = require("./scrapers/autotrader.scraper");
+const { scrapeHumberview } = require("./scrapers/humberview.scraper");
+
 const { logAsync } = require("../utils/logger");
 
 let browser = null;
@@ -38,6 +40,9 @@ const scrapeSite = async (url, siteName) => {
     let result;
     if (siteName === "AutoTrader") {
       result = await scrapeAutoTrader(page, url);
+    } else if (siteName === "HumberviewVW") {
+      // <-- NEW
+      result = await scrapeHumberview(page, url);
     }
     // future sites … just add here
 
