@@ -10,21 +10,76 @@ const scrapeAutoTrader = async (page, baseUrl) => {
     });
 
     // -------------------------------------------------
-    // 1. Wait for at least one card (same as before)
+    // 1. Wait for initial load
     // -------------------------------------------------
     await page
-      .waitForSelector(".result-item.enhanced", { timeout: 30_000 })
+      .waitForSelector(".result-item.enhanced, #titleCount", {
+        timeout: 30_000,
+      })
       .catch(() => {});
 
     // -------------------------------------------------
-    // 2. DOM extraction + retry loop (unchanged)
+    // 2. ZERO-RESULT CHECK FIRST (instant return)
+    // -------------------------------------------------
+    const zeroResult = await page.evaluate(() => {
+      // Check 1: Title count says "0"
+      const countEl = document.querySelector("#titleCount");
+      if (countEl && countEl.textContent.trim() === "0") return true;
+
+      // Check 2: No car cards at all
+      const cards = document.querySelectorAll(".result-item.enhanced");
+      if (cards.length === 0) return true;
+
+      return false;
+    });
+
+    if (zeroResult) {
+      await logAsync("info", "Zero results detected (early exit)", {
+        url: page.url(),
+      });
+      return { cars: [], total: 0, serverError: null };
+    }
+
+    // -------------------------------------------------
+    // 3. Progressive scroll to load lazy images
+    // -------------------------------------------------
+    await page.evaluate(async () => {
+      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      const progressiveScroll = async (
+        step = window.innerHeight * 0.8,
+        pause = 800
+      ) => {
+        let retries = 0;
+        const maxRetries = 5;
+        while (true) {
+          window.scrollBy(0, step);
+          await delay(pause);
+          const atBottom =
+            window.scrollY + window.innerHeight >=
+            document.body.scrollHeight - 10;
+          if (atBottom) {
+            retries++;
+            if (retries >= maxRetries) break;
+          } else {
+            retries = 0;
+          }
+        }
+        window.scrollTo(0, 0);
+        await delay(1000);
+      };
+
+      await progressiveScroll();
+    });
+
+    // -------------------------------------------------
+    // 4. DOM extraction (with retry loop)
     // -------------------------------------------------
     const cars = await page.evaluate((baseUrl) => {
       const out = [];
 
       let attempts = 0;
       const maxAttempts = 4;
-
       while (attempts < maxAttempts) {
         const cards = document.querySelectorAll(".result-item.enhanced");
         if (cards.length) {
@@ -37,7 +92,28 @@ const scrapeAutoTrader = async (page, baseUrl) => {
                 ?.innerText.trim() ?? "";
             const price =
               card.querySelector(".price-amount")?.innerText.trim() ?? "";
-            const img = card.querySelector(".main-photo img")?.src ?? "";
+
+            // ---- IMAGE: always string ----
+            const imgEl = card.querySelector(".main-photo img");
+            let image = "";
+            if (imgEl) {
+              if (imgEl.src && imgEl.src.startsWith("http")) {
+                image = imgEl.src;
+              } else if (
+                imgEl.dataset.src &&
+                imgEl.dataset.src.startsWith("http")
+              ) {
+                image = imgEl.dataset.src;
+              } else if (imgEl.srcset) {
+                const parts = imgEl.srcset
+                  .split(",")
+                  .map((s) => s.trim().split(" ")[0]);
+                const validSrc = parts.find(
+                  (src) => src && src.startsWith("http")
+                );
+                if (validSrc) image = validSrc;
+              }
+            }
 
             const rawLink =
               Array.from(card.querySelectorAll("a.inner-link"))
@@ -66,7 +142,7 @@ const scrapeAutoTrader = async (page, baseUrl) => {
               adId,
               title,
               price,
-              image: img,
+              image,
               proximity,
               odometer,
               link: fullLink,
@@ -77,7 +153,6 @@ const scrapeAutoTrader = async (page, baseUrl) => {
           break;
         }
 
-        // sync delay inside page context
         const syncDelay = (ms) => {
           const start = Date.now();
           while (Date.now() - start < ms) {}
@@ -88,24 +163,6 @@ const scrapeAutoTrader = async (page, baseUrl) => {
       return out;
     }, baseUrl);
 
-    // -------------------------------------------------
-    // 3. FINAL ZERO-CHECK: Only if title says "0"
-    // -------------------------------------------------
-    const titleCount = await page.evaluate(() => {
-      const el = document.querySelector("#titleCount");
-      return el ? el.textContent.trim() : null;
-    });
-
-    if (titleCount === "0") {
-      await logAsync("info", "Zero results confirmed via title count", {
-        url: page.url(),
-      });
-      return { cars: [], total: 0, serverError: null };
-    }
-
-    // -------------------------------------------------
-    // 4. Return scraped data
-    // -------------------------------------------------
     result.cars = cars;
     result.total = cars.length;
 
