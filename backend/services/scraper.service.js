@@ -4,6 +4,8 @@ const { scrapeAutoTrader } = require("./scrapers/autotrader.scraper");
 const { scrapeHumberview } = require("./scrapers/humberview.scraper");
 
 const { logAsync } = require("../utils/logger");
+const { scrapeAutoPlanet } = require("./scrapers/autoplanet.scraper");
+const { scrapeCarGurus } = require("./scrapers/carguru.scraper");
 
 let browser = null;
 let sharedPage = null; // <- reused across calls
@@ -43,6 +45,11 @@ const scrapeSite = async (url, siteName) => {
     } else if (siteName === "HumberviewVW") {
       // <-- NEW
       result = await scrapeHumberview(page, url);
+    } else if (siteName === "AutoPlanet") {
+      // <-- NEW
+      result = await scrapeAutoPlanet(page, url);
+    } else if (siteName === "CarGurus") {
+      result = await scrapeCarGurus(page, url);
     }
     // future sites … just add here
 
