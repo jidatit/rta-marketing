@@ -14,7 +14,7 @@ const scrapeAutoTrader = async (page, baseUrl) => {
     // -------------------------------------------------
     await page
       .waitForSelector(".result-item.enhanced, #titleCount", {
-        timeout: 30_000,
+        timeout: 60_000,
       })
       .catch(() => {});
 

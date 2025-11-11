@@ -1,12 +1,10 @@
 const { logAsync } = require("../../utils/logger");
 
 /**
- * Optimized Scraper for AutoPlanet.ca
- * Faster loading with minimal waits
+ * Optimized AutoPlanet scraper with robust handling of slow-loading pages
  */
 const scrapeAutoPlanet = async (page, baseUrl) => {
   const result = { cars: [], total: 0, serverError: null };
-
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
   try {
@@ -14,53 +12,54 @@ const scrapeAutoPlanet = async (page, baseUrl) => {
       baseUrl,
     });
 
-    // Load page with networkidle2 (faster than networkidle0)
-    await page.goto(baseUrl, {
-      waitUntil: "networkidle2",
-      timeout: 30_000,
-    });
-
-    await logAsync("info", "Waiting for vehicle cards...", {
+    // Load page
+    await page.goto(baseUrl, { waitUntil: "networkidle2", timeout: 60_000 });
+    await logAsync("info", "Page loaded, waiting for vehicle cards...", {
       url: page.url(),
     });
 
-    // Wait for vehicle cards to appear (more direct check)
-    await page
-      .waitForSelector(".vehicle-card", {
-        timeout: 20_000,
-      })
-      .catch(async () => {
-        // Fallback: check if there's a "no results" message
-        const noResults = await page.$(".no-results, .empty-state");
-        if (noResults) {
-          await logAsync("warn", "No vehicles found on page");
-          return result;
-        }
-      });
+    // -----------------------------
+    // Wait for initial cards with retries
+    // -----------------------------
+    let initialCount = 0;
+    const maxRetries = 15;
+    let retry = 0;
 
-    // Quick check if we have initial vehicles
-    const initialCount = await page.evaluate(
-      () => document.querySelectorAll(".vehicle-card").length
-    );
+    while (retry < maxRetries) {
+      initialCount = await page.evaluate(
+        () => document.querySelectorAll(".vehicle-card").length
+      );
+      if (initialCount > 0) break;
+      retry++;
+      await delay(1000); // wait 1s before retrying
+    }
+
+    if (initialCount === 0) {
+      await logAsync(
+        "warn",
+        "No vehicle cards found after retries. Checking for empty state..."
+      );
+      const noResults = await page.$(".no-results, .empty-state");
+      if (noResults) return result; // Return empty result gracefully
+      // else continue and try lazy loading anyway
+    }
 
     await logAsync(
       "info",
-      `Initial cards loaded: ${initialCount}. Loading remaining...`
+      `Initial cards detected: ${initialCount}. Starting lazy load...`
     );
 
-    // -------------------------------------------------
-    // Optimized lazy loading - faster scrolling
-    // -------------------------------------------------
+    // -----------------------------
+    // Lazy load / scroll all vehicles
+    // -----------------------------
     await page.evaluate(async () => {
       const delay = (ms) => new Promise((r) => setTimeout(r, ms));
       let lastCount = 0;
       let noChangeCount = 0;
 
-      // Faster scroll loop with reduced delays
       while (noChangeCount < 3) {
-        // Reduced from 10 to 3 retries
-        window.scrollBy(0, window.innerHeight * 2); // Scroll 2 viewports at once
-        await delay(800); // Reduced from 2500ms to 800ms
+        window.scrollBy(0, window.innerHeight * 2); // scroll 2 viewports at a time
+        await delay(800);
 
         const currentCount = document.querySelectorAll(".vehicle-card").length;
         if (currentCount === lastCount) {
@@ -70,13 +69,15 @@ const scrapeAutoPlanet = async (page, baseUrl) => {
           lastCount = currentCount;
         }
       }
+      window.scrollTo(0, 0); // scroll back to top
+      await delay(500);
     });
 
-    await logAsync("info", "All vehicles loaded, extracting data...");
+    await logAsync("info", "All vehicles loaded. Extracting data...");
 
-    // -------------------------------------------------
-    // Extract car data (no changes needed here)
-    // -------------------------------------------------
+    // -----------------------------
+    // Extract vehicle info
+    // -----------------------------
     const cars = await page.evaluate(() => {
       const out = [];
       const cards = document.querySelectorAll(".vehicle-card");
@@ -142,9 +143,9 @@ const scrapeAutoPlanet = async (page, baseUrl) => {
       return out;
     });
 
-    // -------------------------------------------------
+    // -----------------------------
     // Extract total count
-    // -------------------------------------------------
+    // -----------------------------
     const totalCount = await page.evaluate(() => {
       const el = document.querySelector(".inventory-listing__header-count");
       if (!el) return 0;

@@ -4,7 +4,8 @@ const buildUrl = (filters = {}) => {
   const {
     minPrice,
     maxPrice,
-    year,
+    minYear,
+    maxYear,
     make,
     model,
     bodyStyle,
@@ -40,12 +41,8 @@ const buildUrl = (filters = {}) => {
     params.set("od", ""); // ✅ empty if no mileage range
   }
 
-  if (year) {
-    if (Array.isArray(year) && year.length === 2)
-      params.set("yr", `${year[0]},${year[1]}`);
-    else params.set("yr", year);
-  } else {
-    params.set("yr", ""); // ✅ keep empty when missing
+  if (minYear != null && maxYear != null) {
+    params.set("yr", `${minYear},${maxYear}`);
   }
 
   params.set("v1", vehicleType);

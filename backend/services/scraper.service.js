@@ -2,13 +2,11 @@
 const puppeteer = require("puppeteer");
 const { scrapeAutoTrader } = require("./scrapers/autotrader.scraper");
 const { scrapeHumberview } = require("./scrapers/humberview.scraper");
-
-const { logAsync } = require("../utils/logger");
 const { scrapeAutoPlanet } = require("./scrapers/autoplanet.scraper");
 const { scrapeCarGurus } = require("./scrapers/carguru.scraper");
+const { logAsync } = require("../utils/logger");
 
 let browser = null;
-let sharedPage = null; // <- reused across calls
 
 const getBrowser = async () => {
   if (!browser) {
@@ -20,56 +18,114 @@ const getBrowser = async () => {
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--disable-features=IsolateOrigins,site-per-process",
+        "--disable-web-security", // Helps with some sites
       ],
     });
 
-    // One page that lives for the whole process
-    sharedPage = await browser.newPage();
-    await sharedPage.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    );
-    await sharedPage.setViewport({ width: 1920, height: 1080 });
+    await logAsync("info", "Browser launched successfully");
   }
-  return { browser, page: sharedPage };
+  return browser;
 };
 
 const scrapeSite = async (url, siteName) => {
-  const { page } = await getBrowser();
+  const browser = await getBrowser();
+
+  // ✅ CRITICAL FIX: Create a NEW page for each scraper
+  const page = await browser.newPage();
 
   try {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await logAsync("info", `${siteName}: Creating new page and navigating...`, {
+      url,
+    });
+
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
+    await page.setViewport({ width: 1920, height: 1080 });
+
+    // Navigate with better error handling
+    try {
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 60_000,
+      });
+      await logAsync("debug", `${siteName}: Page loaded successfully`);
+    } catch (navError) {
+      await logAsync("error", `${siteName}: Navigation failed`, {
+        error: navError.message,
+        url,
+      });
+      throw new Error(`Navigation failed: ${navError.message}`);
+    }
 
     let result;
+
     if (siteName === "AutoTrader") {
       result = await scrapeAutoTrader(page, url);
     } else if (siteName === "HumberviewVW") {
-      // <-- NEW
       result = await scrapeHumberview(page, url);
     } else if (siteName === "AutoPlanet") {
-      // <-- NEW
       result = await scrapeAutoPlanet(page, url);
     } else if (siteName === "CarGurus") {
       result = await scrapeCarGurus(page, url);
+    } else {
+      throw new Error(`Unknown site: ${siteName}`);
     }
-    // future sites … just add here
+
+    await logAsync("success", `${siteName}: Scraping completed`, {
+      carsFound: result.total,
+      hasError: !!result.serverError,
+    });
 
     return result; // { cars, total, serverError }
   } catch (err) {
-    await logAsync("error", `${siteName} page failed`, {
+    await logAsync("error", `${siteName}: Scraper failed`, {
       url,
       error: err.message,
+      stack: err.stack,
     });
+
+    // Try to take screenshot for debugging
+    try {
+      await page.screenshot({
+        path: `ERROR-${siteName}-${Date.now()}.png`,
+        fullPage: true,
+      });
+    } catch (screenshotErr) {
+      await logAsync("warn", `${siteName}: Could not take screenshot`);
+    }
+
     return {
       cars: [],
       total: 0,
-      serverError: "Failed to load page: " + err.message,
+      serverError: err.message,
     };
+  } finally {
+    // ✅ IMPORTANT: Close the page after scraping to free up resources
+    try {
+      await page.close();
+      await logAsync("debug", `${siteName}: Page closed`);
+    } catch (closeErr) {
+      await logAsync("warn", `${siteName}: Error closing page`, {
+        error: closeErr.message,
+      });
+    }
   }
-  // NOTE: page is **not** closed – it is reused
 };
 
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  await logAsync("info", "Shutting down browser...");
+  if (browser) {
+    await browser.close();
+  }
+  process.exit(0);
+});
+
 process.on("exit", async () => {
-  if (browser) await browser.close();
+  if (browser) {
+    await browser.close();
+  }
 });
 
 module.exports = { getBrowser, scrapeSite };

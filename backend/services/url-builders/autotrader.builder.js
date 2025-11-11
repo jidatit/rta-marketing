@@ -1,50 +1,87 @@
-// services/url-builders/autotrader.builder.js
 const siteConfig = require("../../config/sites/autotrader");
 
 const buildUrl = (filters) => {
   const {
     make,
     model,
-    yearMin,
-    yearMax,
+    minYear,
+    maxYear,
     minPrice,
     maxPrice,
     postal,
+    minMileage,
+    maxMileage,
+    transmission,
+    exteriorColor,
+    bodyStyle,
     radius = 100,
-    keyword,
+    keywords = "",
   } = filters;
 
+  // Get slugs for province/city
   const slugs = siteConfig.getSlugs(postal || "A1A1A1");
+
+  // Build path: /cars/make/model/province/city/
   let path = "/cars";
   if (make) path += `/${encodeURIComponent(make.toLowerCase())}`;
   if (model)
-    path += `/${encodeURIComponent(
-      model.toLowerCase().replace(/\s+/g, "%20")
-    )}`;
-  //   path += `/${slugs.province}/${slugs.city}/`;
+    path += `/${encodeURIComponent(model.toLowerCase().replace(/\s+/g, "-"))}`;
 
-  const params = new URLSearchParams({
-    rcp: "200",
-    rcs: "0",
-    prx: radius.toString(),
-    // prv: slugs.provinceName,
-    loc: postal || "A1A1A1",
-    hprc: "True",
-    wcp: "True",
-    sts: "New-Used",
-  });
+  // Province and city ALWAYS come after model (if they exist)
+  if (slugs.province) path += `/${slugs.province}`;
+  if (slugs.city) path += `/${slugs.city}`;
 
-  if (make && model) {
-    params.append("inMarket", "advancedSearch");
-  } else {
-    params.append("inMarket", "basicSearch");
-  }
+  // Add trailing slash
+  path += "/";
 
-  if (yearMin && yearMax) params.append("yRng", `${yearMin},${yearMax}`);
+  // Build query params
+  const params = new URLSearchParams();
+
+  params.append("rcp", "200"); // results per page
+  params.append("rcs", "0"); // results start index
+  params.append("srt", "39"); // sort
+
+  // Year range
+  if (minYear && maxYear) params.append("yRng", `${minYear},${maxYear}`);
+
+  // Price range
   if (minPrice != null && maxPrice != null)
     params.append("pRng", `${minPrice},${maxPrice}`);
-  if (keyword) params.append("kwd", keyword);
-  params.append("srt", "39");
+
+  // Mileage range
+  if (minMileage != null && maxMileage != null)
+    params.append("oRng", `${minMileage},${maxMileage}`);
+
+  // Radius
+  params.append("prx", radius.toString());
+
+  // Province name
+  if (slugs.provinceName) params.append("prv", slugs.provinceName);
+
+  // Postal code
+  params.append("loc", postal || "A1A1A1");
+
+  // Exterior color
+  if (exteriorColor) params.append("clr", exteriorColor);
+
+  // Body style
+  if (bodyStyle) params.append("body", bodyStyle);
+
+  // Transmission
+  if (transmission) params.append("trans", transmission);
+
+  // Price and certification flags
+  params.append("hprc", "True");
+  params.append("wcp", "True");
+
+  // Condition
+  params.append("sts", "New-Used");
+
+  // Market type
+  params.append("inMarket", "advancedSearch");
+
+  // Keyword (if exists)
+  if (keywords) params.append("kwd", keywords);
 
   return `${siteConfig.baseUrl}${path}?${params.toString()}`;
 };
