@@ -5,6 +5,7 @@ const { scrapeHumberview } = require("./scrapers/humberview.scraper");
 const { scrapeAutoPlanet } = require("./scrapers/autoplanet.scraper");
 const { scrapeCarGurus } = require("./scrapers/carguru.scraper");
 const { logAsync } = require("../utils/logger");
+const { scrapeYorkdaleVW } = require("./scrapers/scrapeyorkdale.scrapper");
 
 let browser = null;
 
@@ -66,8 +67,8 @@ const scrapeSite = async (url, siteName) => {
       result = await scrapeHumberview(page, url);
     } else if (siteName === "AutoPlanet") {
       result = await scrapeAutoPlanet(page, url);
-    } else if (siteName === "CarGurus") {
-      result = await scrapeCarGurus(page, url);
+    } else if (siteName === "YorkdaleVW") {
+      result = await scrapeYorkdaleVW(page, url);
     } else {
       throw new Error(`Unknown site: ${siteName}`);
     }

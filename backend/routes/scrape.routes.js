@@ -54,7 +54,21 @@ router.post("/run", async (req, res) => {
           })
       );
     }
-
+    if (urls.yorkdalevw) {
+      scrapePromises.push(
+        scrapeSite(urls.yorkdalevw, "YorkdaleVW")
+          .then((result) => ({ site: "yorkdalevw", result }))
+          .catch((error) => {
+            logAsync("error", "YorkdaleVW promise rejected", {
+              error: error.message,
+            });
+            return {
+              site: "yorkdalevw",
+              result: { cars: [], total: 0, serverError: error.message },
+            };
+          })
+      );
+    }
     if (urls.autoplanet) {
       scrapePromises.push(
         scrapeSite(urls.autoplanet, "AutoPlanet")
