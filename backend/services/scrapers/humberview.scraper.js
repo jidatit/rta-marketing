@@ -49,7 +49,26 @@ const scrapeHumberview = async (page, baseUrl) => {
     }
 
     await wait(3000);
+    const pageHeading = await page.evaluate(() => {
+      const heading = document.querySelector(
+        ".il-heading.il-heading1.heading1"
+      );
+      return heading ? heading.textContent.trim() : "";
+    });
+    const isGenericResults = pageHeading.includes(
+      "New & Used SUVs, Trucks, Cars for Sale"
+    );
 
+    if (isGenericResults) {
+      await logAsync(
+        "info",
+        "Generic results detected - filters did not match",
+        {
+          heading: pageHeading,
+        }
+      );
+      return { cars: [], total: 0, serverError: null };
+    }
     // Check how many cards we actually have on first page
     const cardsPerPage = await page.evaluate(() => {
       return document.querySelectorAll("article.vc-alpha").length;
