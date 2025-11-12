@@ -71,11 +71,6 @@ router.post("/run", async (req, res) => {
       );
     }
 
-    // Wait for all scrapers to complete (or fail)
-    await logAsync(
-      "info",
-      `Waiting for ${scrapePromises.length} scrapers to complete...`
-    );
     const scrapeResults = await Promise.all(scrapePromises);
 
     // Convert array results back to object format

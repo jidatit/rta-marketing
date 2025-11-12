@@ -13,7 +13,6 @@ const scrapeHumberview = async (page, baseUrl) => {
     // -------------------------------------------------
     // 1. Wait for initial load (counter or cards)
     // -------------------------------------------------
-    await logAsync("debug", "Waiting for initial load...");
     try {
       await page.waitForSelector(".il-totalVehicles__count, article.vc-alpha", {
         timeout: 60_000,
@@ -25,7 +24,6 @@ const scrapeHumberview = async (page, baseUrl) => {
 
     // Increased wait for JS to finish rendering
     await wait(5000);
-    await logAsync("debug", "Initial load complete");
 
     // -------------------------------------------------
     // 2. Read total count
@@ -34,7 +32,6 @@ const scrapeHumberview = async (page, baseUrl) => {
       const el = document.querySelector(".il-totalVehicles__count");
       return el ? parseInt(el.textContent.trim(), 10) : 0;
     });
-    await logAsync("info", `Initial vehicle count: ${initialCount}`);
 
     if (initialCount === 0) {
       await logAsync("info", "Zero results detected on first load");
@@ -44,7 +41,6 @@ const scrapeHumberview = async (page, baseUrl) => {
     // -------------------------------------------------
     // 3. Determine items per page and calculate total pages
     // -------------------------------------------------
-    await logAsync("debug", "Waiting for car cards...");
     try {
       await page.waitForSelector("article.vc-alpha", { timeout: 90_000 });
     } catch (e) {
@@ -58,14 +54,9 @@ const scrapeHumberview = async (page, baseUrl) => {
     const cardsPerPage = await page.evaluate(() => {
       return document.querySelectorAll("article.vc-alpha").length;
     });
-    await logAsync("debug", `Found ${cardsPerPage} car cards on first page`);
 
     // FIXED: Calculate total pages based on vehicle count and cards per page
     const totalPages = Math.ceil(initialCount / cardsPerPage);
-    await logAsync(
-      "info",
-      `Calculated ${totalPages} page(s) (${initialCount} vehicles ÷ ${cardsPerPage} per page)`
-    );
 
     const allCars = [];
     let consecutiveEmptyPages = 0;
@@ -75,8 +66,6 @@ const scrapeHumberview = async (page, baseUrl) => {
     // 4. Loop through all pages
     // -------------------------------------------------
     for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
-      await logAsync("info", `Scraping page ${currentPage}/${totalPages}`);
-
       // Wait for cards to be visible
       try {
         await page.waitForSelector("article.vc-alpha", { timeout: 60_000 });
@@ -89,20 +78,12 @@ const scrapeHumberview = async (page, baseUrl) => {
         });
 
         if (consecutiveEmptyPages >= MAX_EMPTY_PAGES) {
-          await logAsync(
-            "error",
-            `Hit ${MAX_EMPTY_PAGES} empty pages in a row, stopping`
-          );
           break;
         }
         continue; // Try next page
       }
 
       // Wait for content to stabilize with multiple checks
-      await logAsync(
-        "debug",
-        `Waiting for page ${currentPage} to fully load...`
-      );
 
       // Wait for cards to have JSON-LD data - with retries
       let jsonLdReady = false;
@@ -120,7 +101,6 @@ const scrapeHumberview = async (page, baseUrl) => {
             { timeout: 20_000, polling: 500 }
           );
           jsonLdReady = true;
-          await logAsync("debug", `JSON-LD data ready on page ${currentPage}`);
           break;
         } catch (e) {
           if (attempt === 3) {
@@ -192,7 +172,6 @@ const scrapeHumberview = async (page, baseUrl) => {
 
       if (carsOnPage.length === 0) {
         consecutiveEmptyPages++;
-        await logAsync("warn", `Page ${currentPage} returned 0 cars`);
 
         if (consecutiveEmptyPages >= MAX_EMPTY_PAGES) {
           await logAsync(
@@ -204,10 +183,6 @@ const scrapeHumberview = async (page, baseUrl) => {
       } else {
         consecutiveEmptyPages = 0;
         allCars.push(...carsOnPage);
-        await logAsync(
-          "info",
-          `✓ Page ${currentPage}: Scraped ${carsOnPage.length} cars (Total: ${allCars.length}/${initialCount})`
-        );
       }
 
       // Stop early if we've reached the expected total
@@ -223,8 +198,6 @@ const scrapeHumberview = async (page, baseUrl) => {
       // 5. Navigate to next page (if not last page)
       // -------------------------------------------------
       if (currentPage < totalPages) {
-        await logAsync("debug", `Navigating to page ${currentPage + 1}...`);
-
         // Store current URL to verify navigation
         const beforeUrl = page.url();
 
@@ -292,7 +265,9 @@ const scrapeHumberview = async (page, baseUrl) => {
         if (!navigated) {
           await logAsync(
             "error",
-            `Could not find next page button for page ${currentPage + 1}, stopping pagination`
+            `Could not find next page button for page ${
+              currentPage + 1
+            }, stopping pagination`
           );
           break;
         }
@@ -303,11 +278,6 @@ const scrapeHumberview = async (page, baseUrl) => {
             waitUntil: "domcontentloaded",
             timeout: 60_000,
           });
-
-          await logAsync(
-            "debug",
-            `Navigation to page ${currentPage + 1} completed`
-          );
         } catch (e) {
           await logAsync(
             "warn",
@@ -320,7 +290,6 @@ const scrapeHumberview = async (page, baseUrl) => {
             await logAsync("error", "URL did not change, stopping pagination");
             break;
           }
-          await logAsync("debug", "URL changed despite timeout, continuing...");
         }
 
         // Wait for new page to stabilize
@@ -328,7 +297,6 @@ const scrapeHumberview = async (page, baseUrl) => {
 
         // Verify we're on the new page
         const currentUrl = page.url();
-        await logAsync("debug", `Current URL after navigation: ${currentUrl}`);
 
         // Additional verification: wait for new content to load
         try {
@@ -344,7 +312,6 @@ const scrapeHumberview = async (page, baseUrl) => {
               `No cards found after navigating to page ${currentPage + 1}`
             );
           } else {
-            await logAsync("debug", `Found ${newCardCount} cards on new page`);
           }
         } catch (e) {
           await logAsync(
@@ -373,7 +340,9 @@ const scrapeHumberview = async (page, baseUrl) => {
     if (result.total < initialCount) {
       await logAsync(
         "warn",
-        `⚠️ Scraped ${result.total} of ${initialCount} expected vehicles (${initialCount - result.total} missing)`
+        `⚠️ Scraped ${result.total} of ${initialCount} expected vehicles (${
+          initialCount - result.total
+        } missing)`
       );
     }
 
@@ -405,7 +374,6 @@ const scrapeHumberview = async (page, baseUrl) => {
           url: window.location.href,
         };
       });
-      await logAsync("debug", "Page state at failure:", pageState);
     } catch (evalErr) {
       await logAsync("warn", "Could not capture page state", {
         error: evalErr.message,
