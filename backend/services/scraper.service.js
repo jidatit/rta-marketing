@@ -52,6 +52,8 @@ const scrapeSite = async (url, siteName) => {
       "Upgrade-Insecure-Requests": "1",
     });
 
+    await page.emulateTimezone("America/Toronto");
+
     // ✅ Pretend we are Brave or real Chrome
     await page.evaluateOnNewDocument(() => {
       Object.defineProperty(navigator, "webdriver", { get: () => false });
@@ -67,6 +69,12 @@ const scrapeSite = async (url, siteName) => {
               : Promise.resolve({ state: "granted" }),
         }),
       });
+    });
+
+    // Optional: also fake geolocation (if the site uses it)
+    await page.setGeolocation({ latitude: 43.6532, longitude: -79.3832 }); // Toronto
+    await page.setExtraHTTPHeaders({
+      "Accept-Language": "en-CA,en;q=0.9",
     });
 
     await page.setViewport({ width: 1920, height: 1080 });

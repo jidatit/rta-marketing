@@ -18,25 +18,31 @@ const scrapeAutoPlanet = async (page, baseUrl) => {
       url: page.url(),
     });
     // -----------------------------
-    // 🔍 EARLY EXIT: Check for "0 Items Matching"
+    // 🔍 Wait for Results Heading to Appear
     // -----------------------------
-    const noResultsFound = () => {
+    await page.waitForSelector(
+      ".srp__vehicle-count, .advanced-filters-wrap__heading-custom h1",
+      { timeout: 30000 }
+    );
+
+    // Then check if it says "0 Items Matching" or "No Results"
+    const isZeroResults = await page.evaluate(() => {
       const heading = document.querySelector(
-        ".srp__vehicle-count, .advanced-filters-wrap__heading-custom h3"
+        ".srp__vehicle-count, .advanced-filters-wrap__heading-custom h1"
       );
-      console.log("Checking for zero results on AutoPlanet...", heading);
       if (!heading) return false;
       const text = heading.textContent.trim();
-      console.log("Zero results text on AutoPlanet:", text);
-      return text.includes("0 Items Matching");
-    };
+      return (
+        text.includes("0 Items Matching") ||
+        text.toLowerCase().includes("no results")
+      );
+    });
 
-    if (noResultsFound) {
+    if (isZeroResults) {
       await logAsync(
         "info",
-        "No results found (0 Items Matching) — exiting early"
+        "Detected 'No Results' or '0 Items Matching' — exiting early"
       );
-      console.log("Zero results detected (early exit) autoplanet");
       return result; // { cars: [], total: 0, serverError: null }
     }
     // -----------------------------

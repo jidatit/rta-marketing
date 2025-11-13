@@ -48,32 +48,35 @@ const scrapeHumberview = async (page, baseUrl) => {
       throw new Error("No car cards found after waiting");
     }
 
-    await wait(3000);
-    const pageHeading = await page.evaluate(() => {
-      const headingEl = document.querySelector(
-        ".il-heading.il-heading1.heading1"
-      );
-      const searchInput = document.querySelector(
-        ".uk-form-item.uk-input.has-icon.is-clearable.il-filterSearch__input input.uk-inputtable"
-      );
+    // await wait(3000);
+    // const pageHeading = await page.evaluate(() => {
+    //   const headingEl = document.querySelector(
+    //     ".il-heading.il-heading1.heading1"
+    //   );
+    //   const searchInput = document.querySelector(
+    //     ".uk-form-item.uk-input.has-icon.is-clearable.il-filterSearch__input input.uk-inputtable"
+    //   );
 
-      const heading = headingEl ? headingEl.textContent.trim() : "";
-      const searchValue = searchInput ? searchInput.value.trim() : "";
+    //   const heading = headingEl ? headingEl.textContent.trim() : "";
+    //   const searchValue = searchInput ? searchInput.value.trim() : "";
 
-      return { heading, searchValue };
+    //   return { heading, searchValue };
+    // });
+
+    // const { heading, searchValue } = pageHeading;
+
+    // ✅ NEW: Detect if any filter tags are visible (search, price, odometer, etc.)
+    const filtersApplied = await page.evaluate(() => {
+      return !!document.querySelector(
+        ".il-filtersReset.il-listingAlpha__filtersReset"
+      );
     });
 
-    const { heading, searchValue } = pageHeading;
-
-    const isGenericResults = heading.includes(
-      "New & Used SUVs, Trucks, Cars for Sale"
-    );
-
-    // 🧠 If heading is generic AND search bar is empty => return empty results
-    if (isGenericResults && !searchValue) {
+    if (!filtersApplied) {
+      // Now we can safely decide: truly generic results, not filtered
       await logAsync(
         "info",
-        "Generic results detected - filters did not match (and search bar empty)",
+        "No filters applied — likely a generic results page",
         {
           heading,
           searchValue,
@@ -81,6 +84,23 @@ const scrapeHumberview = async (page, baseUrl) => {
       );
       return { cars: [], total: 0, serverError: null };
     }
+
+    // const isGenericResults = heading.includes(
+    //   "New & Used SUVs, Trucks, Cars for Sale"
+    // );
+
+    // // 🧠 If heading is generic AND search bar is empty => return empty results
+    // if (isGenericResults && !searchValue) {
+    //   await logAsync(
+    //     "info",
+    //     "Generic results detected - filters did not match (and search bar empty)",
+    //     {
+    //       heading,
+    //       searchValue,
+    //     }
+    //   );
+    //   return { cars: [], total: 0, serverError: null };
+    // }
     // Check how many cards we actually have on first page
     const cardsPerPage = await page.evaluate(() => {
       return document.querySelectorAll("article.vc-alpha").length;
