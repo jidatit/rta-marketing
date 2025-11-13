@@ -41,7 +41,6 @@ const buildUrl = (filters) => {
   const {
     make,
     model,
-    year, // single year (deprecated, use minYear/maxYear)
     minYear,
     maxYear,
     minPrice,
@@ -58,7 +57,6 @@ const buildUrl = (filters) => {
   const filterCount = [
     make,
     model,
-    year,
     minYear,
     maxYear,
     minPrice,
@@ -70,7 +68,30 @@ const buildUrl = (filters) => {
     bodyStyle,
     keywords,
   ].filter((val) => val != null && val !== "").length;
+  if (make) {
+    const makeExists = makes.some(
+      (item) => item.label.toLowerCase() === make.toLowerCase()
+    );
+    if (!makeExists) {
+      console.warn(
+        `Make "${make}" not found in makes array. Cannot build URL.`
+      );
+      return null;
+    }
+  }
 
+  // Validate model exists in models array if provided
+  if (model) {
+    const modelExists = models.some(
+      (item) => item.label.toLowerCase() === model.toLowerCase()
+    );
+    if (!modelExists) {
+      console.warn(
+        `Model "${model}" not found in models array. Cannot build URL.`
+      );
+      return null;
+    }
+  }
   // Check if color filter is present
   const hasColorFilter = exteriorColor != null && exteriorColor !== "";
 
@@ -79,7 +100,7 @@ const buildUrl = (filters) => {
   const shouldUseSlug = (make || model) && filterCount <= 2 && !hasColorFilter;
 
   // --- Build URL ---
-  let path = "/inventory/used";
+  let path = "/inventory/used/";
   const params = new URLSearchParams();
 
   if (shouldUseSlug) {
@@ -88,7 +109,7 @@ const buildUrl = (filters) => {
       path += `/${encodeURIComponent(make.toLowerCase())}`;
     }
     if (model) {
-      path += `-${encodeURIComponent(model.toLowerCase().replace(/\s+/g, "-"))}`;
+      path += `${encodeURIComponent(model.toLowerCase().replace(/\s+/g, "-"))}`;
     }
 
     // Add the dynamic location slug based on model or make
@@ -105,9 +126,6 @@ const buildUrl = (filters) => {
     path += `-${locationSlug}`;
 
     // Add query params for the filters
-    if (year != null) {
-      params.append("yearRange[gte]", year.toString());
-    }
 
     // Year range (minYear/maxYear)
     if (minYear != null) {
@@ -141,9 +159,10 @@ const buildUrl = (filters) => {
         params.append("transmissionId", transmissionKey.toString());
       }
     }
-
     if (keywords) {
-      params.append("text", keywords);
+      params.append("keyword", keywords.toLowerCase());
+      params.append("sort[id]", "relevance");
+      params.append("sort[sortDirection]", "DESCENDING");
     }
 
     // Add payment option if price range is specified
@@ -169,9 +188,6 @@ const buildUrl = (filters) => {
     }
 
     // Year range
-    if (year != null) {
-      params.append("yearRange[gte]", year.toString());
-    }
 
     // Year range (minYear/maxYear)
     if (minYear != null) {
@@ -217,9 +233,10 @@ const buildUrl = (filters) => {
 
     // Keyword search
     if (keywords) {
-      params.append("text", keywords);
+      params.append("keyword", keywords.toLowerCase());
+      params.append("sort[id]", "relevance");
+      params.append("sort[sortDirection]", "DESCENDING");
     }
-
     // Add payment option if price range is specified
     if (minPrice != null || maxPrice != null) {
       params.append("paymentOption", "CASH");

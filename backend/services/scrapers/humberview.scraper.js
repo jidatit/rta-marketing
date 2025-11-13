@@ -15,7 +15,7 @@ const scrapeHumberview = async (page, baseUrl) => {
     // -------------------------------------------------
     try {
       await page.waitForSelector(".il-totalVehicles__count, article.vc-alpha", {
-        timeout: 60_000,
+        timeout: 90_000,
       });
     } catch (e) {
       await logAsync("error", "Initial load timeout", { error: e.message });
@@ -50,21 +50,33 @@ const scrapeHumberview = async (page, baseUrl) => {
 
     await wait(3000);
     const pageHeading = await page.evaluate(() => {
-      const heading = document.querySelector(
+      const headingEl = document.querySelector(
         ".il-heading.il-heading1.heading1"
       );
-      return heading ? heading.textContent.trim() : "";
+      const searchInput = document.querySelector(
+        ".uk-form-item.uk-input.has-icon.is-clearable.il-filterSearch__input input.uk-inputtable"
+      );
+
+      const heading = headingEl ? headingEl.textContent.trim() : "";
+      const searchValue = searchInput ? searchInput.value.trim() : "";
+
+      return { heading, searchValue };
     });
-    const isGenericResults = pageHeading.includes(
+
+    const { heading, searchValue } = pageHeading;
+
+    const isGenericResults = heading.includes(
       "New & Used SUVs, Trucks, Cars for Sale"
     );
 
-    if (isGenericResults) {
+    // 🧠 If heading is generic AND search bar is empty => return empty results
+    if (isGenericResults && !searchValue) {
       await logAsync(
         "info",
-        "Generic results detected - filters did not match",
+        "Generic results detected - filters did not match (and search bar empty)",
         {
-          heading: pageHeading,
+          heading,
+          searchValue,
         }
       );
       return { cars: [], total: 0, serverError: null };
@@ -87,7 +99,7 @@ const scrapeHumberview = async (page, baseUrl) => {
     for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
       // Wait for cards to be visible
       try {
-        await page.waitForSelector("article.vc-alpha", { timeout: 60_000 });
+        await page.waitForSelector("article.vc-alpha", { timeout: 90_000 });
         consecutiveEmptyPages = 0; // Reset counter when cards found
       } catch (e) {
         consecutiveEmptyPages++;
@@ -295,7 +307,7 @@ const scrapeHumberview = async (page, baseUrl) => {
         try {
           await page.waitForNavigation({
             waitUntil: "domcontentloaded",
-            timeout: 60_000,
+            timeout: 90_000,
           });
         } catch (e) {
           await logAsync(
@@ -319,7 +331,7 @@ const scrapeHumberview = async (page, baseUrl) => {
 
         // Additional verification: wait for new content to load
         try {
-          await page.waitForSelector("article.vc-alpha", { timeout: 60_000 });
+          await page.waitForSelector("article.vc-alpha", { timeout: 90_000 });
 
           const newCardCount = await page.evaluate(() => {
             return document.querySelectorAll("article.vc-alpha").length;

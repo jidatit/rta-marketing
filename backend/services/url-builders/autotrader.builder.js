@@ -19,7 +19,7 @@ const buildUrl = (filters) => {
   } = filters;
 
   // Get slugs for province/city
-  const slugs = siteConfig.getSlugs(postal || "A1A1A1");
+  // const slugs = siteConfig.getSlugs(postal || "A1A1A1");
 
   // Build path: /cars/make/model/province/city/
   let path = "/cars";
@@ -28,8 +28,8 @@ const buildUrl = (filters) => {
     path += `/${encodeURIComponent(model.toLowerCase().replace(/\s+/g, "-"))}`;
 
   // Province and city ALWAYS come after model (if they exist)
-  if (slugs.province) path += `/${slugs.province}`;
-  if (slugs.city) path += `/${slugs.city}`;
+  // if (slugs.province) path += `/${slugs.province}`;
+  // if (slugs.city) path += `/${slugs.city}`;
 
   // Add trailing slash
   path += "/";
@@ -56,7 +56,7 @@ const buildUrl = (filters) => {
   params.append("prx", radius.toString());
 
   // Province name
-  if (slugs.provinceName) params.append("prv", slugs.provinceName);
+  // if (slugs.provinceName) params.append("prv", slugs.provinceName);
 
   // Postal code
   params.append("loc", postal || "A1A1A1");

@@ -14,7 +14,7 @@ const scrapeAutoTrader = async (page, baseUrl) => {
     // -------------------------------------------------
     await page
       .waitForSelector(".result-item.enhanced, #titleCount", {
-        timeout: 60_000,
+        timeout: 90_000,
       })
       .catch(() => {});
 
@@ -37,6 +37,7 @@ const scrapeAutoTrader = async (page, baseUrl) => {
       await logAsync("info", "Zero results detected (early exit)", {
         url: page.url(),
       });
+      console.log("Zero results detected (early exit)");
       return { cars: [], total: 0, serverError: null };
     }
 

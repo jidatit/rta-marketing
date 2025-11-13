@@ -17,7 +17,28 @@ const scrapeAutoPlanet = async (page, baseUrl) => {
     await logAsync("info", "Page loaded, waiting for vehicle cards...", {
       url: page.url(),
     });
+    // -----------------------------
+    // 🔍 EARLY EXIT: Check for "0 Items Matching"
+    // -----------------------------
+    const noResultsFound = () => {
+      const heading = document.querySelector(
+        ".srp__vehicle-count, .advanced-filters-wrap__heading-custom h3"
+      );
+      console.log("Checking for zero results on AutoPlanet...", heading);
+      if (!heading) return false;
+      const text = heading.textContent.trim();
+      console.log("Zero results text on AutoPlanet:", text);
+      return text.includes("0 Items Matching");
+    };
 
+    if (noResultsFound) {
+      await logAsync(
+        "info",
+        "No results found (0 Items Matching) — exiting early"
+      );
+      console.log("Zero results detected (early exit) autoplanet");
+      return result; // { cars: [], total: 0, serverError: null }
+    }
     // -----------------------------
     // Wait for initial cards with retries
     // -----------------------------
