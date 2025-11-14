@@ -349,13 +349,13 @@ const SaleForm1 = ({
 
                       <div className="w-[48%] mb-4">
                         <label className="block mb-2 text-sm font-medium text-gray-900">
-                          Dealership Purchase
+                          Dealership Name
                         </label>
                         <input
                           type="text"
                           id="dealershipPurchase"
                           className="block w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-lg shadow-sm bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
-                          placeholder="Enter Dealership Purchase"
+                          placeholder="Enter Dealership Name"
                           value={formData.dealershipPurchase}
                           onChange={handleInputChange}
                         />
@@ -462,11 +462,10 @@ const SaleForm1 = ({
             </div>
             <div className="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
               <button
-                className={`flex flex-row items-center justify-center px-6 py-3 mb-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${
-                  isFormDataValid()
-                    ? "bg-[#003160] hover:shadow-lg active:bg-emerald-600"
-                    : "bg-gray-500 cursor-not-allowed"
-                }`}
+                className={`flex flex-row items-center justify-center px-6 py-3 mb-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear rounded shadow outline-none gap-x-2 ${isFormDataValid()
+                  ? "bg-[#003160] hover:shadow-lg active:bg-emerald-600"
+                  : "bg-gray-500 cursor-not-allowed"
+                  }`}
                 type="button"
                 onClick={handleFirstNext}
                 disabled={!isFormDataValid()}

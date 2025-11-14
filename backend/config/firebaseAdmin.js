@@ -24,5 +24,5 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const auth = admin.auth();
 const storage = admin.storage();
-
-module.exports = { admin, db, auth, storage };
+const logsRef = db.collection("scrape_logs");
+module.exports = { admin, db, auth, storage, logsRef };
