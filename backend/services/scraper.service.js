@@ -12,9 +12,12 @@ let browser = null;
 
 const getBrowser = async () => {
   if (!browser) {
+    const chromium110 = puppeteer.executablePath("chrome", "110");
+
     browser = await puppeteer.launch({
       headless: false, // can test with 'new' later for performance
       defaultViewport: { width: 1920, height: 1080 },
+      executablePath: chromium110,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -24,6 +27,7 @@ const getBrowser = async () => {
         "--disable-features=IsolateOrigins,site-per-process",
         "--disable-web-security",
         "--window-size=1920,1080",
+        "--lang=en-CA",
       ],
     });
 
@@ -45,8 +49,9 @@ const scrapeSite = async (url, siteName) => {
 
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "(KHTML, like Gecko) Chrome/109.0.5414.120 Safari/537.36"
     );
+
     await page.setExtraHTTPHeaders({
       "Accept-Language": "en-CA,en;q=0.9",
       "Upgrade-Insecure-Requests": "1",
