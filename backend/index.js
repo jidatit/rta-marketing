@@ -166,8 +166,22 @@ app.post("/leads", publicCors, async (req, res) => {
     return res.status(500).send("Error creating lead");
   }
 });
+const allowedOrigins = process.env.CORS_ORIGIN.split(",");
 
-app.use(cors({ origin: process.env.CORS_ORIGIN }));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS: " + origin), false);
+      }
+    },
+  })
+);
 
 app.post("/disableUser", async (req, res) => {
   const { uid } = req.body;
@@ -314,6 +328,6 @@ app.use("/api/scrape", scrapeRoutes);
 // Start cron scheduler
 inventoryScheduler.start();
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });
