@@ -9,6 +9,8 @@ import {
     List,
     Package,
     Filter,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,8 @@ const LOADING_MESSAGES = [
     { text: "Almost there, finalizing results...", duration: 5000 },
 ];
 
+const CARS_PER_PAGE = 12;
+
 export const App: React.FC = () => {
     const { mutate, data, isPending, error } = useScrape();
     const { savedCars, saveCar, removeCar, isSaved } = useGlobalSavedCars();
@@ -38,10 +42,12 @@ export const App: React.FC = () => {
     const [allCars, setAllCars] = useState<NormalizedCar[]>([]);
     const [selectedSources, setSelectedSources] = useState<string[]>([]);
     const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleSearch = (filters: Record<string, any>) => {
         mutate(filters);
         setLoadingMessageIndex(0);
+        setCurrentPage(1);
     };
 
     // ----- loading messages rotation -----
@@ -74,6 +80,7 @@ export const App: React.FC = () => {
         setAllCars(normalized);
         const sources = [...new Set(normalized.map((c) => c.source))];
         setSelectedSources(sources);
+        setCurrentPage(1);
     }, [data]);
 
     // ----- summary -----
@@ -99,6 +106,47 @@ export const App: React.FC = () => {
         if (!selectedSources.length) return allCars;
         return allCars.filter((c) => selectedSources.includes(c.source));
     }, [allCars, selectedSources]);
+
+    const totalPages = Math.ceil(filteredCars.length / CARS_PER_PAGE);
+
+    const displayedCars = useMemo(() => {
+        const start = (currentPage - 1) * CARS_PER_PAGE;
+        const end = start + CARS_PER_PAGE;
+        return filteredCars.slice(start, end);
+    }, [filteredCars, currentPage]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const maxVisible = 7;
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+        return pages;
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -215,7 +263,10 @@ export const App: React.FC = () => {
                     {!isPending && allCars.length > 0 && (
                         <div className="mb-6 flex gap-2 border-b">
                             <button
-                                onClick={() => setSelectedSources(availableSources)}
+                                onClick={() => {
+                                    setSelectedSources(availableSources);
+                                    setCurrentPage(1);
+                                }}
                                 className={`px-4 py-2 font-medium transition-colors border-b-2 ${selectedSources.length === availableSources.length
                                     ? 'border-blue-600 text-blue-600'
                                     : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -226,7 +277,10 @@ export const App: React.FC = () => {
                             {availableSources.map((src) => (
                                 <button
                                     key={src}
-                                    onClick={() => setSelectedSources([src])}
+                                    onClick={() => {
+                                        setSelectedSources([src]);
+                                        setCurrentPage(1);
+                                    }}
                                     className={`px-4 py-2 font-medium capitalize transition-colors border-b-2 ${selectedSources.length === 1 && selectedSources[0] === src
                                         ? 'border-blue-600 text-blue-600'
                                         : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -239,16 +293,67 @@ export const App: React.FC = () => {
                     )}
 
                     {/* ----- 3-column car grid ----- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredCars.map((car) => (
-                            <CarCard
-                                key={car.id}
-                                car={car}
-                                onSave={() => (isSaved(car.id) ? null : saveCar(car))}
-                                isSaved={isSaved(car.id)}
-                            />
-                        ))}
-                    </div>
+                    {displayedCars.length > 0 && (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {displayedCars.map((car) => (
+                                    <CarCard
+                                        key={car.id}
+                                        car={car}
+                                        onSave={() => (isSaved(car.id) ? null : saveCar(car))}
+                                        isSaved={isSaved(car.id)}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* ----- pagination ----- */}
+                            {totalPages > 1 && (
+                                <div className="mt-8 flex items-center justify-center gap-2">
+                                    <Button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        variant="outline"
+                                        size="sm"
+                                        className="px-3"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+
+                                    {getPageNumbers().map((page, idx) => (
+                                        page === '...' ? (
+                                            <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">
+                                                ...
+                                            </span>
+                                        ) : (
+                                            <Button
+                                                key={page}
+                                                onClick={() => handlePageChange(page as number)}
+                                                variant={currentPage === page ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="px-3 min-w-[40px]"
+                                            >
+                                                {page}
+                                            </Button>
+                                        )
+                                    ))}
+
+                                    <Button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        variant="outline"
+                                        size="sm"
+                                        className="px-3"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+
+                                    <span className="ml-4 text-sm text-gray-600">
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                </div>
+                            )}
+                        </>
+                    )}
 
                     {/* ----- filtered empty ----- */}
                     {filteredCars.length === 0 && allCars.length > 0 && (
@@ -258,7 +363,10 @@ export const App: React.FC = () => {
                                 No cars match the selected sources
                             </p>
                             <Button
-                                onClick={() => setSelectedSources(availableSources)}
+                                onClick={() => {
+                                    setSelectedSources(availableSources);
+                                    setCurrentPage(1);
+                                }}
                                 variant="outline"
                                 className="mt-4"
                             >
