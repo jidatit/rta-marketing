@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ApiResponse } from "@/types";
 
