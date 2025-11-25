@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Car, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react"
+import { Car, ChevronDown, ChevronUp, X, RotateCcw, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,9 +13,10 @@ import toast from "react-hot-toast"
 
 interface FilterPanelProps {
     onSearch: (filters: Record<string, any>) => void
+    isPending: boolean
 }
 
-export const FilterPanel: React.FC<FilterPanelProps> = ({ onSearch }) => {
+export const FilterPanel: React.FC<FilterPanelProps> = ({ onSearch, isPending }) => {
     const makesModels = useMakesModels()
     const defaultFilters = Object.fromEntries(
         FILTERS.map((f) => [f.key, f.default ?? ""])
@@ -250,10 +251,20 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ onSearch }) => {
                         <div className="flex flex-wrap gap-3 pt-2">
                             <Button
                                 onClick={handleSubmit}
-                                className="flex-1 md:flex-none bg-sky-800 hover:bg-sky-900 text-white font-semibold py-2 h-10 rounded-lg transition-colors shadow-md"
+                                disabled={isPending}
+                                className="flex-1 md:flex-none bg-sky-800 hover:bg-sky-900 text-white font-semibold py-2 h-10 rounded-lg transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Car className="mr-2 h-4 w-4" />
-                                Search Cars
+                                {isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Searching...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Car className="mr-2 h-4 w-4" />
+                                        Search Cars
+                                    </>
+                                )}
                             </Button>
                             {hasActiveFilters() && (
                                 <Button

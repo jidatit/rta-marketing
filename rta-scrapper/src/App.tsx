@@ -181,7 +181,7 @@ export const App: React.FC = () => {
 
                 {/* CENTRAL CONTENT (max-w-7xl) */}
                 <main className="flex-1 max-w-7xl mx-auto px-4 py-8">
-                    <FilterPanel onSearch={handleSearch} />
+                    <FilterPanel onSearch={handleSearch} isPending={isPending} />
 
                     {/* ----- error / loading / empty ----- */}
                     {error && (

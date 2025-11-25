@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import type { ApiResponse } from "@/types";
 
 type Filters = Record<string, any>;
@@ -38,27 +37,17 @@ const fetchScrape = async (filters: Filters): Promise<ApiResponse> => {
 };
 
 export const useScrape = () => {
-  const [filters, setFilters] = useState<Filters | null>(null);
-
-  const query = useQuery({
-    queryKey: ["scrape", filters ? cleanObject(filters) : null],
-    queryFn: () => fetchScrape(cleanObject(filters!)),
-    enabled: filters !== null, // only run when filters are set
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    retry: 1,
+  const mutation = useMutation({
+    mutationFn: (filters: Filters) => fetchScrape(cleanObject(filters)),
+    retry: false, // Don't auto-retry on errors
   });
 
-  const mutate = (newFilters: Filters) => {
-    setFilters(newFilters);
-  };
-
   return {
-    mutate,
-    data: query.data,
-    // Only show pending if filters are set (user has searched)
-    isPending: filters !== null && query.isPending,
-    error: query.error,
-    isSuccess: query.isSuccess,
+    mutate: mutation.mutate,
+    data: mutation.data,
+    isPending: mutation.isPending,
+    error: mutation.error,
+    isSuccess: mutation.isSuccess,
+    reset: mutation.reset, // Clear data/error state if needed
   };
 };

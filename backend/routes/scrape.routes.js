@@ -1,97 +1,50 @@
 const express = require("express");
 const { buildUrls } = require("../services/url-builder.service");
-const { scrapeSite } = require("../services/scraper.service");
+const { scrapeAllSites } = require("../services/scraper.service");
 const { logAsync } = require("../utils/logger");
 
 const router = express.Router();
+
+const TOTAL_REQUEST_TIMEOUT = 180000; // 3 minutes
 
 router.post("/run", async (req, res) => {
   const filters = req.body;
   const start = Date.now();
 
+  req.setTimeout(TOTAL_REQUEST_TIMEOUT);
+  res.setTimeout(TOTAL_REQUEST_TIMEOUT);
+
+  let responseSent = false;
+
+  const timeoutHandler = setTimeout(() => {
+    if (!responseSent) {
+      responseSent = true;
+      logAsync(
+        "warn",
+        `Request timeout after ${((Date.now() - start) / 1000).toFixed(2)}s`
+      );
+
+      res.status(408).json({
+        success: false,
+        error: "Request timeout - scraping took too long",
+        filters,
+        duration: `${((Date.now() - start) / 1000).toFixed(2)}s`,
+      });
+    }
+  }, TOTAL_REQUEST_TIMEOUT);
+
   try {
     const urls = buildUrls(filters);
-
     const sitesToScrape = Object.keys(urls).filter((key) => urls[key]);
 
-    await logAsync("info", "🚀 Starting parallel scraping", {
-      sites: sitesToScrape,
-      filters,
-      urls,
-    });
+    logAsync("info", `Starting scrape: ${sitesToScrape.join(", ")}`);
 
-    // Create scraping promises for all sites
-    const scrapePromises = [];
+    // Single browser, multiple tabs
+    const results = await scrapeAllSites(urls);
 
-    if (urls.autotrader) {
-      scrapePromises.push(
-        scrapeSite(urls.autotrader, "AutoTrader")
-          .then((result) => ({ site: "autotrader", result }))
-          .catch((error) => {
-            logAsync("error", "AutoTrader promise rejected", {
-              error: error.message,
-            });
-            return {
-              site: "autotrader",
-              result: { cars: [], total: 0, serverError: error.message },
-            };
-          })
-      );
-    }
+    clearTimeout(timeoutHandler);
 
-    if (urls.humberview) {
-      scrapePromises.push(
-        scrapeSite(urls.humberview, "HumberviewVW")
-          .then((result) => ({ site: "humberview", result }))
-          .catch((error) => {
-            logAsync("error", "HumberviewVW promise rejected", {
-              error: error.message,
-            });
-            return {
-              site: "humberview",
-              result: { cars: [], total: 0, serverError: error.message },
-            };
-          })
-      );
-    }
-    if (urls.yorkdalevw) {
-      scrapePromises.push(
-        scrapeSite(urls.yorkdalevw, "YorkdaleVW")
-          .then((result) => ({ site: "yorkdalevw", result }))
-          .catch((error) => {
-            logAsync("error", "YorkdaleVW promise rejected", {
-              error: error.message,
-            });
-            return {
-              site: "yorkdalevw",
-              result: { cars: [], total: 0, serverError: error.message },
-            };
-          })
-      );
-    }
-    if (urls.autoplanet) {
-      scrapePromises.push(
-        scrapeSite(urls.autoplanet, "AutoPlanet")
-          .then((result) => ({ site: "autoplanet", result }))
-          .catch((error) => {
-            logAsync("error", "AutoPlanet promise rejected", {
-              error: error.message,
-            });
-            return {
-              site: "autoplanet",
-              result: { cars: [], total: 0, serverError: error.message },
-            };
-          })
-      );
-    }
-
-    const scrapeResults = await Promise.all(scrapePromises);
-
-    // Convert array results back to object format
-    const results = {};
-    scrapeResults.forEach(({ site, result }) => {
-      results[site] = result;
-    });
+    if (responseSent) return;
 
     const duration = Date.now() - start;
     const totalCars = Object.values(results).reduce(
@@ -104,14 +57,12 @@ router.post("/run", async (req, res) => {
       error: data.serverError || null,
     }));
 
-    await logAsync("success", "✅ All scrapers completed", {
-      filters,
-      duration: `${(duration / 1000).toFixed(2)}s`,
-      sites: Object.keys(results),
-      totalCars,
-      summary,
-    });
+    logAsync(
+      "success",
+      `Completed in ${(duration / 1000).toFixed(2)}s - Total cars: ${totalCars}`
+    );
 
+    responseSent = true;
     res.json({
       success: true,
       results,
@@ -122,18 +73,26 @@ router.post("/run", async (req, res) => {
       summary,
     });
   } catch (error) {
-    await logAsync("error", "❌ Scrape job failed", {
-      error: error.message,
-      stack: error.stack,
-      filters,
-    });
+    clearTimeout(timeoutHandler);
 
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      filters,
-    });
+    if (!responseSent) {
+      logAsync("error", `Scrape failed: ${error.message}`);
+
+      responseSent = true;
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        filters,
+      });
+    }
   }
+});
+
+router.get("/health", async (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 module.exports = router;
