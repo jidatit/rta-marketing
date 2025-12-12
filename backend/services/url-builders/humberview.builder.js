@@ -15,13 +15,14 @@ const findKeyByLabel = (array, label) => {
 
 /**
  * Build Humberview VW inventory URL from filters.
- * Supports: make, model, year, price range, mileage range, transmission, exterior color, body style, keyword
+ * Supports: make, model, year range, price range, mileage range, transmission, exterior color, body style, keyword
  */
 const buildUrl = (filters) => {
   const {
     make,
     model,
-    year, // single year (e.g. 2022)
+    minYear,
+    maxYear,
     minPrice,
     maxPrice,
     keywords = "",
@@ -45,15 +46,23 @@ const buildUrl = (filters) => {
   // --- Build query params ---
   const params = new URLSearchParams();
 
-  // Year
-  if (year != null) {
-    params.append("year", year.toString());
+  // Year: if both minYear and maxYear, use maxYear; else whichever is provided
+  let yearToUse = null;
+  if (minYear != null && maxYear != null) {
+    yearToUse = maxYear;
+  } else if (minYear != null) {
+    yearToUse = minYear;
+  } else if (maxYear != null) {
+    yearToUse = maxYear;
+  }
+
+  if (yearToUse != null) {
+    params.append("year", yearToUse.toString());
   }
 
   // Body style (frameStyleId)
   if (bodyStyle) {
     const frameStyleKey = findKeyByLabel(frameStyleId, bodyStyle);
-    console.log("bodyStyle:", bodyStyle, "-> frameStyleId:", frameStyleKey);
     if (frameStyleKey && frameStyleKey !== -1) {
       params.append("frameStyleId", frameStyleKey.toString());
     }
@@ -68,22 +77,16 @@ const buildUrl = (filters) => {
   }
 
   // Mileage range (odometer)
-  if (maxMileage != null) {
-    params.append("maxOdometer", maxMileage.toString());
-  }
   if (minMileage != null) {
     params.append("minOdometer", minMileage.toString());
+  }
+  if (maxMileage != null) {
+    params.append("maxOdometer", maxMileage.toString());
   }
 
   // Transmission (transmissionId)
   if (transmission) {
     const transmissionKey = findKeyByLabel(transmissionId, transmission);
-    console.log(
-      "transmission:",
-      transmission,
-      "-> transmissionId:",
-      transmissionKey
-    );
     if (transmissionKey && transmissionKey !== -1) {
       params.append("transmissionId", transmissionKey.toString());
     }
@@ -92,12 +95,6 @@ const buildUrl = (filters) => {
   // Exterior color (exteriorColorId)
   if (exteriorColor) {
     const exteriorColorKey = findKeyByLabel(exteriorColorId, exteriorColor);
-    console.log(
-      "exteriorColor:",
-      exteriorColor,
-      "-> exteriorColorId:",
-      exteriorColorKey
-    );
     if (exteriorColorKey && exteriorColorKey !== -1) {
       params.append("exteriorColorId", exteriorColorKey.toString());
     }

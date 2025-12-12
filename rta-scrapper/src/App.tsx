@@ -96,15 +96,16 @@ export const App: React.FC = () => {
             sites,
         };
     }, [data]);
-
     const availableSources = useMemo(
-        () => [...new Set(allCars.map((c) => c.source))],
+        () => [...new Set(allCars.map((c) => c.source.trim().toLowerCase()))],
         [allCars]
     );
 
     const filteredCars = useMemo(() => {
         if (!selectedSources.length) return allCars;
-        return allCars.filter((c) => selectedSources.includes(c.source));
+        return allCars.filter((c) =>
+            selectedSources.map((s) => s.toLowerCase()).includes(c.source)
+        );
     }, [allCars, selectedSources]);
 
     const totalPages = Math.ceil(filteredCars.length / CARS_PER_PAGE);

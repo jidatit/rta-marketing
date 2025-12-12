@@ -72,11 +72,11 @@ export const FILTERS: FilterConfig[] = [
     required: true,
     default: "A1A1A1",
   },
-  // {
-  //   key: "radius",
-  //   label: "Radius (km)",
-  //   type: "select",
-  //   options: [25, 50, 100, 200, 500],
-  //   default: 100,
-  // },
+  {
+    key: "radius",
+    label: "Radius (km)",
+    type: "select",
+    options: [25, 50, 100, 200, 500],
+    default: 100,
+  },
 ];

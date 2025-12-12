@@ -27,7 +27,7 @@ export const normalizeCar = (
 
   return {
     id: `${source}-${id}`,
-    source,
+    source: source.trim().toLowerCase(),
     title:
       raw.title ||
       `${raw.year || ""} ${raw.make || ""} ${raw.model || ""}`.trim(),

@@ -49,7 +49,7 @@ const scrapeAutoTrader = async (page, baseUrl) => {
 
       const progressiveScroll = async (
         step = window.innerHeight * 0.8,
-        pause = 800
+        pause = 1500
       ) => {
         let retries = 0;
         const maxRetries = 5;
