@@ -44,28 +44,35 @@ const SaleForm2 = ({
     } = formData;
 
     if (isSecondFormDataValid()) {
-      const otherCostsTotal = otherCostItems?.reduce((sum, item) => {
-        const amt = parseFloat(item.amount);
-        return sum + (isNaN(amt) ? 0 : amt);
-      }, 0);
+    // Safe number parser: empty/undefined → 0
+    const toNum = (v) => {
+      const n = parseFloat(v);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const otherCostsTotal = otherCostItems?.reduce((sum, item) => {
+      const amt = toNum(item.amount);
+      return sum + amt;
+    }, 0);
 
       const grossProfit =
-        parseFloat(salePrice) -
-        parseFloat(unitCost) +
-        parseFloat(warr) +
-        parseFloat(admin) +
-        parseFloat(gap) -
-        parseFloat(warCost) -
-        parseFloat(gapCost) -
-        parseFloat(pac) -
-        parseFloat(safety) +
-        parseFloat(reserve) -
-        otherCostsTotal;
+     toNum(salePrice) -
+      toNum(unitCost) +
+      toNum(warr) +
+      toNum(admin) +
+      toNum(gap) -
+      toNum(warCost) -
+      toNum(gapCost) -
+      toNum(pac) -
+      toNum(safety) +
+      toNum(reserve) -
+      otherCostsTotal;
 
       setFormData((prevData) => ({
         ...prevData,
         grossProfit: grossProfit.toFixed(2),
       }));
+
     } else {
       toast.error("Please fill in all required fields.");
     }
