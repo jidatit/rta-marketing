@@ -123,7 +123,7 @@ const TVScreen = () => {
     } catch (error) {
       console.error("Error fetching Sale Persons: ", error);
       toast.error("Failed to fetch Sales Person: " + error.message);
-      return () => {};
+      return () => { };
     }
   };
 
@@ -155,14 +155,24 @@ const TVScreen = () => {
 
             if (leads && Array.isArray(leads)) {
               const filteredLeads = leads.filter((lead) => {
-                if (lead.timestamp) {
-                  const leadDate = lead.timestamp.toDate(); // Convert Firestore timestamp to Date
+                if (!lead.timestamp) return false;
+
+                try {
+                  // Support both Firestore Timestamp and plain date/number/string
+                  const leadDate =
+                    typeof lead.timestamp?.toDate === "function"
+                      ? lead.timestamp.toDate()
+                      : new Date(lead.timestamp);
+
+                  if (Number.isNaN(leadDate.getTime())) return false;
+
                   return (
                     leadDate.getMonth() === currentMonth &&
                     leadDate.getFullYear() === currentYear
                   );
+                } catch {
+                  return false;
                 }
-                return false;
               });
 
               totalLeadsCount += filteredLeads.length; // Count only leads from the current month
@@ -274,7 +284,7 @@ const TVScreen = () => {
         unsubscribeList.forEach((unsubscribe) => unsubscribe());
       };
     }
-    return () => {};
+    return () => { };
   };
 
   useEffect(() => {
@@ -288,9 +298,9 @@ const TVScreen = () => {
 
   // Merge sales data with employee data and sort
   useEffect(() => {
-    if (updatedSalesPerson.length > 0 && salesData.length > 0) {
+    if (updatedSalesPerson.length > 0) {
       const mergedSalesPersons = updatedSalesPerson.map((person) => {
-        const matchingSalesData = salesData.find(
+        const matchingSalesData = (salesData || []).find(
           (sale) => sale?.userId === person?.uid
         );
 
@@ -306,7 +316,7 @@ const TVScreen = () => {
 
       // Sort based on total sales
       const sortedSalesPersons = mergedSalesPersons.sort(
-        (a, b) => b.totalSales - a.totalSales
+        (a, b) => (b.totalSales || 0) - (a.totalSales || 0)
       );
 
       setSortedSalesPerson(sortedSalesPersons);
@@ -517,7 +527,11 @@ const TVScreen = () => {
           <InfoCard title="Total Sales" value={totalSales} src="icon-2.png" />
           <InfoCard
             title="Conversion Rate"
-            value={`${((totalSales / totalLeadsCount) * 100).toFixed(2)}%`}
+            value={`${
+              totalLeadsCount === 0
+                ? 0
+                : ((totalSales / totalLeadsCount) * 100).toFixed(2)
+            }%`}
             src="icon-4.png"
           />
         </div>
