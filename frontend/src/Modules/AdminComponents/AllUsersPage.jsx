@@ -11,10 +11,12 @@ import React, { useEffect, useState } from "react";
 import { db } from "../../config/firebaseConfig";
 import { FaSearch, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { Loader } from "../../Utils/Loader";
 
 const AllUsersPage = () => {
   const [loading, setLoading] = useState(false);
   const [blockLoading, setBlockLoading] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [virtualAssistants, setVirtualAssistant] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -22,7 +24,8 @@ const AllUsersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState(null);
   const apiUrl = import.meta.env.VITE_BLOCK_USER_API;
 
   const fetchUsers = async () => {
@@ -32,25 +35,31 @@ const AllUsersPage = () => {
       setLoading(true);
 
       const employeesSnap = await getDocs(employeesRef);
-      const employeeList = employeesSnap.docs.map((doc) => {
-        const data = doc.data();
-        delete data.password;
-        return {
-          id: doc.id,
-          ...data,
-        };
-      });
+      const employeeList = employeesSnap.docs
+        .map((doc) => {
+          const data = doc.data();
+          delete data.password;
+          return {
+            id: doc.id,
+            ...data,
+          };
+        })
+        // Filter out employees with isDeleted set to true
+        .filter((employee) => !employee.isDeleted);
       setEmployees(employeeList);
 
       const virtualAssistantSnap = await getDocs(virtualAssistantRef);
-      const virtualAssistantList = virtualAssistantSnap.docs.map((doc) => {
-        const data = doc.data();
-        delete data.password;
-        return {
-          id: doc.id,
-          ...data,
-        };
-      });
+      const virtualAssistantList = virtualAssistantSnap.docs
+        .map((doc) => {
+          const data = doc.data();
+          delete data.password;
+          return {
+            id: doc.id,
+            ...data,
+          };
+        })
+        // Filter out virtual assistants with isDeleted set to true
+        .filter((va) => !va.isDeleted);
       setVirtualAssistant(virtualAssistantList);
 
       const combinedUsers = [...employeeList, ...virtualAssistantList];
@@ -197,8 +206,37 @@ const AllUsersPage = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
+  const handleDeleteUser = async (uid) => {
+    if (!uid) return;
+
+    try {
+      setDeleteLoading(true); // Reuse blockLoading state to show loading
+
+      const response = await fetch(`${apiUrl}/deleteUser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uid }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete user");
+      }
+      toast.success("User deleted successfully");
+      // Remove user from UI
+      const updatedUsers = allUsers.filter((user) => user.uid !== uid);
+      setAllUsers(updatedUsers);
+      setFilteredUsers(updatedUsers);
+    } catch (error) {
+      toast.error("Error deleting user: " + error.message);
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
 
   return (
     <>
@@ -233,7 +271,10 @@ const AllUsersPage = () => {
                   <th scope="col" className="px-4 py-4">
                     Date Joined
                   </th>
-                  <th scope="col" className="px-4 py-4 rounded-tr-md">
+                  <th
+                    scope="col"
+                    className="px-4 py-4 rounded-tr-md text-center"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -261,7 +302,58 @@ const AllUsersPage = () => {
                           : user.dateCreated}
                       </td>
 
-                      <td className="flex px-4 py-4 ">
+                      <td className="flex px-4 py-4 gap-3">
+                        <button
+                          className="w-[70%] p-2.5 text-white bg-blue-500 rounded-lg"
+                          onClick={() => {
+                            setSelectedUserToDelete(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          disabled={deleteLoading}
+                        >
+                          {deleteLoading === user.uid
+                            ? "Deleting..."
+                            : "Delete user"}
+                        </button>
+                        <>
+                          {isDeleteModalOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1111112c] bg-opacity-50">
+                              <div className="bg-white p-6 rounded-lg  w-96">
+                                <h2 className="text-lg font-semibold mb-4">
+                                  Confirm Deletion
+                                </h2>
+                                <p>
+                                  Are you sure you want to delete user{" "}
+                                  <strong>{selectedUserToDelete?.name}</strong>?
+                                </p>
+                                <div className="flex justify-end mt-6 gap-3">
+                                  <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      await handleDeleteUser(
+                                        selectedUserToDelete.uid
+                                      );
+                                      setIsDeleteModalOpen(false);
+
+                                      setSelectedUserToDelete(null);
+                                    }}
+                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                    disabled={deleteLoading}
+                                  >
+                                    {deleteLoading
+                                      ? "Deleting..."
+                                      : "Confirm Delete"}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
                         {blockLoading === user.uid ? (
                           <button
                             className="w-[70%] p-2.5 text-white bg-red-500 rounded-lg"

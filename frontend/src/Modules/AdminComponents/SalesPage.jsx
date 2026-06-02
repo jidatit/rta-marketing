@@ -10,6 +10,7 @@ import {
   where,
   deleteField,
   deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 
@@ -24,7 +25,8 @@ import { FaCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import SalesTable from "./SalesTable";
 import SalesHeader from "./SalesHeader";
-
+import SaleDetailsModal from "../VirtualAssistantComponents/components/AddSaleDetailsModal";
+import SaleTabs from "../../Utils/SaleTypeTabs";
 const SalesPage = ({ setShowModal }) => {
   const [allSales, setAllSales] = useState([]);
   const [sales, setSales] = useState([]);
@@ -42,41 +44,53 @@ const SalesPage = ({ setShowModal }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [sale, setSale] = useState(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [selectedSaleType, setSelectedSaleType] = useState("all"); // State for selected sale type (All, Individual, Wholesale)
 
+  console.log("setSelectedSaleType", selectedSaleType);
   const [uId, setUid] = useState([]);
 
-  const fetchSalesData = async () => {
+  const fetchSalesData = () => {
     try {
       const salesCollection = collection(db, "sales");
-      const querySnapshot = await getDocs(salesCollection);
-      const salesData = [];
-      const uIds = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const id = doc.id;
-        uIds.push(id);
-        const dataWithId = data.sales.map((el) => ({
-          documentId: doc.id,
-          ...el,
-        }));
-        const dataObject = {
-          sales: dataWithId,
-          id: id,
-        };
+      const unsubscribe = onSnapshot(salesCollection, (querySnapshot) => {
+        const salesData = [];
+        const uIds = [];
 
-        salesData.push(dataObject);
-        setUid(uIds);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const id = doc.id;
+          uIds.push(id);
+          const dataWithId = data.sales.map((el) => ({
+            documentId: doc.id,
+            ...el,
+          }));
+          const dataObject = {
+            sales: dataWithId,
+            id: id,
+          };
+
+          salesData.push(dataObject);
+          setUid(uIds);
+        });
+
+        setSales(salesData);
+
+        const allSales = salesData.flatMap((item) => item.sales);
+        setAllSales(allSales);
+        setFilteredClients(allSales);
+
+        // Fetch sales persons whenever sales data updates
+        fetchSalesPerson();
       });
 
-      setSales(salesData);
-
-      const allSales = salesData.flatMap((item) => item.sales);
-      setAllSales(allSales);
-      setFilteredClients(allSales);
+      // Return the unsubscribe function to clean up when component unmounts
+      return unsubscribe;
     } catch (error) {
-      console.error("Error fetching sales data: ", error);
+      console.error("Error setting up sales data listener: ", error);
     }
   };
+
+  console.log("selectedLeadSource", selectedLeadSource);
 
   const fetchLeads = async () => {
     try {
@@ -114,6 +128,17 @@ const SalesPage = ({ setShowModal }) => {
     }
   };
 
+  // Usage in your component
+  useEffect(() => {
+    const unsubscribe = fetchSalesData();
+    fetchLeads();
+
+    // Clean up the listener when component unmounts
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
@@ -133,6 +158,20 @@ const SalesPage = ({ setShowModal }) => {
   useEffect(() => {
     fetchSalesPerson();
   }, [uId]);
+
+  //FILTER BY SALES ,on frontend
+  useEffect(() => {
+    if (selectedSaleType === "all") {
+      setFilteredClients(allSales); // Show all sales
+    } else {
+      // Default "individual" if saleType is not "wholesale"
+      const filtered = allSales?.filter((sale) => {
+        const saleType = sale?.saleType || "individual"; // Default to 'individual' if no saleType
+        return saleType === selectedSaleType;
+      });
+      setFilteredClients(filtered);
+    }
+  }, [selectedSaleType, allSales]);
 
   const handleDeleteSale = async (saleId, documentId) => {
     try {
@@ -175,36 +214,96 @@ const SalesPage = ({ setShowModal }) => {
     setRowsPerPage(Number(event.target.value));
     setCurrentPage(1);
   };
+  // const handleFilter = () => {
+  //   let filtered = allSales;
+  //   if (selectedSaleType !== "all") {
+  //     filtered = filtered.filter((sale) => {
+  //       const saleType = sale?.saleType || "individual";
+  //       return saleType === selectedSaleType;
+  //     });
+  //   }
+
+  //   if (startDate && endDate) {
+  //     const filteredSales = filtered.filter((sale) => {
+  //       const saleDate = new Date(sale.saleDate);
+  //       return saleDate >= startDate && saleDate <= endDate;
+  //     });
+  //     setFilteredClients(filteredSales);
+  //     setCurrentPage(1);
+  //   } else {
+  //     setFilteredClients(filtered);
+  //   }
+  //   if (selectedLeadSource) {
+  //     const filteredSales = filtered.filter(
+  //       (sale) => sale.leadSource === selectedLeadSource
+  //     );
+  //     setFilteredClients(filteredSales);
+  //   }
+  //   if (selectedSalesPerson) {
+  //     const filteredSales = filtered.filter(
+  //       (sale) => sale.documentId === selectedSalesPerson
+  //     );
+  //     setFilteredClients(filteredSales);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   handleFilter();
+  // }, [
+  //   selectedSalesPerson,
+  //   selectedLeadSource,
+  //   startDate,
+  //   endDate,
+  //   selectedSaleType,
+  // ]);
+
   const handleFilter = () => {
+    let filtered = allSales;
+
+    // First apply sale type filter
+    if (selectedSaleType !== "all") {
+      filtered = filtered.filter((sale) => {
+        const saleType = sale?.saleType || "individual";
+        return saleType === selectedSaleType;
+      });
+    }
+
+    // Then apply other filters
     if (startDate && endDate) {
-      const filteredSales = allSales.filter((sale) => {
+      filtered = filtered.filter((sale) => {
         const saleDate = new Date(sale.saleDate);
         return saleDate >= startDate && saleDate <= endDate;
       });
-      setFilteredClients(filteredSales);
-      setCurrentPage(1);
-    } else {
-      setFilteredClients(allSales);
     }
+
     if (selectedLeadSource) {
-      const filteredSales = allSales.filter(
+      filtered = filtered.filter(
         (sale) => sale.leadSource === selectedLeadSource
       );
-      setFilteredClients(filteredSales);
     }
+
     if (selectedSalesPerson) {
-      const filteredSales = allSales.filter(
+      filtered = filtered.filter(
         (sale) => sale.documentId === selectedSalesPerson
       );
-      setFilteredClients(filteredSales);
     }
+
+    setFilteredClients(filtered);
+    setCurrentPage(1);
   };
 
+  // Update the useEffect for sale type filtering
   useEffect(() => {
     handleFilter();
-  }, [selectedSalesPerson, selectedLeadSource]);
+  }, [
+    selectedSaleType,
+    allSales,
+    selectedSalesPerson,
+    selectedLeadSource,
+    startDate,
+    endDate,
+  ]);
 
-  // Clear filter
   const handleClearFilter = () => {
     setStartDate(null);
     setEndDate(null);
@@ -231,7 +330,16 @@ const SalesPage = ({ setShowModal }) => {
     startIndex,
     startIndex + rowsPerPage
   );
-
+  const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState(null);
+  const handleAddData = (sale) => {
+    setSelectedSale(sale);
+    setIsAddDetailsModalOpen(true);
+  };
+  const handleDetailsUpdate = () => {
+    // Refresh data after update
+    fetchSalesData();
+  };
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   const handleSelect = (event, setValue) => {
@@ -239,12 +347,18 @@ const SalesPage = ({ setShowModal }) => {
 
     setValue(event.target.value);
   };
+
   return (
     <>
       <div className="flex items-start justify-start w-full h-full px-12 py-8 overflow-y-auto">
-        <div className="flex flex-col w-full h-full gap-y-8  ">
+        <div className="flex flex-col w-full h-full   ">
           <SalesHeader />
+          {/*tabs attached to the top of the table*/}
 
+          <SaleTabs
+            selectedSaleType={selectedSaleType}
+            onSaleTypeChange={setSelectedSaleType}
+          />
           <div className="relative p-2  bg-white shadow-lg sm:rounded-lg  ">
             <div className="w-full text-end flex justify-end">
               <button
@@ -285,27 +399,29 @@ const SalesPage = ({ setShowModal }) => {
 
                   <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
                 </div>
+                {selectedSaleType !== "wholesale" && (
+                  <div className="relative w-52 mx-4">
+                    <select
+                      name="leads Sources"
+                      id=""
+                      value={selectedLeadSource}
+                      onChange={(event) => {
+                        handleSelect(event, setSelectedLeadSource);
+                      }}
+                      className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1  focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
+                    >
+                      <option value="">Lead Source</option>
+                      {leadSources.map((lead) => (
+                        <option key={lead} value={lead}>
+                          {lead}
+                        </option>
+                      ))}
+                    </select>
 
-                <div className="relative w-52 mx-4">
-                  <select
-                    name="leads Sources"
-                    id=""
-                    value={selectedLeadSource}
-                    onChange={(event) => {
-                      handleSelect(event, setSelectedLeadSource);
-                    }}
-                    className="w-full appearance-none px-8 py-2 pr-4 border border-gray-300 rounded-md focus:outline-1  focus:outline-[#003160] bg-white text-gray-500 cursor-pointer"
-                  >
-                    <option value="">Lead Source</option>
-                    {leadSources.map((lead) => (
-                      <option key={lead} value={lead}>
-                        {lead}
-                      </option>
-                    ))}
-                  </select>
+                    <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
+                  </div>
+                )}
 
-                  <FaChevronDown className="absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none text-gray-400 text-sm" />
-                </div>
                 {!showDateFilter ? (
                   <div
                     onClick={() => {
@@ -361,6 +477,15 @@ const SalesPage = ({ setShowModal }) => {
               currentClients={currentClients}
               handleDeleteSale={handleDeleteSale}
               handleOpenViewModal={handleOpenViewModal}
+              onAddData={handleAddData}
+              admin={true}
+            />
+            {/* {isAddDetailsModalOpen && ( */}
+            <SaleDetailsModal
+              open={isAddDetailsModalOpen}
+              onClose={() => setIsAddDetailsModalOpen(false)}
+              onSuccess={handleDetailsUpdate}
+              sale={selectedSale}
             />
             <div className="flex items-center justify-between mt-4">
               <div>

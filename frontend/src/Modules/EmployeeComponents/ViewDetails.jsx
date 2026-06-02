@@ -9,16 +9,34 @@ import { Box, Tab, Tabs } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import CommissionReportGenerator from "./CommissionReport";
+import { useAuth } from "../../AuthContext";
 
-const InsuranceUpload = ({ onClose, sale }) => {
-  // console.log(sale);
+const formatNumber = (value) => {
+  if (!value && value !== 0) return "";
+  const number = parseFloat(value);
+
+  if (isNaN(number)) return value;
+
+  // Check if number has decimal places
+  if (number % 1 === 0) {
+    return number.toString(); // Return whole number without decimals
+  }
+
+  return number.toFixed(2); // Return with 2 decimal places only if decimals exist
+};
+
+const InsuranceUpload = ({ onClose, sale, hide }) => {
   const { currentUser } = getAuth();
+  const { currentUser: user } = useAuth();
+  const isEmployee = user?.userType === "Employee";
+  const isReportGenerated = sale?.reportHistory?.length > 0;
+
   const [fileURL, setFileURL] = useState("");
   const [fileType, setFileType] = useState("");
   const [fileName, setFileName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedURL, setSelectedURL] = useState("");
-
   const [value, setValue] = useState("1");
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -69,6 +87,22 @@ const InsuranceUpload = ({ onClose, sale }) => {
     setIsModalOpen(false);
   };
 
+  const numericFields = [
+    "grossProfit",
+    "vehiclePurchasePrice",
+    "vehicleSoldPrice",
+    "salePrice",
+    "unitCost",
+    "warr",
+    "warCost",
+    "gap",
+    "gapCost",
+    "admin",
+    "pac",
+    "safety",
+    "reserve",
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50">
       <div className="relative w-[45%] max-w-4x bg-white p-6 rounded-lg shadow-lg mt-10 mb-10 overflow-y-auto max-h-[90%]">
@@ -79,6 +113,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
           &times;
         </button>
         <h2 className="mb-4 text-xl font-bold text-center">Sale Details</h2>
+
         <Box sx={{ width: "100%", typography: "body1" }}>
           <TabContext value={value}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -96,6 +131,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <Tab label="Details" value="1" />
                 <Tab label="Gross Sheet" value="2" />
                 <Tab label="Documents" value="3" />
+                {!hide && <Tab label="Report" value="4" />}
               </TabList>
             </Box>
 
@@ -104,22 +140,27 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <div className="flex items-center justify-between mb-6 ">
                   <h3 className="text-lg font-bold w-[45%]">Sale Details</h3>
                   <div className="">
-                    <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full  gap-x-2">
-                      <span>Gross Profit :</span>
-                      <p>{sale.grossProfit}</p>
+                    <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full gap-x-2">
+                      <span>Gross Profit</span>
+                      <p>{formatNumber(sale?.grossProfit)}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4  ">
-                  <div className=" flex flex-col gap-2 w-[45%] ">
-                    <p className="text-sm font-medium text-slate-800 ">
-                      Customer Name
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col gap-2 w-[45%]">
+                    <p className="text-sm font-medium text-slate-800">
+                      {sale.saleType === "wholesale"
+                        ? "Dealership Name"
+                        : "Customer Name"}
                     </p>
-                    <p className="text-xl font-bold text-black ">
-                      {sale.customerName}
+                    <p className="text-xl font-bold text-black">
+                      {sale.saleType === "wholesale"
+                        ? sale.dealershipPurchase
+                        : sale.customerName}
                     </p>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Vehicle Make
                     </p>
@@ -128,8 +169,9 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4 ">
-                  <div className=" flex flex-col gap-2 w-[45%]">
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Vehicle Model
                     </p>
@@ -137,7 +179,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       {sale.vehicleModel}
                     </p>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
+                  <div className="flex flex-col gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Stock Number
                     </p>
@@ -146,20 +188,82 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4 ">
-                  <div className=" flex flex-col gap-2 w-[45%]">
-                    <p className="text-sm font-medium text-slate-800">VIN</p>
-                    <p className="text-xl font-bold text-black">{sale.VIN}</p>
+
+                {sale.saleType === "wholesale" ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Year
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.year}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Auction
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.auction}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Vehicle Purchase Price
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {formatNumber(sale.vehiclePurchasePrice)}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Vehicle Sold Price
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {formatNumber(sale.vehicleSoldPrice)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Date Vehicle Received
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.dateVehicleReceived}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-[45%]">
+                        <p className="text-sm font-medium text-slate-800">
+                          Date Vehicle Sold
+                        </p>
+                        <p className="text-xl font-bold text-black">
+                          {sale.dateVehicleSold}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col gap-2 w-[45%]">
+                      <p className="text-sm font-medium text-slate-800">VIN</p>
+                      <p className="text-xl font-bold text-black">{sale.VIN}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 w-[45%]">
+                      <p className="text-sm font-medium text-slate-800">
+                        Lead Source
+                      </p>
+                      <p className="text-xl font-bold text-black">
+                        {sale.leadSource}
+                      </p>
+                    </div>
                   </div>
-                  <div className=" flex flex-col gap-2 w-[45%]">
-                    <p className="text-sm font-medium text-slate-800">
-                      Lead Source
-                    </p>
-                    <p className="text-xl font-bold text-black">
-                      {sale.leadSource}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </TabPanel>
             <TabPanel value="2" style={{ padding: "0", margin: "0" }}>
@@ -169,7 +273,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                   <div className="">
                     <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full  gap-x-2">
                       <span>Gross Profit :</span>
-                      <p>{sale.grossProfit}</p>
+                      <p>{formatNumber(sale.grossProfit)}</p>
                     </div>
                   </div>
                 </div>
@@ -180,7 +284,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       Sale Price :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.salePrice}
+                      {formatNumber(sale.salePrice)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-[45%]">
@@ -188,7 +292,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       Unit Cost :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.unitCost}
+                      {formatNumber(sale.unitCost)}
                     </p>
                   </div>
                 </div>
@@ -196,14 +300,16 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">Warr :</p>
-                    <p className="text-xl font-bold text-black">{sale.warr}</p>
+                    <p className="text-xl font-bold text-black">
+                      {formatNumber(sale.warr)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       War Cost :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.warCost}
+                      {formatNumber(sale.warCost)}
                     </p>
                   </div>
                 </div>
@@ -211,14 +317,16 @@ const InsuranceUpload = ({ onClose, sale }) => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">Gap :</p>
-                    <p className="text-xl font-bold text-black">{sale.gap}</p>
+                    <p className="text-xl font-bold text-black">
+                      {formatNumber(sale.gap)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">
                       Gap Cost :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.gapCost}
+                      {formatNumber(sale.gapCost)}
                     </p>
                   </div>
                 </div>
@@ -228,11 +336,15 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     <p className="text-sm font-medium text-slate-800">
                       Admin :
                     </p>
-                    <p className="text-xl font-bold text-black">{sale.admin}</p>
+                    <p className="text-xl font-bold text-black">
+                      {formatNumber(sale.admin)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 w-[45%]">
                     <p className="text-sm font-medium text-slate-800">PAC :</p>
-                    <p className="text-xl font-bold text-black">{sale.pac}</p>
+                    <p className="text-xl font-bold text-black">
+                      {formatNumber(sale.pac)}
+                    </p>
                   </div>
                 </div>
 
@@ -242,7 +354,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       Safety :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.safety}
+                      {formatNumber(sale.safety)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 w-[45%]">
@@ -250,7 +362,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                       Safety Reserve :
                     </p>
                     <p className="text-xl font-bold text-black">
-                      {sale.reserve}
+                      {formatNumber(sale.reserve)}
                     </p>
                   </div>
                 </div>
@@ -263,7 +375,7 @@ const InsuranceUpload = ({ onClose, sale }) => {
                   <div className="">
                     <div className="flex flex-row px-4 py-2 text-md font-bold text-white bg-[#003160] rounded-full  gap-x-2">
                       <span>Gross Profit :</span>
-                      <p>{sale.grossProfit}</p>
+                      <p>{formatNumber(sale?.grossProfit)}</p>
                     </div>
                   </div>
                 </div>
@@ -301,6 +413,17 @@ const InsuranceUpload = ({ onClose, sale }) => {
                     isOpen={isModalOpen}
                   />
                 ) : null}
+              </div>
+            </TabPanel>
+            <TabPanel value="4" style={{ padding: "0", margin: "0" }}>
+              <div className="py-6">
+                {!isEmployee || isReportGenerated ? (
+                  <CommissionReportGenerator saleData={sale} />
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Commission report not yet generated.
+                  </div>
+                )}
               </div>
             </TabPanel>
           </TabContext>

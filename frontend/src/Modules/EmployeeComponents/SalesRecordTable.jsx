@@ -20,6 +20,7 @@ import { useAuth } from "../../AuthContext";
 import { FaArrowLeft, FaArrowRight, FaBan } from "react-icons/fa6";
 import { FaCalendarAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import SaleTabs from "../../Utils/SaleTypeTabs";
 const SaleRecordTable = ({ setShowModal }) => {
   const [clients, setClients] = useState([]); // Initialize as an empty array
   const [filteredClients, setFilteredClients] = useState([]); // Initialize as an empty array
@@ -29,6 +30,9 @@ const SaleRecordTable = ({ setShowModal }) => {
   const [endDate, setEndDate] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sale, setSale] = useState(null);
+
+  //sale type filter
+  const [selectedSaleType, setSelectedSaleType] = useState("all");
   // Calculate total pages based on filtered clients
 
   const { currentUser } = useAuth();
@@ -78,6 +82,7 @@ const SaleRecordTable = ({ setShowModal }) => {
 
     fetchSalesData();
   }, [currentUser]);
+
   const handleFundStatus = async (clientId, index, saleId) => {
     // console.log("car funded");
     try {
@@ -123,6 +128,19 @@ const SaleRecordTable = ({ setShowModal }) => {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
+  useEffect(() => {
+    if (selectedSaleType === "all") {
+      setFilteredClients(clients); // Show all sales
+    } else {
+      // Default "individual" if saleType is not "wholesale"
+      const filtered = clients?.filter((sale) => {
+        const saleType = sale?.saleType || "individual"; // Default to 'individual' if no saleType
+        return saleType === selectedSaleType;
+      });
+      setFilteredClients(filtered);
+    }
+  }, [selectedSaleType, clients]);
 
   // Handle rows per page change
   const handleRowsPerPageChange = (event) => {
@@ -176,7 +194,14 @@ const SaleRecordTable = ({ setShowModal }) => {
 
   return (
     <>
-      <div className="relative p-6 overflow-x-auto bg-white shadow-lg sm:rounded-lg">
+      <div className="relative bg-white rounded-lg shadow-md">
+        {/* Sale Type Tabs - Enhanced */}
+        <SaleTabs
+          selectedSaleType={selectedSaleType}
+          onSaleTypeChange={setSelectedSaleType}
+        />
+      </div>
+      <div className="relative p-4  overflow-x-auto bg-white shadow-lg sm:rounded-lg ">
         <div className="w-full text-end flex justify-end">
           <button
             onClick={handleFilterToggle}
@@ -236,7 +261,7 @@ const SaleRecordTable = ({ setShowModal }) => {
           <thead className="w-full p-4 text-sm text-gray-700 uppercase bg-gray-50 dark:bg-[#003160] dark:text-white rounded-t-md">
             <tr>
               <th scope="col" className="px-4 py-4 rounded-tl-md">
-                Client Name
+                Client/Dealership
               </th>
               <th scope="col" className="px-4 py-4">
                 Car Name
@@ -263,7 +288,9 @@ const SaleRecordTable = ({ setShowModal }) => {
                   className="bg-white border-b dark:bg-white dark:border-gray-300"
                 >
                   <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-black">
-                    {sale.customerName}
+                    {sale?.customerName
+                      ? sale?.customerName
+                      : sale?.dealershipPurchase}
                   </td>
                   <td className="px-4 py-4 text-gray-900">
                     {sale.vehicleMake}

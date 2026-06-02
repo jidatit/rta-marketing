@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pencil, Trash2, Check } from "lucide-react";
 import {
   collection,
@@ -7,12 +7,15 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  query,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { toast } from "react-toastify";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import FinanceProviderManager from "../UIComponents/FinanceProvidersModal";
 
-const SalesHeader = () => {
+const SalesHeader = ({ VA }) => {
   const [showModal, setShowModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   return (
@@ -20,20 +23,23 @@ const SalesHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="text-2xl pt-4 font-bold">Sales</div>
         <div className="flex flex-row gap-4">
-          <button
+          {/* <button
             className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
             onClick={() => setShowModal(true)}
           >
             Lead sources
-          </button>
-          <button
-            className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg"
-            onClick={() => setShowLimitModal(true)}
-          >
-            Set Limit
-          </button>
+          </button> */}
+          {!VA && (
+            <button
+              className="bg-[#003160] hover:bg-[#173652] text-white px-10 py-2 rounded-full text-lg mb-4"
+              onClick={() => setShowLimitModal(true)}
+            >
+              Set Limit
+            </button>
+          )}
         </div>
       </div>
+      <FinanceProviderManager />
       <LeadSourceModal open={showModal} onClose={() => setShowModal(false)} />
       <LimitModal
         open={showLimitModal}
@@ -42,9 +48,176 @@ const SalesHeader = () => {
     </>
   );
 };
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+// const LimitModal = ({ open, onClose }) => {
+//   const [limit, setLimit] = useState("");
+//   const [selectedMonth, setSelectedMonth] = useState("January"); // Default: January
+//   const [docId, setDocId] = useState(null);
+
+//   // Fetch the existing limit for the selected month
+//   useEffect(() => {
+//     const fetchLimit = async () => {
+//       try {
+//         const q = query(
+//           collection(db, "SalesLimit"),
+//           where("month", "==", selectedMonth)
+//         );
+//         const querySnapshot = await getDocs(q);
+
+//         if (!querySnapshot.empty) {
+//           const doc = querySnapshot.docs[0];
+//           setLimit(doc.data().limit);
+//           setDocId(doc.id); // Store doc ID for updates
+//         } else {
+//           setLimit(""); // No limit set for this month
+//           setDocId(null);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching sales limit:", error);
+//       }
+//     };
+
+//     fetchLimit();
+//   }, [selectedMonth]);
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     if (limit.trim() === "") {
+//       toast.error("Limit cannot be empty");
+//       return;
+//     }
+
+//     try {
+//       const limitRef = doc(db, "SalesLimit", docId || `${selectedMonth}-limit`);
+
+//       await setDoc(limitRef, {
+//         limit,
+//         month: selectedMonth,
+//         createdAt: new Date(),
+//       });
+
+//       toast.success(`Limit for ${selectedMonth} updated successfully!`);
+//       onClose();
+//     } catch (error) {
+//       toast.error("Error updating limit: " + error.message);
+//     }
+//   };
+
+//   return (
+//     <Dialog
+//       open={open}
+//       onClose={onClose}
+//       maxWidth="md"
+//       fullWidth
+//       PaperProps={{
+//         sx: {
+//           width: "60%",
+//           maxWidth: "700px",
+//           margin: "32px auto",
+//           borderRadius: "12px",
+//           height: "auto",
+//           maxHeight: "90vh",
+//         },
+//       }}
+//     >
+//       <DialogContent sx={{ padding: "24px", overflow: "auto" }}>
+//         <DialogTitle sx={{ padding: "0 0 24px 0" }}>
+//           <div className="flex items-center justify-between">
+//             <h1 className="text-2xl font-bold font-radios">Gross Profit Benchmark</h1>
+//           </div>
+//         </DialogTitle>
+
+//         <div className="w-full">
+//           <form onSubmit={handleSubmit} className="flex flex-col w-full items-end">
+//             {/* Month Dropdown */}
+//             <label htmlFor="month" className="text-xl font-medium self-start">
+//               Select Month
+//             </label>
+//             <Select
+//               value={selectedMonth}
+//               onChange={(e) => setSelectedMonth(e.target.value)}
+//               className="block w-full border-2 border-gray-300 p-3 rounded-md my-2"
+//             >
+//               {months.map((month) => (
+//                 <MenuItem key={month} value={month}>
+//                   {month}
+//                 </MenuItem>
+//               ))}
+//             </Select>
+
+//             {/* Set Limit Field */}
+//             <label htmlFor="sales-limit" className="text-xl font-medium self-start">
+//               Set Limit
+//             </label>
+//             <input
+//               type="number"
+//               value={limit}
+//               placeholder="Set Limit"
+//               className="block border-2 w-full border-gray-300 p-3 rounded-md my-2"
+//               onChange={(e) => setLimit(e.target.value)}
+//             />
+
+//             {/* Buttons */}
+//             <div className="flex gap-4 mt-2">
+//               <button
+//                 type="button"
+//                 onClick={onClose}
+//                 className="px-8 py-2 text-xl rounded-md border-2 border-gray-300 hover:bg-gray-50"
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 type="submit"
+//                 className="bg-blue-900 text-white py-2 px-8 text-xl rounded-md"
+//               >
+//                 Submit
+//               </button>
+//             </div>
+//           </form>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
 
 const LimitModal = ({ open, onClose }) => {
   const [limit, setLimit] = useState("");
+  const [docId, setDocId] = useState(null); // Store document ID for updates
+
+  // Fetch the existing limit from Firestore on mount
+  useEffect(() => {
+    const fetchLimit = async () => {
+      try {
+        const q = query(collection(db, "SalesLimit"));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          setLimit(doc.data().limit);
+          setDocId(doc.id); // Store the document ID for updating
+        }
+      } catch (error) {
+        console.error("Error fetching sales limit:", error);
+      }
+    };
+
+    fetchLimit();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -52,16 +225,16 @@ const LimitModal = ({ open, onClose }) => {
       toast.error("Limit cannot be empty");
       return;
     }
+
     try {
-      await addDoc(collection(db, "SalesLimit"), {
-        limit: limit,
-        createdAt: new Date(),
-      });
-      toast.success("Limit added successfully!");
+      // const limitRef = doc(db, "SalesLimit", docId || "salesLimitDoc"); // Use existing doc or create a default one
+      const limitRef = doc(db, "SalesLimit", docId); // Use existing doc or create a default one
+      await setDoc(limitRef, { limit, createdAt: new Date() }); // setDoc replaces existing data
+
+      toast.success("Limit updated successfully!");
       onClose();
-      setLimit("");
     } catch (error) {
-      toast.error("Error adding lead: " + error.message);
+      toast.error("Error updating limit: " + error.message);
     }
   };
   return (
@@ -134,7 +307,7 @@ const LimitModal = ({ open, onClose }) => {
   );
 };
 
-const LeadSourceModal = ({ open, onClose }) => {
+export const LeadSourceModal = ({ open, onClose }) => {
   const [leads, setLeads] = useState([]);
   const [inputLead, setInputLead] = useState("");
   const [showForm, setShowForm] = useState(false);

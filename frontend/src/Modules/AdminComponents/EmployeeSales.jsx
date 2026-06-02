@@ -19,6 +19,7 @@ import {
 import { FaCalendarAlt } from "react-icons/fa";
 import SalesTable from "./SalesTable";
 import ViewDetails from "../EmployeeComponents/ViewDetails";
+import { Loader } from "../../Utils/Loader";
 
 const EmployeeSales = () => {
   const { id } = useParams();
@@ -190,7 +191,7 @@ const EmployeeSales = () => {
   // console.log(selectedLeadSource);
 
   if (!allSales) {
-    return <div>loading...</div>;
+    return <Loader />;
   }
 
   return (
